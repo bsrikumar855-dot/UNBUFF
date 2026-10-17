@@ -49,6 +49,20 @@ export function judge0UrlProblem(raw: string | undefined, production: boolean): 
   return null;
 }
 
+/** Returns why a GitHub OAuth callback URL is unacceptable, or null. Read only from the environment. */
+export function githubRedirectProblem(raw: string | undefined, production: boolean): string | null {
+  let u: URL;
+  try {
+    u = new URL((raw ?? "").trim());
+  } catch {
+    return "GITHUB_REDIRECT_URI must be a valid URL";
+  }
+  if (u.username || u.password || u.search || u.hash) return "GITHUB_REDIRECT_URI must not contain credentials, a query or a fragment";
+  const local = ["localhost", "127.0.0.1", "[::1]"].includes(u.hostname);
+  if (u.protocol !== "https:" && !(u.protocol === "http:" && local && !production)) return "GITHUB_REDIRECT_URI must use https (http is allowed only for localhost outside production)";
+  return null;
+}
+
 const EnvSchema = z
   .object({
     LLM_MODE: z.enum(["live", "mock"]).default("live"),
@@ -73,6 +87,22 @@ const EnvSchema = z
     /** none: running code is reported as unavailable. judge0: use the Judge0 service at JUDGE0_URL. */
     EXECUTION_PROVIDER: z.enum(["none", "judge0"]).default("none"),
     JUDGE0_URL: z.string().optional(),
+    /**
+     * GitHub contribution insights. All four of CLIENT_ID, CLIENT_SECRET, REDIRECT_URI and TOKEN_ENCRYPTION_KEY, or none:
+     * with none the feature stays off and reports itself as not configured. CLIENT_SECRET and the key are secrets.
+     */
+    GITHUB_CLIENT_ID: z.string().trim().optional(),
+    GITHUB_CLIENT_SECRET: z.string().optional(),
+    GITHUB_REDIRECT_URI: z.string().trim().optional(),
+    /** 32 random bytes, base64. Kept apart from the database: it encrypts the stored GitHub tokens. */
+    GITHUB_TOKEN_ENCRYPTION_KEY: z.string().optional(),
+    /** Comma-separated earlier keys, accepted for decryption only (key rotation). */
+    GITHUB_TOKEN_ENCRYPTION_KEY_RETIRED: z.string().optional(),
+    /** Where the browser returns after GitHub redirects back. Defaults to the first CORS origin. */
+    GITHUB_FRONTEND_URL: z.string().trim().optional(),
+    GITHUB_FRESH_MINUTES: z.coerce.number().int().min(15).max(1440).default(360),
+    GITHUB_MIN_SYNC_INTERVAL_MINUTES: z.coerce.number().int().min(1).max(60).default(5),
+    GITHUB_TIMEOUT_MS: z.coerce.number().int().min(2_000).max(30_000).default(10_000),
     /** AI mentor model settings (the same Gemini provider and key as the interview features). */
     MENTOR_MODEL: z.string().trim().min(1).optional(),
     MENTOR_TEMPERATURE: z.coerce.number().min(0).max(1).default(0.5),
@@ -139,6 +169,25 @@ const EnvSchema = z
         ctx.addIssue({ code: "custom", path: ["CORS_ORIGIN"], message: "CORS_ORIGIN is required when NODE_ENV=production" });
       } else if (cors.wildcard) {
         ctx.addIssue({ code: "custom", path: ["CORS_ORIGIN"], message: 'CORS_ORIGIN must not be "*" when NODE_ENV=production' });
+      }
+    }
+    const gh = { id: env.GITHUB_CLIENT_ID, secret: env.GITHUB_CLIENT_SECRET?.trim(), uri: env.GITHUB_REDIRECT_URI, key: env.GITHUB_TOKEN_ENCRYPTION_KEY?.trim() };
+    if (gh.id || gh.secret || gh.uri || gh.key) {
+      const missing = [!gh.id && "GITHUB_CLIENT_ID", !gh.secret && "GITHUB_CLIENT_SECRET", !gh.uri && "GITHUB_REDIRECT_URI", !gh.key && "GITHUB_TOKEN_ENCRYPTION_KEY"].filter(Boolean);
+      if (missing.length > 0) ctx.addIssue({ code: "custom", path: ["GITHUB_CLIENT_ID"], message: `GitHub is partly configured; also set ${missing.join(", ")} (or unset them all)` });
+      if (gh.uri) {
+        const problem = githubRedirectProblem(gh.uri, env.NODE_ENV === "production");
+        if (problem) ctx.addIssue({ code: "custom", path: ["GITHUB_REDIRECT_URI"], message: problem });
+      }
+      if (gh.key && Buffer.from(gh.key, "base64").length !== 32) {
+        ctx.addIssue({ code: "custom", path: ["GITHUB_TOKEN_ENCRYPTION_KEY"], message: "GITHUB_TOKEN_ENCRYPTION_KEY must be 32 random bytes encoded as base64" });
+      }
+      for (const r of (env.GITHUB_TOKEN_ENCRYPTION_KEY_RETIRED ?? "").split(",").map((k) => k.trim()).filter((k) => k !== "")) {
+        if (Buffer.from(r, "base64").length !== 32) ctx.addIssue({ code: "custom", path: ["GITHUB_TOKEN_ENCRYPTION_KEY_RETIRED"], message: "every retired key must be 32 random bytes encoded as base64" });
+      }
+      if (env.GITHUB_FRONTEND_URL) {
+        const o = parseCorsOrigins(env.GITHUB_FRONTEND_URL);
+        if (o.invalid.length > 0 || o.origins.length !== 1 || o.wildcard) ctx.addIssue({ code: "custom", path: ["GITHUB_FRONTEND_URL"], message: "GITHUB_FRONTEND_URL must be one bare origin like https://app.example.com" });
       }
     }
     if (env.EXECUTION_PROVIDER === "judge0") {

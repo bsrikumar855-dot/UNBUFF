@@ -33,6 +33,8 @@ const DsaProgressPage = lazy(() => import("@/pages/DsaProgressPage"));
 const CodeWorkspacePage = lazy(() => import("@/pages/CodeWorkspacePage"));
 const DsaAnalyticsPage = lazy(() => import("@/pages/DsaAnalyticsPage"));
 const DsaRevisionPage = lazy(() => import("@/pages/DsaRevisionPage"));
+const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
+const GithubInsightsPage = lazy(() => import("@/pages/GithubInsightsPage"));
 const MentorPage = lazy(() => import("@/pages/MentorPage"));
 const MentorMemoryPage = lazy(() => import("@/pages/MentorMemoryPage"));
 
@@ -90,8 +92,14 @@ const AppNav: React.FC = () => {
           <NavLink to={routes.mentor()} className={navClass}>
             AI Mentor
           </NavLink>
+          <NavLink to={routes.github} className={navClass}>
+            GitHub
+          </NavLink>
           <NavLink to={routes.sessions} className={navClass}>
             My sessions
+          </NavLink>
+          <NavLink to={routes.settings} className={navClass}>
+            Settings
           </NavLink>
           <button
             type="button"
@@ -143,6 +151,8 @@ export const AppRoutes: React.FC = () => (
         <Route path="/dsa/revision" element={<DsaRevisionPage />} />
         <Route path="/mentor" element={<MentorPage />} />
         <Route path="/mentor/memory" element={<MentorMemoryPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/github" element={<GithubInsightsPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

@@ -42,6 +42,13 @@ import type {
   MemoryType,
   GoalTrack,
   LearningSignal,
+  GithubConnection,
+  GithubConnectResponse,
+  GithubDisconnectResponse,
+  GithubSyncResponse,
+  GithubContributionsResponse,
+  GithubRepositoriesResponse,
+  GithubActivityResponse,
 } from "@/types/contract";
 
 /**
@@ -293,6 +300,29 @@ export const api = {
    */
   async deleteSession(sessionId: string): Promise<void> {
     return apiClient<void>(`/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" });
+  },
+
+  /** GitHub (read-only, public data). The token never reaches the browser. */
+  async getGithubConnection(): Promise<GithubConnection> {
+    return apiClient<GithubConnection>("/github/connection", { method: "GET" });
+  },
+  async connectGithub(): Promise<GithubConnectResponse> {
+    return apiClient<GithubConnectResponse>("/github/connect", { method: "POST", body: JSON.stringify({}) });
+  },
+  async disconnectGithub(): Promise<GithubDisconnectResponse> {
+    return apiClient<GithubDisconnectResponse>("/github/connection", { method: "DELETE" });
+  },
+  async syncGithub(): Promise<GithubSyncResponse> {
+    return apiClient<GithubSyncResponse>("/github/sync", { method: "POST", body: JSON.stringify({}) });
+  },
+  async getGithubContributions(): Promise<GithubContributionsResponse> {
+    return apiClient<GithubContributionsResponse>("/github/contributions", { method: "GET" });
+  },
+  async getGithubRepositories(): Promise<GithubRepositoriesResponse> {
+    return apiClient<GithubRepositoriesResponse>("/github/repositories", { method: "GET" });
+  },
+  async getGithubActivity(): Promise<GithubActivityResponse> {
+    return apiClient<GithubActivityResponse>("/github/activity", { method: "GET" });
   },
 
   /**

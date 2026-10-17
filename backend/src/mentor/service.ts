@@ -18,6 +18,7 @@ import type {
   MentorProfileResponse,
   MentorSavedMemory,
 } from "../types.js";
+import { githubBlock, NOT_CONNECTED_TEXT, wantsGithub, type CachedGithub } from "../github/context.js";
 import { buildActivityContext, type ActivityDeps } from "./activity.js";
 import { evaluateGoals } from "./goals.js";
 import {
@@ -52,6 +53,8 @@ export interface MentorDeps extends ActivityDeps {
   logger: Logger;
   now?: () => Date;
   retention?: RetentionConfig;
+  /** Optional GitHub summary source. The mentor works the same without it. */
+  github?: { cachedForMentor(uid: string): Promise<CachedGithub | null> };
 }
 
 const MAX_STORED_MESSAGES = 60;
@@ -148,6 +151,15 @@ export class MentorService {
     const profile = profileFromMemories(allMemories).profile;
     const activity = await buildActivityContext(uid, this.deps, { questionId: req.question_id, topics });
 
+    // ---- GitHub summary: only when the message is about projects/GitHub, only the student's own cached public data
+    let githubText: string | undefined;
+    let githubMeta: { used: boolean; synced_at: string | null; stale: boolean } | undefined;
+    if (this.deps.github && wantsGithub(message)) {
+      const cached = await this.deps.github.cachedForMentor(uid).catch(() => null);
+      githubText = cached ? githubBlock(cached) : NOT_CONNECTED_TEXT;
+      githubMeta = { used: cached !== null, synced_at: cached?.syncedAt ?? null, stale: cached?.stale ?? false };
+    }
+
     // ---- the model (skipped when a full solution is requested too early)
     let replyText: string;
     let proposals: Parameters<typeof validateProposals>[0] = [];
@@ -156,8 +168,8 @@ export class MentorService {
     } else {
       try {
         const out = await llm.mentorChat({
-          system: systemPrompt(req.mode, { hintLevel, solutionAllowed: req.assist === "solution" }),
-          prompt: chatPrompt({ activity: activity.text, profile: nonEmptyProfileJson(profile), memories: selected, recent: conv?.messages ?? [], message }),
+          system: systemPrompt(req.mode, { hintLevel, solutionAllowed: req.assist === "solution", github: githubText !== undefined }),
+          prompt: chatPrompt({ activity: activity.text, profile: nonEmptyProfileJson(profile), memories: selected, recent: conv?.messages ?? [], message, ...(githubText !== undefined ? { github: githubText } : {}) }),
         });
         replyText = stripControl(out.reply).trim().slice(0, 6000);
         proposals = out.memory_updates;
@@ -234,6 +246,7 @@ export class MentorService {
       analytics_note: activity.analytics_note,
       degraded: conversationStatus === "failed" || memoryStatus === "failed",
       mock: llm.mode === "mock",
+      ...(githubMeta ? { github_context: githubMeta } : {}),
     };
   }
 

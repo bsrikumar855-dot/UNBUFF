@@ -338,6 +338,25 @@ describe("mentor chat", () => {
     expect(screen.getByText(/not judged, so not verified/)).toBeInTheDocument();
   });
 
+  it("tells the student when the answer used their saved GitHub summary", async () => {
+    mocked.mentorChat.mockResolvedValue(
+      reply({
+        github_context: {
+          used: true,
+          synced_at: "2026-06-15T12:00:00.000Z",
+          stale: true,
+        },
+      })
+    );
+    renderAt("/mentor");
+    fireEvent.change(await box(), { target: { value: "How is my GitHub?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    const notes = await screen.findByLabelText("Notes about this answer");
+    expect(
+      within(notes).getByText(/short summary of your saved public GitHub data/)
+    ).toHaveTextContent(/may be out of date.*not a skill score/);
+  });
+
   it("opens a past conversation, starts a new one, and deletes with confirmation", async () => {
     mocked.listMentorConversations.mockResolvedValue({
       conversations: [conv({ title: "Graphs chat" })],

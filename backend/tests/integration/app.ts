@@ -6,6 +6,9 @@ import type { TokenVerifier } from "../../src/auth/verifier.js";
 import { MockProvider } from "../../src/llm/mock.js";
 import type { LLMProvider } from "../../src/llm/provider.js";
 import type { RateLimitOptions } from "../../src/middleware/rateLimit.js";
+import { GithubGraphQL } from "../../src/github/client.js";
+import { GithubService } from "../../src/github/service.js";
+import { MemoryGithubStore } from "../../src/github/store.js";
 import { MentorService } from "../../src/mentor/service.js";
 import { MemoryMentorStore, type MentorStore } from "../../src/mentor/store.js";
 import { AnalyticsService } from "../../src/analytics/service.js";
@@ -68,7 +71,7 @@ export const DEFAULT_TEST_UID = "student-a";
  * 401 behaviour. The wrapper only touches headers; the app under test is unchanged.
  */
 export function testApp(
-  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService } = {},
+  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService } = {},
 ): Express {
   const llm = opts.llm ?? new MockProvider();
   const catalogue = opts.catalogue ?? fixtureCatalogue();
@@ -87,6 +90,10 @@ export function testApp(
       catalogue: () => catalogue,
       logger: silentLogger,
     });
+  // Default: GitHub is not configured (no OAuth app, no key), which is also how a fresh deployment starts.
+  const github =
+    opts.github ??
+    new GithubService({ store: new MemoryGithubStore(), gql: new GithubGraphQL(), oauth: null, vault: null, logger: silentLogger, frontendUrl: "http://localhost:5173" });
   const mentor =
     opts.mentor ??
     new MentorService({
@@ -100,6 +107,7 @@ export function testApp(
       sessions: sessionStore,
       roles,
       logger: silentLogger,
+      github,
     });
   const service = new AssessmentService({ store: sessionStore, llm, roles, logger: silentLogger });
   const app = createApp({
@@ -119,6 +127,7 @@ export function testApp(
     }),
     analytics,
     mentor,
+    github,
     llm,
     logger: silentLogger,
     demoReportJson,

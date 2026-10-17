@@ -343,3 +343,14 @@ everything once gcloud is available.
 - **Hints are gated server-side** (`assist: "solution"` needs `hint_level >= 2`). Chat is idempotent per `client_message_id` and degrades honestly when storage fails.
 - **Retention is lazy-purged on reads** (conversations 90 d, summaries 365 d, learning 180 d; profile and goals until deleted); an optional Firestore TTL on `expires_at` is documented but not created.
 - **No streaming** (the provider layer is request/response). **Not verified against a live model or live Firestore**: see docs/phase-6-ai-mentor.md.
+
+## Phase 7 — GitHub contribution insights
+
+- **Separate from UNBLUFF sign-in.** `POST /api/github/connect` (authenticated) stores a one-time, hashed, 10-minute `state` bound to the verified uid plus a PKCE verifier. GitHub's redirect cannot carry a bearer token, so the callback identifies the student only through that server-side record; the client never names a user. Disconnecting never signs the student out.
+- **Public, read-only data only; private repositories are not offered.** No OAuth scope is requested. GitHub OAuth apps have no read-only private-repository scope (`repo` is read and write), so private access would need a separate GitHub App. Any token carrying a scope beyond `read:user` is revoked and refused.
+- **One GitHub account, one student** (`unbluff_github_identities`, claimed in a transaction). On a conflict only the new token is revoked, because revoking the grant would cut off the first student.
+- **Tokens are encrypted with AES-256-GCM** using a key from the environment (`GITHUB_TOKEN_ENCRYPTION_KEY`, retired keys for rotation), bound to uid and GitHub id. Tokens are never logged, returned, cached with data or given to the mentor. Without the OAuth app and key the feature stays in a visible "not configured" state.
+- **Bounded, cached synchronisation.** Fixed query documents (no client input, no proxy), at most 2 repository pages, 10 README reads, 1 year of calendar. Reads come from the saved copy; syncs are spaced, de-duplicated in-process and by a stored lock, and respect GitHub's reset time. Partial results keep older data for the failed section, labelled.
+- **Checklist states only what was observed**: "unknown" when GitHub did not return enough, never "missing". README text is pattern-matched, never executed, and never sent to the model.
+- **Mentor gets a minimised summary only for GitHub or project questions**: counts, repository names, languages, dates and checklist flags, no descriptions or file text. GitHub activity never feeds DSA analytics.
+- **Not verified against real GitHub or a real Firebase project**: see docs/phase-7-github-insights.md.

@@ -23,6 +23,11 @@ export type ErrorCode =
   | "REVISION_NOT_FOUND"
   | "CONVERSATION_NOT_FOUND"
   | "MEMORY_NOT_FOUND"
+  | "GITHUB_NOT_CONFIGURED"
+  | "GITHUB_NOT_CONNECTED"
+  | "GITHUB_REAUTH_REQUIRED"
+  | "GITHUB_RATE_LIMITED"
+  | "GITHUB_UNAVAILABLE"
   | "EXECUTION_UNAVAILABLE"
   | "GRADING_UNAVAILABLE"
   | "ROLE_NOT_FOUND"
@@ -756,6 +761,150 @@ export interface MentorChatResponse {
   analytics_note: string | null; // set when verified practice data is missing or unconfirmed
   degraded: boolean; // true when the answer worked but something could not be saved
   mock: boolean; // true when the answer came from the built-in mock mentor, not a live model
+  github_context?: { used: boolean; synced_at: string | null; stale: boolean }; // used: a short GitHub summary was given to the mentor
+}
+
+// ---------- GitHub contribution insights (Phase 7) ----------
+// Read-only, public-data-only. Tokens, authorization codes and raw GitHub payloads never appear in any response.
+export type GithubConnectionStatus = "not_configured" | "disconnected" | "connected" | "reauthorization_required";
+export type GithubFreshness = "never_synced" | "fresh" | "stale";
+export type GithubSyncFailure = "rate_limited" | "unavailable" | "unauthorized" | "invalid_response" | "timeout";
+export type GithubSection = "contributions" | "repositories" | "activity";
+export type GithubCheckId = "readme_present" | "description_present" | "setup_instructions" | "test_instructions" | "license_present";
+export type GithubCheckStatus = "pass" | "fail" | "unknown"; // unknown: GitHub did not return what was needed to decide
+// Why the OAuth round trip did not end in a connection. Sent to the app as ?github=error&reason=<this>.
+export type GithubCallbackReason =
+  | "access_denied"
+  | "invalid_state"
+  | "expired_state"
+  | "exchange_failed"
+  | "already_linked"
+  | "excessive_permissions"
+  | "not_configured"
+  | "github_unavailable";
+
+export interface GithubConnection {
+  status: GithubConnectionStatus;
+  login: string | null;
+  profile_url: string | null;
+  access: "public_only"; // private repositories are never requested (see docs/phase-7-github-insights.md)
+  permissions: string[]; // OAuth scopes GitHub granted; empty = public read-only
+  connected_at: string | null;
+  last_synced_at: string | null;
+  freshness: GithubFreshness;
+  fresh_for_minutes: number; // data older than this is shown as stale
+  last_sync_error: GithubSyncFailure | null;
+  last_sync_error_at: string | null;
+  sync_in_progress: boolean;
+  next_sync_allowed_at: string | null; // manual syncs are spaced out to protect the GitHub rate limit
+}
+
+export interface GithubConnectResponse {
+  authorize_url: string; // always https://github.com/login/oauth/authorize?...
+  expires_at: string; // the one-time state is valid until then
+}
+
+export interface GithubDisconnectResponse {
+  connection: GithubConnection;
+  revoked_at_github: boolean; // false: GitHub could not be reached; the student can revoke it in GitHub settings
+  data_removed: true; // stored credentials and cached GitHub data are deleted either way
+}
+
+export interface GithubSourceInfo {
+  login: string;
+  synced_at: string | null; // when this data was fetched from GitHub
+  from: string | null; // date range the data covers
+  to: string | null;
+  freshness: GithubFreshness;
+  cached: true; // always served from the last synchronisation, never fetched live
+}
+
+export interface GithubCalendarDay {
+  date: string; // YYYY-MM-DD
+  count: number;
+}
+export interface GithubCalendarWeek {
+  starts_on: string;
+  days: GithubCalendarDay[];
+}
+export interface GithubPeriodTotal {
+  period: string; // week start (YYYY-MM-DD) or month (YYYY-MM)
+  total: number;
+}
+
+export interface GithubContributionsResponse {
+  source: GithubSourceInfo;
+  available: boolean; // false until the first successful synchronisation, or when GitHub did not return it
+  total: number | null; // GitHub's own total for the range
+  weeks: GithubCalendarWeek[];
+  weekly: GithubPeriodTotal[]; // most recent 12 weeks
+  monthly: GithubPeriodTotal[];
+  breakdown: { commits: number; pull_requests: number; reviews: number; issues: number } | null;
+  restricted_count: number | null; // contributions to private repositories, count only, if the profile shares it
+  active_days: number | null;
+  longest_streak_days: number | null;
+  notice: string; // contribution counts are partial evidence, not a measure of skill
+}
+
+export interface GithubLanguageShare {
+  name: string;
+  percent: number; // share of the bytes in the repository's top languages
+}
+export interface GithubRepository {
+  name_with_owner: string;
+  url: string;
+  description: string | null;
+  primary_language: string | null;
+  languages: GithubLanguageShare[];
+  is_fork: boolean;
+  is_archived: boolean;
+  pushed_at: string | null;
+  updated_at: string | null;
+  stars: number;
+  open_issues: number;
+  open_pull_requests: number;
+  your_commits_90d: number | null; // null: GitHub did not return it
+  has_license: boolean | null;
+  topics: string[];
+}
+export interface GithubChecklistItem {
+  repository: string;
+  check: GithubCheckId;
+  status: GithubCheckStatus;
+  label: string; // what was checked
+  evidence: string; // what GitHub returned that decided it
+}
+export interface GithubRepositoriesResponse {
+  source: GithubSourceInfo;
+  available: boolean;
+  repositories: GithubRepository[];
+  total_public_repositories: number | null;
+  truncated: boolean; // true when the student has more public repositories than were scanned
+  checklist: GithubChecklistItem[]; // observed facts only; "unknown" when it could not be checked
+}
+
+export interface GithubActivityItem {
+  kind: "pull_request" | "issue" | "review";
+  title: string;
+  url: string;
+  repository: string;
+  state: string;
+  occurred_at: string;
+}
+export interface GithubActivityResponse {
+  source: GithubSourceInfo;
+  available: boolean;
+  pull_requests_total: number | null;
+  issues_total: number | null;
+  items: GithubActivityItem[];
+}
+
+export type GithubSyncOutcome = "synced" | "partial" | "cached" | "in_progress";
+export interface GithubSyncResponse {
+  outcome: GithubSyncOutcome; // cached: synced recently, no GitHub request was made
+  connection: GithubConnection;
+  unavailable_sections: GithubSection[]; // sections GitHub did not return this time (older data, if any, is kept and labelled)
+  rate_limit_remaining: number | null;
 }
 
 export interface ApiErrorBody {

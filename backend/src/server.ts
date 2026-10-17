@@ -5,6 +5,11 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createApp } from "./app.js";
 import { FirebaseTokenVerifier } from "./auth/verifier.js";
+import { GithubGraphQL } from "./github/client.js";
+import { GithubOAuth } from "./github/oauth.js";
+import { GithubService } from "./github/service.js";
+import { FirestoreGithubStore, MemoryGithubStore, type GithubStore } from "./github/store.js";
+import { TokenVault } from "./github/vault.js";
 import { MentorService } from "./mentor/service.js";
 import { FirestoreMentorStore, MemoryMentorStore, type MentorStore } from "./mentor/store.js";
 import { AnalyticsService } from "./analytics/service.js";
@@ -52,8 +57,8 @@ function createProvider(config: Config, logger: ReturnType<typeof createLogger>)
   });
 }
 
-function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore } {
-  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore(), mentor: new MemoryMentorStore() };
+function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore; github: GithubStore } {
+  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore(), mentor: new MemoryMentorStore(), github: new MemoryGithubStore() };
   const account = config.FIREBASE_SERVICE_ACCOUNT_JSON ? parseServiceAccount(config.FIREBASE_SERVICE_ACCOUNT_JSON) : null;
   const projectId = config.GOOGLE_CLOUD_PROJECT ?? account?.project_id ?? config.FIREBASE_PROJECT_ID;
   // Without a service-account secret, Application Default Credentials apply (Cloud Run identity, gcloud login, emulator).
@@ -62,7 +67,7 @@ function createStores(config: Config): { sessions: SessionStore; progress: Progr
     ignoreUndefinedProperties: true,
     ...(account ? { credentials: { client_email: account.client_email, private_key: account.private_key } } : {}),
   });
-  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db), mentor: new FirestoreMentorStore(undefined, db) };
+  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db), mentor: new FirestoreMentorStore(undefined, db), github: new FirestoreGithubStore(db) };
 }
 
 /**
@@ -100,6 +105,28 @@ function loadSuites(config: Config, root: string, logger: ReturnType<typeof crea
   return suites;
 }
 
+/** GitHub is optional: without its OAuth app and encryption key the service exists but reports itself as not configured. */
+function createGithub(config: Config, store: GithubStore, logger: ReturnType<typeof createLogger>): GithubService {
+  const timeoutMs = config.GITHUB_TIMEOUT_MS;
+  const configured = config.GITHUB_CLIENT_ID && config.GITHUB_CLIENT_SECRET && config.GITHUB_REDIRECT_URI && config.GITHUB_TOKEN_ENCRYPTION_KEY;
+  if (!configured) logger.warn("GitHub OAuth is not configured: GitHub insights are disabled (set GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GITHUB_REDIRECT_URI and GITHUB_TOKEN_ENCRYPTION_KEY)");
+  return new GithubService({
+    store,
+    gql: new GithubGraphQL({ timeoutMs }),
+    oauth: configured ? new GithubOAuth({ clientId: config.GITHUB_CLIENT_ID as string, clientSecret: config.GITHUB_CLIENT_SECRET as string, redirectUri: config.GITHUB_REDIRECT_URI as string, timeoutMs }) : null,
+    vault: configured
+      ? new TokenVault(
+          config.GITHUB_TOKEN_ENCRYPTION_KEY as string,
+          (config.GITHUB_TOKEN_ENCRYPTION_KEY_RETIRED ?? "").split(",").map((k) => k.trim()).filter((k) => k !== ""),
+        )
+      : null,
+    logger,
+    frontendUrl: config.GITHUB_FRONTEND_URL || (config.CORS_ORIGIN.split(",")[0] ?? "http://localhost:5173").trim(),
+    freshMinutes: config.GITHUB_FRESH_MINUTES,
+    minSyncIntervalMinutes: config.GITHUB_MIN_SYNC_INTERVAL_MINUTES,
+  });
+}
+
 function main(): void {
   const config = loadConfig();
   const logger = createLogger(config.LOG_LEVEL);
@@ -122,6 +149,7 @@ function main(): void {
   if (config.EXECUTION_PROVIDER === "judge0" && !config.EXECUTION_PROVIDER_VERIFIED) {
     logger.warn("EXECUTION_PROVIDER_VERIFIED is not true: judged submissions will not count toward analytics until the operator confirms the service is a real deployment");
   }
+  const github = createGithub(config, stores.github, logger);
   const mentor = new MentorService({
     store: stores.mentor,
     llm,
@@ -133,6 +161,7 @@ function main(): void {
     sessions: stores.sessions,
     roles,
     logger,
+    github,
     retention: { conversationDays: config.MENTOR_CONVERSATION_RETENTION_DAYS, summaryDays: config.MENTOR_SUMMARY_RETENTION_DAYS, learningDays: config.MENTOR_LEARNING_RETENTION_DAYS },
   });
   const code = new CodeService({
@@ -162,6 +191,7 @@ function main(): void {
     code,
     analytics,
     mentor,
+    github,
     llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
   const server = app.listen(config.PORT, "0.0.0.0", (err?: Error) => {
     if (err) {

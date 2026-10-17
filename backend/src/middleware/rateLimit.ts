@@ -9,6 +9,8 @@ export interface RateLimitOptions {
   codeRunPerMinute?: number;
   codeSubmitPerMinute?: number;
   mentorChatPerMinute?: number;
+  githubConnectPerMinute?: number;
+  githubSyncPerMinute?: number;
 }
 
 export const DEFAULT_RATE_LIMITS: RateLimitOptions = { globalPerMinute: 300, llmPerMinute: 40 };
@@ -47,6 +49,11 @@ export function createCodeLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS)
 /** Per-user limit for AI mentor messages (each one is a model call). Mount after requireAuth. */
 export function createMentorLimiter(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
   return userLimiter(opts.mentorChatPerMinute ?? 12);
+}
+
+/** GitHub: connecting/disconnecting and manual syncs are per user; the OAuth callback (no token) is per IP. */
+export function createGithubLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
+  return { connect: userLimiter(opts.githubConnectPerMinute ?? 10), sync: userLimiter(opts.githubSyncPerMinute ?? 6), callback: limiter(30) };
 }
 
 /** Global limiter for all routes, plus a tighter one for routes that call the LLM (cost control). */
