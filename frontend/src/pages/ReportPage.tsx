@@ -12,9 +12,9 @@ import { DEMO_SESSION, routes } from "@/lib/routes";
  * /report/:sessionId: fetches the report once per visit (and again after an action that changes
  * it, e.g. opening a fix task). /report/demo loads the contract's demo report.
  */
-const ReportPage: React.FC = () => {
+const ReportPage: React.FC<{ demo?: boolean }> = ({ demo = false }) => {
   const { sessionId = "" } = useParams<{ sessionId: string }>();
-  const isDemo = sessionId === DEMO_SESSION;
+  const isDemo = demo || sessionId === DEMO_SESSION;
   // The "View Demo Report" button already fetched it; reuse that instead of fetching twice.
   const handedOver = (useLocation().state as { report?: Report } | null)?.report ?? null;
   const [report, setReport] = useState<Report | null>(isDemo ? handedOver : null);

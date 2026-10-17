@@ -4,13 +4,15 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createApp } from "./app.js";
-import { loadConfig, type Config } from "./config.js";
+import { FirebaseTokenVerifier } from "./auth/verifier.js";
+import { loadConfig, parseServiceAccount, type Config } from "./config.js";
 import { createLogger } from "./logger.js";
 import { GeminiProvider } from "./llm/gemini.js";
 import { MockProvider } from "./llm/mock.js";
 import type { LLMProvider } from "./llm/provider.js";
 import { AssessmentService } from "./services/assessment.js";
 import { RoleRegistry } from "./services/roles.js";
+import { Firestore } from "@google-cloud/firestore";
 import { FirestoreStore } from "./store/firestoreStore.js";
 import { MemoryStore } from "./store/memoryStore.js";
 import type { SessionStore } from "./store/SessionStore.js";
@@ -35,6 +37,19 @@ function createProvider(config: Config, logger: ReturnType<typeof createLogger>)
   });
 }
 
+function createStore(config: Config): SessionStore {
+  if (config.STORE !== "firestore") return new MemoryStore();
+  const account = config.FIREBASE_SERVICE_ACCOUNT_JSON ? parseServiceAccount(config.FIREBASE_SERVICE_ACCOUNT_JSON) : null;
+  const projectId = config.GOOGLE_CLOUD_PROJECT ?? account?.project_id ?? config.FIREBASE_PROJECT_ID;
+  // Without a service-account secret, Application Default Credentials apply (Cloud Run identity, gcloud login, emulator).
+  const db = new Firestore({
+    projectId,
+    ignoreUndefinedProperties: true,
+    ...(account ? { credentials: { client_email: account.client_email, private_key: account.private_key } } : {}),
+  });
+  return new FirestoreStore(undefined, db);
+}
+
 function main(): void {
   const config = loadConfig();
   const logger = createLogger(config.LOG_LEVEL);
@@ -42,14 +57,15 @@ function main(): void {
 
   const roles = RoleRegistry.fromDirectory(join(root, "data", "roles")); // asserts weights sum to 1
   const demoReportJson = JSON.stringify(JSON.parse(readFileSync(join(root, "data", "demo_report.json"), "utf8")));
-  const store: SessionStore = config.STORE === "firestore" ? new FirestoreStore() : new MemoryStore();
+  const store = createStore(config);
+  const verifier = new FirebaseTokenVerifier(config.FIREBASE_PROJECT_ID);
   if (config.NODE_ENV === "production" && config.STORE === "memory") {
-    logger.warn("STORE=memory in production: sessions are lost on restart/redeploy and are not shared between instances");
+    logger.warn("ALLOW_EPHEMERAL_STORE is set: sessions are lost on restart/redeploy and are not shared between instances");
   }
   const llm = createProvider(config, logger);
   const service = new AssessmentService({ store, llm, roles, logger });
 
-  const app = createApp({ service, roles, llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
+  const app = createApp({ service, roles, verifier, llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
   const server = app.listen(config.PORT, "0.0.0.0", (err?: Error) => {
     if (err) {
       // Express 5 reports bind errors (e.g. EADDRINUSE) here instead of throwing.

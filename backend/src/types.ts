@@ -15,6 +15,7 @@ export type SessionMode = "prepare" | "defense"; // added (learning loop)
 export type RetestStatus = "none" | "scheduled" | "due" | "done"; // added (learning loop)
 export type ErrorCode =
   | "BAD_REQUEST"
+  | "UNAUTHENTICATED"
   | "NOT_FOUND"
   | "ROLE_NOT_FOUND"
   | "SESSION_NOT_FOUND"
@@ -269,6 +270,19 @@ export interface FixTaskRequest {
 }
 
 export type FixTaskResponse = FixTask;
+
+export interface SessionSummary {
+  session_id: string;
+  role_id: string;
+  mode: SessionMode;
+  created_at: string;
+  claims_total: number;
+  claims_done: number; // claims whose verdict is not "pending"
+}
+
+export interface SessionsResponse {
+  sessions: SessionSummary[]; // the caller's own sessions, newest first
+}
 
 export interface ApiErrorBody {
   error: { code: ErrorCode; message: string };

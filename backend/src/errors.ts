@@ -2,6 +2,7 @@ import type { ErrorCode } from "./types.js";
 
 const STATUS: Record<ErrorCode, number> = {
   BAD_REQUEST: 400,
+  UNAUTHENTICATED: 401,
   NOT_FOUND: 404,
   ROLE_NOT_FOUND: 404,
   SESSION_NOT_FOUND: 404,

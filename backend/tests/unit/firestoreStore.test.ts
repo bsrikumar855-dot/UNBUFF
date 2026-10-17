@@ -18,8 +18,16 @@ function fakeFirestore() {
             writes.push({ path, data });
             docs.set(path, data);
           },
+          delete: async () => void docs.delete(path),
         };
       },
+      where: (field: string, _op: string, value: unknown) => ({
+        get: async () => ({
+          docs: [...docs.entries()]
+            .filter(([path, data]) => path.startsWith(`${name}/`) && data[field] === value)
+            .map(([, data]) => ({ data: () => data })),
+        }),
+      }),
     }),
   };
   return { db: db as unknown as Firestore, docs, writes };
@@ -60,6 +68,7 @@ function session(): Session {
   });
   return {
     id: "s_fs",
+    owner_uid: "u1",
     role_id: "frontend_developer",
     created_at: "2026-09-26T10:00:00.000Z",
     resume_text: "Built a React dashboard\n\nUsed Git",
@@ -121,5 +130,52 @@ describe("FirestoreStore (mocked client)", () => {
     const got = await store.get("s_fs");
     expect(got?.guard_flips).toBe(7);
     expect(got?.claims[0]?.verdict).toBe("defended");
+  });
+
+  it("persists ownership both inside the JSON and as a queryable top-level field", async () => {
+    const fake = fakeFirestore();
+    await new FirestoreStore("sessions", fake.db).save(session());
+    const write = fake.writes[0]!;
+    expect(write.data.owner_uid).toBe("u1");
+    expect((JSON.parse(write.data.json as string) as Session).owner_uid).toBe("u1");
+  });
+
+  it("listByOwner returns only that owner's sessions and survives a new store instance (restart)", async () => {
+    const fake = fakeFirestore();
+    const first = new FirestoreStore("sessions", fake.db);
+    await first.save(session());
+    await first.save({ ...session(), id: "s_other", owner_uid: "u2" });
+
+    const afterRestart = new FirestoreStore("sessions", fake.db); // same database, fresh process
+    expect((await afterRestart.listByOwner("u1")).map((s) => s.id)).toEqual(["s_fs"]);
+    expect((await afterRestart.listByOwner("u2")).map((s) => s.id)).toEqual(["s_other"]);
+    expect(await afterRestart.listByOwner("nobody")).toEqual([]);
+    expect((await afterRestart.get("s_fs"))?.owner_uid).toBe("u1");
+  });
+
+  it("legacy documents without an owner are never listed", async () => {
+    const fake = fakeFirestore();
+    const legacy = { ...session() } as Partial<Session>;
+    delete legacy.owner_uid;
+    fake.docs.set("sessions/s_fs", { json: JSON.stringify(legacy), updated_at: new Date() });
+    const store = new FirestoreStore("sessions", fake.db);
+    expect(await store.listByOwner("u1")).toEqual([]);
+    expect((await store.get("s_fs"))?.owner_uid).toBeUndefined(); // the service rejects this at the ownership check
+  });
+
+  it("ignores a document whose top-level owner disagrees with the JSON owner", async () => {
+    const fake = fakeFirestore();
+    fake.docs.set("sessions/s_fs", { json: JSON.stringify(session()), owner_uid: "u2" });
+    expect(await new FirestoreStore("sessions", fake.db).listByOwner("u2")).toEqual([]);
+  });
+
+  it("delete removes the whole document", async () => {
+    const fake = fakeFirestore();
+    const store = new FirestoreStore("sessions", fake.db);
+    await store.save(session());
+    await store.delete("s_fs");
+    expect(await store.get("s_fs")).toBeNull();
+    expect(fake.docs.size).toBe(0);
+    await expect(store.delete("s_fs")).resolves.toBeUndefined();
   });
 });

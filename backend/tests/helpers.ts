@@ -12,6 +12,8 @@ import { MemoryStore } from "../src/store/memoryStore.js";
 
 export const roles = RoleRegistry.fromDirectory(join(import.meta.dirname, "..", "data", "roles"));
 export const role = roles.get("frontend_developer")!;
+/** The student every service-level test acts as. */
+export const UID = "user-1";
 export const silentLogger = pino({ level: "silent" });
 
 export function claim(id: string, skillId: string | null, verdict: Verdict, proficiency: number, extra: Partial<Claim> = {}): Claim {
@@ -57,7 +59,7 @@ export function service(llm: LLMProvider = new MockProvider()) {
 
 /** Creates a session with a single declared React claim (CL-001, react_state). */
 export async function reactSession(svc: AssessmentService) {
-  const res = await svc.extract({ role_id: "frontend_developer", declared_skills: ["React"] });
+  const res = await svc.extract(UID, { role_id: "frontend_developer", declared_skills: ["React"] });
   return res.session_id;
 }
 

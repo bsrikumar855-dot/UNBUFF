@@ -7,6 +7,8 @@ export const routes = {
   home: "/",
   setup: "/setup",
   ledger: "/ledger",
+  login: "/login",
+  sessions: "/sessions",
   report: (sessionId: string) => `/report/${encodeURIComponent(sessionId)}`,
   demoReport: `/report/${DEMO_SESSION}`,
   roadmap: (sessionId?: string | null) => (sessionId ? `/roadmap?session=${encodeURIComponent(sessionId)}` : "/roadmap"),

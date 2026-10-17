@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ApiError } from "../errors.js";
 
 /** zod schemas for every request body (CONTRACT.md §4/§5). Unknown keys are rejected. */
 
@@ -45,3 +46,10 @@ export const FixTaskRequestSchema = z.strictObject({
   session_id: id("session_id"),
   claim_id: id("claim_id"),
 });
+
+/** Route-param validation for :sessionId (same bounds as the body `session_id`). */
+export function parseSessionId(raw: unknown): string {
+  const parsed = id("session id").safeParse(raw);
+  if (!parsed.success) throw new ApiError("BAD_REQUEST", "Invalid session id");
+  return parsed.data;
+}

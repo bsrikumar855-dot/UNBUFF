@@ -22,6 +22,24 @@ export class FirestoreStore implements SessionStore {
   async save(session: Session): Promise<void> {
     // Stored as a JSON string: sessions contain nested arrays Firestore can't index anyway,
     // and this sidesteps Firestore's nested-array restrictions.
-    await this.collection.doc(session.id).set({ json: JSON.stringify(session), updated_at: new Date() });
+    // owner_uid is duplicated as a top-level field so listByOwner can use a single-field equality query
+    // (no composite index). The copy inside `json` remains the authority for access checks.
+    await this.collection.doc(session.id).set({ json: JSON.stringify(session), owner_uid: session.owner_uid, updated_at: new Date() });
+  }
+
+  async listByOwner(uid: string): Promise<Session[]> {
+    const snap = await this.collection.where("owner_uid", "==", uid).get();
+    const sessions: Session[] = [];
+    for (const doc of snap.docs) {
+      const data = doc.data() as { json?: string };
+      if (!data.json) continue;
+      const session = JSON.parse(data.json) as Session;
+      if (session.owner_uid === uid) sessions.push(session);
+    }
+    return sessions;
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.collection.doc(id).delete();
   }
 }

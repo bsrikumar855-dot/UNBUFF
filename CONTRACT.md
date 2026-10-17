@@ -28,7 +28,12 @@ backend code decides pass/fail, verdicts, proficiency, readiness, coverage and p
 - All ids are strings. Claim ids look like `CL-001`, stable for the session.
 - Timestamps are ISO-8601 UTC strings.
 - Numbers: `proficiency` is `0..1`; `readiness` and `coverage` are integers `0..100`.
-- Sessions live in server memory (or Firestore on Cloud Run). No auth.
+- Sessions live in server memory (local dev/tests) or Firestore (production).
+- **Auth (Phase 2):** every endpoint except `GET /api/health`, `GET /api/roles[/:roleId]` and
+  `GET /api/demo/report` requires `Authorization: Bearer <Firebase ID token>`. The backend verifies the
+  token and derives the user id (`uid`) from it; a uid is never accepted from the client. Each session is
+  owned by the uid that created it. Someone else's session, an unknown session and a legacy session with no
+  owner all return the same `404 SESSION_NOT_FOUND`.
 - Every non-2xx response has this shape:
 
 ```json
@@ -38,9 +43,10 @@ backend code decides pass/fail, verdicts, proficiency, readiness, coverage and p
 | HTTP | code | When |
 |---|---|---|
 | 400 | `BAD_REQUEST` | Body fails validation, or the action isn't allowed in the current state |
+| 401 | `UNAUTHENTICATED` | Missing, malformed, invalid or expired bearer token |
 | 404 | `NOT_FOUND` | Unknown route |
 | 404 | `ROLE_NOT_FOUND` | Unknown `role_id` |
-| 404 | `SESSION_NOT_FOUND` | Unknown `session_id` |
+| 404 | `SESSION_NOT_FOUND` | Unknown `session_id`, or a session the caller does not own |
 | 404 | `CLAIM_NOT_FOUND` | Unknown `claim_id` in that session |
 | 429 | `RATE_LIMITED` | Too many requests; retry later |
 | 502 | `LLM_INVALID_OUTPUT` | LLM output invalid after one retry (extraction only; grading turns this into verdict `error`) |
@@ -86,6 +92,7 @@ export type SessionMode = "prepare" | "defense"; // added (learning loop)
 export type RetestStatus = "none" | "scheduled" | "due" | "done"; // added (learning loop)
 export type ErrorCode =
   | "BAD_REQUEST"
+  | "UNAUTHENTICATED"
   | "NOT_FOUND"
   | "ROLE_NOT_FOUND"
   | "SESSION_NOT_FOUND"
@@ -340,6 +347,19 @@ export interface FixTaskRequest {
 }
 
 export type FixTaskResponse = FixTask;
+
+export interface SessionSummary {
+  session_id: string;
+  role_id: string;
+  mode: SessionMode;
+  created_at: string;
+  claims_total: number;
+  claims_done: number; // claims whose verdict is not "pending"
+}
+
+export interface SessionsResponse {
+  sessions: SessionSummary[]; // the caller's own sessions, newest first
+}
 
 export interface ApiErrorBody {
   error: { code: ErrorCode; message: string };

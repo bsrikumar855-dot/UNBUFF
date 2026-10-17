@@ -88,7 +88,7 @@ describe("config", () => {
   });
 
   it("production requires explicit non-wildcard CORS origins", () => {
-    const prod = { LLM_MODE: "mock", NODE_ENV: "production" };
+    const prod = { LLM_MODE: "mock", NODE_ENV: "production", FIREBASE_PROJECT_ID: "my-project", STORE: "firestore" };
     expect(() => loadConfig(prod)).toThrow(/CORS_ORIGIN is required/);
     expect(() => loadConfig({ ...prod, CORS_ORIGIN: "*" })).toThrow(/must not be "\*"/);
     expect(() => loadConfig({ ...prod, CORS_ORIGIN: "https://app.example.com, *" })).toThrow(/must not be "\*"/);
@@ -119,7 +119,7 @@ describe("config", () => {
 
 describe("MemoryStore", () => {
   const session = (id: string): Session => ({
-    id, role_id: "frontend_developer", mode: "defense", created_at: "t", resume_text: null, declared_skills: [],
+    id, owner_uid: "u1", role_id: "frontend_developer", mode: "defense", created_at: "t", resume_text: null, declared_skills: [],
     claims: [], next_seq: 1, cursors: {}, history: [], guard_flips: 0, completions: 0, schedule: {},
   });
 

@@ -297,3 +297,12 @@ everything once gcloud is available.
   collapse) and clamps claim text/resume_line to the confirm limits on a word boundary, so extract can
   never return what confirm refuses. The frontend PDF import now keeps line breaks (`hasEOL`). This was
   a backend change during frontend integration, made because the contract invariant was broken.
+
+## Phase 2 — authentication, ownership, durable storage
+
+- **Firebase Auth + Admin token verification.** The uid comes only from the verified ID token. See `docs/phase-2-auth-storage.md`.
+- **Contract changes (intentional):** new `401 UNAUTHENTICATED`; `GET /api/sessions`, `DELETE /api/sessions/:sessionId`; `SessionSummary` and `SessionsResponse` types; `SESSION_NOT_FOUND` also covers sessions the caller does not own and legacy ownerless sessions, so existence is never revealed.
+- **No dev auth bypass.** Local dev uses a Firebase project or the Auth emulator; tests inject a fake verifier.
+- **Production refuses `STORE=memory`** unless `ALLOW_EPHEMERAL_STORE=true`, and requires `FIREBASE_PROJECT_ID`.
+- **Legacy records are not migrated.** They stay unreadable until an operator deletes or claims them.
+- **Test helper `testApp` injects a default test user** when no Authorization header is sent, so the pre-auth flow tests still run unchanged; `autoAuth: false` gives the real 401 behaviour.

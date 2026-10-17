@@ -7,6 +7,20 @@ export interface RequestOptions extends RequestInit {
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 
+export interface AuthHooks {
+  /** Resolves with a fresh Firebase ID token, or null when signed out. */
+  getToken: () => Promise<string | null>;
+  /** Called when the backend answers 401 to a request that carried a token (expired or revoked). */
+  onUnauthorized: () => void;
+}
+
+let authHooks: AuthHooks | null = null;
+
+/** Installed by AuthProvider. The token is only ever sent in the Authorization header. */
+export function setAuthHooks(hooks: AuthHooks | null): void {
+  authHooks = hooks;
+}
+
 /**
  * Base URL resolution:
  * Uses import.meta.env.VITE_API_URL if set; otherwise defaults to empty string for relative proxying.
@@ -53,6 +67,14 @@ export async function apiClient<T>(
     Accept: "application/json",
   };
 
+  let token: string | null = null;
+  try {
+    token = (await authHooks?.getToken()) ?? null;
+  } catch {
+    token = null; // a failed token refresh surfaces as a 401 from the server, handled below
+  }
+  if (token) (defaultHeaders as Record<string, string>).Authorization = `Bearer ${token}`;
+
   try {
     const response = await fetch(url, {
       ...customConfig,
@@ -70,6 +92,8 @@ export async function apiClient<T>(
 
     const contentType = response.headers.get("content-type");
     const isJson = contentType && contentType.includes("application/json");
+
+    if (response.status === 401 && token) authHooks?.onUnauthorized();
 
     if (!response.ok) {
       if (isJson) {

@@ -11,6 +11,8 @@ import type {
   Role,
   RoleSkill,
   SessionMode,
+  SessionSummary,
+  SessionsResponse,
   TurnResponse,
 } from "../types.js";
 import { ApiError } from "../errors.js";
@@ -93,7 +95,7 @@ export class AssessmentService {
 
   // ---------- claims ----------
 
-  async extract(input: ExtractInput): Promise<ClaimsResponse> {
+  async extract(uid: string, input: ExtractInput): Promise<ClaimsResponse> {
     const role = this.role(input.role_id);
     const resume = input.resume_text?.trim() ? normalizeResume(input.resume_text) || null : null;
     const chips = dedupe((input.declared_skills ?? []).map((s) => s.trim()).filter(Boolean));
@@ -143,6 +145,7 @@ export class AssessmentService {
     const capped = claims.slice(0, MAX_CLAIMS);
     const session: Session = {
       id: `s_${randomUUID()}`,
+      owner_uid: uid,
       role_id: role.id,
       mode: input.mode ?? "defense",
       created_at: this.now().toISOString(),
@@ -160,8 +163,8 @@ export class AssessmentService {
     return claimsResponse(session, role);
   }
 
-  confirm(sessionId: string, inputs: ClaimInput[]): Promise<ClaimsResponse> {
-    return this.withSession(sessionId, async (session, role) => {
+  confirm(uid: string, sessionId: string, inputs: ClaimInput[]): Promise<ClaimsResponse> {
+    return this.withSession(uid, sessionId, async (session, role) => {
       const validSkills = new Set(role.skills.map((s) => s.id));
       const byId = new Map(session.claims.map((c) => [c.id, c]));
       const next: Claim[] = [];
@@ -203,8 +206,8 @@ export class AssessmentService {
 
   // ---------- interrogation ----------
 
-  interrogate(input: InterrogateInput): Promise<TurnResponse> {
-    return this.withSession(input.session_id, async (session, role) => {
+  interrogate(uid: string, input: InterrogateInput): Promise<TurnResponse> {
+    return this.withSession(uid, input.session_id, async (session, role) => {
       const claim = findClaim(session, input.claim_id);
       const cursor = session.cursors[claim.id];
       const skill = role.skills.find((s) => s.id === claim.skill_id) ?? null;
@@ -385,8 +388,8 @@ export class AssessmentService {
 
   // ---------- fix task + report ----------
 
-  fixTask(sessionId: string, id: string): Promise<FixTask> {
-    return this.withSession(sessionId, async (session, role) => {
+  fixTask(uid: string, sessionId: string, id: string): Promise<FixTask> {
+    return this.withSession(uid, sessionId, async (session, role) => {
       const claim = findClaim(session, id);
       if (!isWeakVerdict(claim.verdict)) {
         throw new ApiError("BAD_REQUEST", `Fix tasks are only for shaky, bluff or honest_gap claims (${claim.id} is "${claim.verdict}")`);
@@ -403,8 +406,8 @@ export class AssessmentService {
     });
   }
 
-  report(sessionId: string): Promise<Report> {
-    return this.withSession(sessionId, async (session, role) => {
+  report(uid: string, sessionId: string): Promise<Report> {
+    return this.withSession(uid, sessionId, async (session, role) => {
       // Generate missing language outputs for weak claims once; cached on the claim afterwards.
       const jobs: (() => Promise<void>)[] = [];
       for (const claim of session.claims.filter((c) => isWeakVerdict(c.verdict))) {
@@ -420,6 +423,32 @@ export class AssessmentService {
         this.deps.logger.warn({ session: session.id, done, skipped }, "report: LLM enrichment stopped early; using templates, will retry on next fetch");
       }
       return buildReport({ ...session, session_id: session.id }, role, this.now().toISOString());
+    });
+  }
+
+  // ---------- history + deletion ----------
+
+  async listSessions(uid: string): Promise<SessionsResponse> {
+    const owned = await this.deps.store.listByOwner(uid);
+    const sessions: SessionSummary[] = owned
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .map((s) => ({
+        session_id: s.id,
+        role_id: s.role_id,
+        mode: s.mode,
+        created_at: s.created_at,
+        claims_total: s.claims.length,
+        claims_done: s.claims.filter((c) => c.verdict !== "pending").length,
+      }));
+    return { sessions };
+  }
+
+  /** Deletes an owned session document (resume text, answers, grades, report cache). Not-owned looks like not-found. */
+  deleteSession(uid: string, sessionId: string): Promise<void> {
+    return this.serialize(sessionId, async () => {
+      const session = await this.deps.store.get(sessionId);
+      if (!session || session.owner_uid !== uid) throw sessionNotFound(sessionId);
+      await this.deps.store.delete(sessionId);
     });
   }
 
@@ -452,15 +481,20 @@ export class AssessmentService {
   }
 
   /** Serialises work per session, then saves. Errors abort without saving. */
-  private async withSession<T>(sessionId: string, fn: (s: Session, r: Role) => Promise<T>): Promise<T> {
-    const previous = this.locks.get(sessionId) ?? Promise.resolve();
-    const run = previous.catch(() => undefined).then(async () => {
+  private withSession<T>(uid: string, sessionId: string, fn: (s: Session, r: Role) => Promise<T>): Promise<T> {
+    return this.serialize(sessionId, async () => {
       const session = await this.deps.store.get(sessionId);
-      if (!session) throw new ApiError("SESSION_NOT_FOUND", `Session ${sessionId} not found`);
+      // Unknown, someone else's and legacy (ownerless) sessions are indistinguishable to the caller.
+      if (!session || session.owner_uid !== uid) throw sessionNotFound(sessionId);
       const result = await fn(session, this.role(session.role_id));
       await this.deps.store.save(session);
       return result;
     });
+  }
+
+  private async serialize<T>(sessionId: string, fn: () => Promise<T>): Promise<T> {
+    const previous = this.locks.get(sessionId) ?? Promise.resolve();
+    const run = previous.catch(() => undefined).then(fn);
     this.locks.set(sessionId, run);
     try {
       return await run;
@@ -468,6 +502,10 @@ export class AssessmentService {
       if (this.locks.get(sessionId) === run) this.locks.delete(sessionId);
     }
   }
+}
+
+function sessionNotFound(sessionId: string): ApiError {
+  return new ApiError("SESSION_NOT_FOUND", `Session ${sessionId} not found`);
 }
 
 // ---------- module helpers ----------

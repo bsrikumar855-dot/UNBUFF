@@ -6,6 +6,7 @@ import type { ErrorCode } from "@/types/contract";
  * Never surface raw messages/stack traces from unknown failures.
  */
 const ERROR_COPY: Record<ErrorCode, string> = {
+  UNAUTHENTICATED: "Please sign in to continue.",
   BAD_REQUEST: "That request wasn't valid. Check the form and try again.",
   NOT_FOUND: "That page or resource doesn't exist.",
   ROLE_NOT_FOUND: "We couldn't find that role. Pick another one.",

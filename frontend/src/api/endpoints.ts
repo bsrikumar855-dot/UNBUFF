@@ -11,6 +11,7 @@ import type {
   Report,
   FixTaskRequest,
   FixTaskResponse,
+  SessionsResponse,
 } from "@/types/contract";
 
 /**
@@ -96,6 +97,20 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     });
+  },
+
+  /**
+   * GET /api/sessions: the signed-in student's own sessions, newest first.
+   */
+  async getSessions(): Promise<SessionsResponse> {
+    return apiClient<SessionsResponse>("/sessions", { method: "GET" });
+  },
+
+  /**
+   * DELETE /api/sessions/:sessionId: deletes an owned session and its resume-derived data.
+   */
+  async deleteSession(sessionId: string): Promise<void> {
+    return apiClient<void>(`/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" });
   },
 
   /**

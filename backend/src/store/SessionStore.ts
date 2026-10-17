@@ -5,6 +5,8 @@ import type { Cursor } from "../core/stateMachine.js";
 /** Server-side session. Never sent to the client as-is. */
 export interface Session {
   id: string;
+  /** Firebase uid of the owner. Records without it (legacy) are never served to anyone. */
+  owner_uid: string;
   role_id: string;
   mode: SessionMode;
   created_at: string;
@@ -26,4 +28,8 @@ export interface Session {
 export interface SessionStore {
   get(id: string): Promise<Session | null>;
   save(session: Session): Promise<void>;
+  /** Sessions owned by `uid` (records without an owner are never returned). */
+  listByOwner(uid: string): Promise<Session[]>;
+  /** Removes the session document entirely (resume text, answers, report data). No-op if absent. */
+  delete(id: string): Promise<void>;
 }

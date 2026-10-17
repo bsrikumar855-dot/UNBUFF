@@ -1,10 +1,13 @@
+import express, { type Express } from "express";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createApp } from "../../src/app.js";
+import type { TokenVerifier } from "../../src/auth/verifier.js";
 import { MockProvider } from "../../src/llm/mock.js";
 import type { LLMProvider } from "../../src/llm/provider.js";
 import type { RateLimitOptions } from "../../src/middleware/rateLimit.js";
 import { AssessmentService } from "../../src/services/assessment.js";
+import type { SessionStore } from "../../src/store/SessionStore.js";
 import { MemoryStore } from "../../src/store/memoryStore.js";
 import { roles, silentLogger } from "../helpers.js";
 
@@ -28,16 +31,44 @@ export function countingProvider(inner: LLMProvider = new MockProvider()) {
   return { llm: new Proxy(inner, handler), counts, total };
 }
 
-export function testApp(opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string } = {}) {
+/** Test verifier: "test:<uid>" is a valid token; anything else (including "expired") is rejected. */
+export const fakeVerifier: TokenVerifier = {
+  async verify(token) {
+    const m = /^test:([\w-]+)$/.exec(token);
+    if (!m) throw new Error("invalid token");
+    return { uid: m[1]! };
+  },
+};
+
+export const bearer = (uid: string) => `Bearer test:${uid}`;
+export const DEFAULT_TEST_UID = "student-a";
+
+/**
+ * Builds the app. By default requests without an Authorization header are sent as DEFAULT_TEST_UID so
+ * the pre-auth flow tests keep exercising the full interview. Pass `autoAuth: false` to test the real
+ * 401 behaviour. The wrapper only touches headers; the app under test is unchanged.
+ */
+export function testApp(
+  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean } = {},
+): Express {
   const llm = opts.llm ?? new MockProvider();
-  const service = new AssessmentService({ store: new MemoryStore(), llm, roles, logger: silentLogger });
-  return createApp({
+  const service = new AssessmentService({ store: opts.store ?? new MemoryStore(), llm, roles, logger: silentLogger });
+  const app = createApp({
     service,
     roles,
+    verifier: fakeVerifier,
     llm,
     logger: silentLogger,
     demoReportJson,
     corsOrigin: opts.corsOrigin,
     rateLimits: opts.rateLimits ?? { globalPerMinute: 10_000, llmPerMinute: 10_000 },
   });
+  if (opts.autoAuth === false) return app;
+  const wrapper = express();
+  wrapper.use((req, _res, next) => {
+    req.headers.authorization ??= bearer(DEFAULT_TEST_UID);
+    next();
+  });
+  wrapper.use(app);
+  return wrapper;
 }

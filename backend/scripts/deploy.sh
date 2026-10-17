@@ -13,6 +13,7 @@ SERVICE="${SERVICE:-unbluff-api}"
 GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.1-flash-lite}"   # free tier: ~20 req/day on 3.6-flash
 GEMINI_FALLBACK_MODEL="${GEMINI_FALLBACK_MODEL:-gemini-3.6-flash}"
 CORS_ORIGIN="${CORS_ORIGIN:-}"   # REQUIRED: exact frontend origin(s), comma-separated; "*" is rejected in production
+: "${FIREBASE_PROJECT_ID:?Set FIREBASE_PROJECT_ID to your Firebase project id (ID tokens are verified against it)}"
 : "${CORS_ORIGIN:?Set CORS_ORIGIN to the deployed frontend origin, e.g. CORS_ORIGIN=https://<frontend-origin>}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PROJECT="${PROJECT:-$(gcloud config get-value project 2>/dev/null)}"
@@ -50,6 +51,6 @@ gcloud run deploy "$SERVICE" \
   --min-instances 0 \
   --max-instances 3 \
   --set-secrets GEMINI_API_KEY=gemini-api-key:latest \
-  --set-env-vars "NODE_ENV=production,STORE=firestore,LLM_MODE=live,GEMINI_MODEL=${GEMINI_MODEL},GEMINI_FALLBACK_MODEL=${GEMINI_FALLBACK_MODEL},CORS_ORIGIN=${CORS_ORIGIN}"
+  --set-env-vars "NODE_ENV=production,STORE=firestore,LLM_MODE=live,GEMINI_MODEL=${GEMINI_MODEL},GEMINI_FALLBACK_MODEL=${GEMINI_FALLBACK_MODEL},CORS_ORIGIN=${CORS_ORIGIN},FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}"
 
 gcloud run services describe "$SERVICE" --project "$PROJECT" --region "$REGION" --format 'value(status.url)'

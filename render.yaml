@@ -24,7 +24,11 @@ services:
       - key: GEMINI_FALLBACK_MODEL
         value: gemini-3.6-flash
       - key: STORE
-        value: memory
+        value: firestore # durable sessions; production refuses STORE=memory unless ALLOW_EPHEMERAL_STORE=true
+      - key: FIREBASE_PROJECT_ID
+        sync: false # REQUIRED: your Firebase project id (ID tokens from any other project are rejected)
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false # REQUIRED on Render for Firestore: service-account JSON, entered only in the dashboard
       - key: CORS_ORIGIN
         sync: false # REQUIRED in production (the server refuses to start without it, and rejects "*").
         # Enter the exact deployed frontend origin(s) in the Render dashboard, comma-separated,

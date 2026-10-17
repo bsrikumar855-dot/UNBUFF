@@ -342,7 +342,8 @@ export async function buildDemoReport() {
     now: () => new Date((t += 23_000)),
   });
 
-  const { session_id: sid, claims } = await svc.extract({
+  const UID = "demo-user"; // synthetic owner; the generated report never includes it
+  const { session_id: sid, claims } = await svc.extract(UID, {
     role_id: "frontend_developer",
     resume_text: DEMO_RESUME,
     mode: "prepare",
@@ -350,23 +351,23 @@ export async function buildDemoReport() {
   const css = claims.find((c) => c.skill_id === "responsive_css")!;
   const react = claims.find((c) => c.skill_id === "react_state")!;
   for (const claim of claims.filter((c) => c.skill_id !== null)) {
-    let res = await svc.interrogate({ session_id: sid, claim_id: claim.id });
+    let res = await svc.interrogate(UID, { session_id: sid, claim_id: claim.id });
     for (const step of SCRIPT[claim.text] ?? []) {
       if (res.turn === "done") break;
-      res = await svc.interrogate({ session_id: sid, claim_id: claim.id, answer: step.answer });
+      res = await svc.interrogate(UID, { session_id: sid, claim_id: claim.id, answer: step.answer });
     }
     // Prepare mode: teach_now after the CSS claim ends shaky, so the student opens its fix task.
-    if (claim.id === css.id && res.teach_now) await svc.fixTask(sid, css.id);
+    if (claim.id === css.id && res.teach_now) await svc.fixTask(UID, sid, css.id);
     // A due retest takes priority over the next pending claim (after 2 interleaved claims).
     if (res.next_mode === "retest" && res.progress.next_claim_id === css.id) {
-      await svc.interrogate({ session_id: sid, claim_id: css.id, mode: "retest" });
-      await svc.interrogate({ session_id: sid, claim_id: css.id, answer: RETEST.answer });
+      await svc.interrogate(UID, { session_id: sid, claim_id: css.id, mode: "retest" });
+      await svc.interrogate(UID, { session_id: sid, claim_id: css.id, answer: RETEST.answer });
     }
   }
   // Fix task opened for the React claim; CL-007 is still pending, so its retest stays scheduled.
-  await svc.fixTask(sid, react.id);
+  await svc.fixTask(UID, sid, react.id);
 
-  const report = await svc.report(sid);
+  const report = await svc.report(UID, sid);
   return { ...report, session_id: "s_demo" };
 }
 

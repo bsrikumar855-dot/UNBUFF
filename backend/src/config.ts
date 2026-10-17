@@ -19,6 +19,19 @@ export function parseCorsOrigins(raw: string): { origins: string[]; wildcard: bo
   return { origins, wildcard, invalid };
 }
 
+/** Returns the parsed service-account object, or null if it is not valid JSON with the required fields. */
+export function parseServiceAccount(raw: string): { client_email: string; private_key: string; project_id?: string } | null {
+  try {
+    const v = JSON.parse(raw) as Record<string, unknown>;
+    if (typeof v.client_email === "string" && typeof v.private_key === "string") {
+      return { client_email: v.client_email, private_key: v.private_key, ...(typeof v.project_id === "string" ? { project_id: v.project_id } : {}) };
+    }
+  } catch {
+    // fall through
+  }
+  return null;
+}
+
 const EnvSchema = z
   .object({
     LLM_MODE: z.enum(["live", "mock"]).default("live"),
@@ -45,6 +58,15 @@ const EnvSchema = z
     /** Number of reverse-proxy hops in front of the app (drives req.ip for rate limits). 0 disables. */
     TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(1),
     STORE: z.enum(["memory", "firestore"]).default("memory"),
+    /** Production refuses STORE=memory unless this is "true" (sessions would vanish on restart). */
+    ALLOW_EPHEMERAL_STORE: z
+      .enum(["true", "false", "1", "0"])
+      .default("false")
+      .transform((v) => v === "true" || v === "1"),
+    /** Firebase project whose ID tokens are accepted. Required in production. */
+    FIREBASE_PROJECT_ID: z.string().optional(),
+    /** Optional service-account JSON (secret) for Firestore on hosts without a cloud identity, e.g. Render. */
+    FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
   })
   .superRefine((env, ctx) => {
@@ -57,11 +79,28 @@ const EnvSchema = z
       });
     }
     if (env.NODE_ENV === "production") {
+      if (!env.FIREBASE_PROJECT_ID?.trim()) {
+        ctx.addIssue({ code: "custom", path: ["FIREBASE_PROJECT_ID"], message: "FIREBASE_PROJECT_ID is required when NODE_ENV=production" });
+      }
+      if (env.STORE === "memory" && !env.ALLOW_EPHEMERAL_STORE) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["STORE"],
+          message: "STORE=firestore is required when NODE_ENV=production (set ALLOW_EPHEMERAL_STORE=true only to accept losing all sessions on restart)",
+        });
+      }
       if (cors.origins.length === 0) {
         ctx.addIssue({ code: "custom", path: ["CORS_ORIGIN"], message: "CORS_ORIGIN is required when NODE_ENV=production" });
       } else if (cors.wildcard) {
         ctx.addIssue({ code: "custom", path: ["CORS_ORIGIN"], message: 'CORS_ORIGIN must not be "*" when NODE_ENV=production' });
       }
+    }
+    if (env.FIREBASE_SERVICE_ACCOUNT_JSON && !parseServiceAccount(env.FIREBASE_SERVICE_ACCOUNT_JSON)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["FIREBASE_SERVICE_ACCOUNT_JSON"],
+        message: "FIREBASE_SERVICE_ACCOUNT_JSON must be a service-account JSON object (client_email + private_key)",
+      });
     }
     if (env.LLM_MODE !== "live") return;
     if (!env.GEMINI_MODEL) {
@@ -71,7 +110,12 @@ const EnvSchema = z
       ctx.addIssue({ code: "custom", path: ["GEMINI_API_KEY"], message: "GEMINI_API_KEY is required when LLM_MODE=live" });
     }
   })
-  .transform((env) => ({ ...env, CORS_ORIGIN: env.CORS_ORIGIN?.trim() || DEV_CORS_ORIGINS }));
+  .transform((env) => ({
+    ...env,
+    CORS_ORIGIN: env.CORS_ORIGIN?.trim() || DEV_CORS_ORIGINS,
+    // "demo-*" ids are the Firebase emulator convention; real tokens never verify against it.
+    FIREBASE_PROJECT_ID: env.FIREBASE_PROJECT_ID?.trim() || "demo-unbluff",
+  }));
 
 export type Config = z.output<typeof EnvSchema>;
 
