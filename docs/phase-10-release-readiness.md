@@ -266,3 +266,57 @@ Nothing about Judge0, Firebase, GitHub or the full journey has been verified aga
 2. **Firebase:** log in (`firebase login`), choose a non-production project, supply `FIREBASE_PROJECT_ID` and credentials and the `VITE_FIREBASE_*` web config; with your authorisation run `firebase deploy --only firestore --project <id>` (index and deny-all rules); `npm run indexes:check`; run with `STORE=firestore`, repeat the journey and restart the server to prove persistence.
 3. **GitHub:** create a non-production OAuth App (no scopes; callback `https://<api-host>/api/github/oauth/callback`), set the four `GITHUB_*` variables, then connect, sync and disconnect with a test account.
 4. Then re-run this phase to turn the BLOCKED rows into PASS and run the full journey live.
+
+---
+
+## Phase 10.1 update: Firebase verified live (2026-10-17)
+
+Operator created a **non-production** project (`unbluff-test-babus01-91131`), enabled Email/Password sign-in, created the Firestore database, and deployed `firestore.indexes.json` and `firestore.rules` (deny-all) with `firebase deploy --only firestore`. The backend used the operator's Application Default Credentials.
+
+| Area | Status | Evidence |
+|---|---|---|
+| Composite index (`unbluff_code_submissions`) | **PASS** | `FIREBASE_PROJECT_ID=... npm run indexes:check`: first FAILED_PRECONDITION (index building), then PASS once built |
+| Firebase Auth, token verification, Firestore reads/writes, ownership isolation, durable persistence, deletion | **PASS** (23/23 checks) | `FIREBASE_PROJECT_ID=... npx tsx scripts/live_firebase_check.ts` (new): two throwaway real users; no, malformed and broken-signature tokens refused (401); real ID token accepted; memory, profile and a 4-task plan written to real Firestore; second student could not see, change or delete them; **all data still present after a backend restart**; deletion honoured; logs contain no token, password or test text; both users deleted. |
+| AI mentor durable storage | **PASS** for memory persistence on real Firestore (model replies remain mock in this run; the live model was verified separately) | same run |
+| Firestore rules | deployed and compiled; the deny-all effect against a direct client was **not** tested | |
+
+Still BLOCKED: Judge0 and GitHub OAuth. The full live journey also needs those, so it remains not fully verified. Not tested live: sign-in through the frontend UI, and the production `CORS_ORIGIN` / `NODE_ENV=production` start-up.
+
+---
+
+## Phase 10.1 update: GitHub OAuth and GraphQL verified live (2026-10-17)
+
+Operator registered a **non-production** GitHub OAuth App (single exact callback `http://localhost:8094/api/github/oauth/callback`, no wildcard, no device flow) and set the four `GITHUB_*` variables in `backend/.env`. Port 8080 was occupied by an unrelated Windows service, so the callback uses 8094. The check used the real test Firebase project and one throwaway Firebase user (deleted afterwards). The operator authorised in the browser with their own GitHub account.
+
+`FIREBASE_PROJECT_ID=... npx tsx scripts/live_github_check.ts` (new; interactive): **PASS, 30 of 30 checks**.
+
+| Area | Status | Evidence |
+|---|---|---|
+| Authorisation address | **PASS** | github.com authorise URL with this app's client id and callback, a one-time state, PKCE S256, **no scope**, no secret |
+| State validation | **PASS** | a forged state and a callback with no parameters were handled (302), nothing connected |
+| Real callback and token exchange | **PASS** | after the operator authorised, status became `connected`; access reported `public_only` |
+| Token storage | **PASS** | credential record exists and contains no readable token; connection record owned by the student; no leftover state records |
+| Authenticated GraphQL sync | **PASS** | outcome `synced`; contributions, repositories (30) and activity returned; all repository links `https://github.com/...` |
+| Rate-limit handling | **PASS** (partial) | GitHub's remaining allowance was read (4977); an immediate second sync was served from cache (minimum interval). A real rate-limit **exhaustion** was not provoked. |
+| Privacy | **PASS** | no response, stored record or log contained a token, the client secret, the encryption key or the authorisation code |
+| Disconnect | **PASS** | status back to disconnected; credential, connection and synced data deleted; reads refused afterwards; `revoked_at_github=true` |
+
+Not tested live: a second student connecting the same GitHub account (conflict handling), token expiry/refresh, the key-rotation path, a production HTTPS callback, and the frontend click-through (the browser went to a frontend address with nothing listening).
+
+Remaining BLOCKED: **Judge0**. Because of it, the full live journey (real judged submissions feeding progress, analytics, revision and the plan) is still not verified.
+
+---
+
+## Phase 10.1 update: Judge0 and judged submissions verified live (2026-10-17)
+
+Service used: Judge0's **public community instance** `https://ce.judge0.com` (no credential), chosen by the operator for testing. It is a shared third-party service, so this proves the adapter against a real Judge0 and **does not** verify any production deployment. `EXECUTION_PROVIDER_VERIFIED` was **not set** by anyone or anything in this phase.
+
+| Area | Status | Evidence |
+|---|---|---|
+| Judge0 protocol, languages, execution, compile errors | **PASS** (operator run) | `EXECUTION_PROVIDER=judge0 JUDGE0_URL=https://ce.judge0.com npm run smoke:judge0`: 71 languages; Python, JavaScript, C++, Java resolved and each printed the expected output; invalid C++ and Java reported as compile errors; `RESULT: PASS` |
+| Real judged submissions against a first-party suite | **PASS** (30 of 30 checks) | `JUDGE0_URL=https://ce.judge0.com FIREBASE_PROJECT_ID=... npx tsx scripts/live_judge0_check.ts` (new): the first-party, non-demonstration "balanced brackets" exercise (12 hidden tests). Correct Python, JavaScript, C++ and Java solutions each judged **accepted 12/12** in the real sandbox; a wrong answer judged `wrong_answer`; broken C++ judged `compile_error`; hidden inputs and expected outputs never appeared in any response; sample run executed but was not stored; all six submissions stored for the owner on real Firestore (which also proves the composite index) and invisible to a second student; no source code or token in logs; test data and users deleted. |
+| Honest exclusion while the flag is unset | **PASS** | every accepted submission reported `analytics_status = excluded_unverified_provider`; analytics showed zero eligible attempts and nothing solved; no revision item was created; student B unaffected |
+| Counting path (accepted submission updates the right student's progress, analytics, revision queue and plan) | **BLOCKED on an operator decision** | needs `EXECUTION_PROVIDER_VERIFIED=true`, which only the operator may set. Until then the live counting path is covered only by the mock and local tests (Phase 10 journey tests). |
+| Full live student journey | **Not fully verified** | the counting path above, plus the frontend click-through, were not exercised live |
+
+Caveats: the public instance is rate-limited, shared and outside this project's control; it must not be the production judge. A production release still needs the operator's own Judge0 deployment, its own smoke-test run, and the operator's decision to set the flag.
