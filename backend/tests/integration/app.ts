@@ -7,6 +7,9 @@ import { MockProvider } from "../../src/llm/mock.js";
 import type { LLMProvider } from "../../src/llm/provider.js";
 import type { RateLimitOptions } from "../../src/middleware/rateLimit.js";
 import { GithubGraphQL } from "../../src/github/client.js";
+import { EvidenceService } from "../../src/placement/evidence.js";
+import { PlacementService } from "../../src/placement/service.js";
+import { MemoryPlacementStore, type PlacementStore } from "../../src/placement/store.js";
 import { LabService } from "../../src/graphqllab/service.js";
 import { MemoryLabStore, type LabStore } from "../../src/graphqllab/store.js";
 import { GithubService } from "../../src/github/service.js";
@@ -73,7 +76,7 @@ export const DEFAULT_TEST_UID = "student-a";
  * 401 behaviour. The wrapper only touches headers; the app under test is unchanged.
  */
 export function testApp(
-  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService; lab?: LabService; labStore?: LabStore } = {},
+  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService; lab?: LabService; labStore?: LabStore; placement?: PlacementService; placementStore?: PlacementStore; execution?: { configured: boolean; verified: boolean }; llmMode?: "live" | "mock"; now?: () => Date } = {},
 ): Express {
   const llm = opts.llm ?? new MockProvider();
   const catalogue = opts.catalogue ?? fixtureCatalogue();
@@ -112,6 +115,30 @@ export function testApp(
       github,
     });
   const lab = opts.lab ?? new LabService({ store: opts.labStore ?? new MemoryLabStore(), mentor, logger: silentLogger });
+  const placement =
+    opts.placement ??
+    new PlacementService({
+      store: opts.placementStore ?? new MemoryPlacementStore(),
+      evidence: new EvidenceService({
+        analytics,
+        sessions: sessionStore,
+        roles,
+        lab,
+        github,
+        mentor,
+        catalogue: () => catalogue,
+        suites: opts.suites ?? fixtureSuites(),
+        execution: opts.execution ?? { configured: false, verified: false },
+        llmMode: opts.llmMode ?? llm.mode,
+        logger: silentLogger,
+        now: opts.now,
+      }),
+      roles,
+      topics: () => catalogue.allTopics(),
+      mentor,
+      logger: silentLogger,
+      now: opts.now,
+    });
   const service = new AssessmentService({ store: sessionStore, llm, roles, logger: silentLogger });
   const app = createApp({
     service,
@@ -132,6 +159,7 @@ export function testApp(
     mentor,
     github,
     lab,
+    placement,
     llm,
     logger: silentLogger,
     demoReportJson,

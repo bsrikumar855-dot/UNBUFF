@@ -14,6 +14,9 @@ export interface RateLimitOptions {
   labExecutePerMinute?: number;
   labSubmitPerMinute?: number;
   labHelpPerMinute?: number;
+  placementRefreshPerMinute?: number;
+  placementAssistantPerMinute?: number;
+  placementActionPerMinute?: number;
 }
 
 export const DEFAULT_RATE_LIMITS: RateLimitOptions = { globalPerMinute: 300, llmPerMinute: 40 };
@@ -52,6 +55,11 @@ export function createCodeLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS)
 /** Per-user limit for AI mentor messages (each one is a model call). Mount after requireAuth. */
 export function createMentorLimiter(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
   return userLimiter(opts.mentorChatPerMinute ?? 12);
+}
+
+/** Placement planner: refreshing/generating the plan, assistant questions and task actions, each per student. Mount after requireAuth. */
+export function createPlacementLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
+  return { refresh: userLimiter(opts.placementRefreshPerMinute ?? 20), assistant: userLimiter(opts.placementAssistantPerMinute ?? 12), action: userLimiter(opts.placementActionPerMinute ?? 60) };
 }
 
 /** GraphQL Learning Lab: running queries, grading submissions and mentor help, each per student. Mount after requireAuth. */

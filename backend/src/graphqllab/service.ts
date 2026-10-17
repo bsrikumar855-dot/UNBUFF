@@ -174,6 +174,20 @@ export class LabService {
     };
   }
 
+  /**
+   * Every exercise in curriculum order with this student's own state, for other modules (such as the placement
+   * planner) that need to know what is done and what comes next. Contains nothing that is not already public.
+   */
+  async studentExercises(uid: string): Promise<{ id: string; module_id: string; lesson_id: string; title: string; order: number; type: LabExercise["type"]; difficulty: LabExercise["difficulty"]; passed: boolean; attempts: number; last_attempt_at: string | null; module_title: string; module_order: number }[]> {
+    const p = await this.progressOf(uid);
+    return MODULES.flatMap((m) =>
+      m.exercises.map((e, i) => {
+        const st = p?.exercises[e.id];
+        return { id: e.id, module_id: m.id, lesson_id: e.lessonId, title: e.title, order: i + 1, type: e.type, difficulty: e.difficulty, passed: st?.passed === true, attempts: st?.attempts ?? 0, last_attempt_at: st?.last_attempt_at ?? null, module_title: m.title, module_order: m.order };
+      }),
+    );
+  }
+
   // ---------------- playground ----------------
 
   private async loadContext(uid: string): Promise<LabContext> {

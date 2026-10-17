@@ -18,6 +18,8 @@ const ERROR_COPY: Record<ErrorCode, string> = {
   MODULE_NOT_FOUND: "That module no longer exists.",
   EXERCISE_NOT_FOUND: "That exercise no longer exists.",
   GRAPHQL_LAB_UNAVAILABLE: "Your GraphQL Lab progress could not be saved or loaded right now. Running queries still works; try again shortly.",
+  PLACEMENT_PROFILE_REQUIRED: "Set your goals and availability first, then generate your plan.",
+  PLACEMENT_TASK_NOT_FOUND: "That task no longer exists.",
   GITHUB_UNAVAILABLE: "GitHub couldn't be reached or answered unexpectedly. Your saved data is unchanged; try again later.",
   REVISION_NOT_FOUND: "That revision item no longer exists.",
   SUBMISSION_NOT_FOUND: "We couldn't find that submission.",

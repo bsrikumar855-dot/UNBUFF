@@ -23,6 +23,18 @@ export interface AnalyticsDeps {
   config?: AnalyticsConfig;
 }
 
+/** A question's verified outcome for one student. */
+export interface QuestionOutcome {
+  question_id: string;
+  topics: string[];
+  difficulty: "easy" | "medium" | "hard" | null;
+  attempts: number;
+  accepted: number;
+  solved: boolean;
+  last_attempt_at: string | null;
+  consecutive_failures: number;
+}
+
 const MAX_STATS = 5000;
 const MAX_REVISIONS = 500;
 const EXCLUSION_SAMPLE = 200;
@@ -104,6 +116,24 @@ export class AnalyticsService {
       has_eligible_activity: t.eligible_attempts > 0,
       revision_due: revisions.filter((r) => isDue(r, now) || r.status === "in_progress").length,
     };
+  }
+
+  /**
+   * Compact per-question outcomes from the verified statistics (counted submissions only), for other modules that need
+   * to know what a student has really solved or last tried without recomputing analytics.
+   */
+  async questionOutcomes(uid: string): Promise<QuestionOutcome[]> {
+    const records = await this.deps.stats.listByOwner(uid, MAX_STATS);
+    return records.map((r) => ({
+      question_id: r.question_id,
+      topics: r.topics,
+      difficulty: r.difficulty,
+      attempts: r.attempts,
+      accepted: r.accepted,
+      solved: r.accepted > 0,
+      last_attempt_at: r.last_attempt_at,
+      consecutive_failures: r.consecutive_failures,
+    }));
   }
 
   async history(uid: string, from: Date, to: Date): Promise<AnalyticsHistoryResponse> {

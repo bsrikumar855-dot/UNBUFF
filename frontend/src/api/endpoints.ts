@@ -42,6 +42,15 @@ import type {
   MemoryType,
   GoalTrack,
   LearningSignal,
+  PlacementProfile,
+  PlacementProfileResponse,
+  PlacementDashboard,
+  PlacementGenerateRequest,
+  PlacementTask,
+  PlacementTaskActionRequest,
+  PlacementAssistantResponse,
+  PlacementApplyChangeRequest,
+  PlacementApplyChangeResponse,
   LabModulesResponse,
   LabModuleDetail,
   LabExercise,
@@ -314,6 +323,35 @@ export const api = {
    */
   async deleteSession(sessionId: string): Promise<void> {
     return apiClient<void>(`/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" });
+  },
+
+  /** Unified placement planner: everything is calculated by the backend from stored records. */
+  async getPlacementProfile(): Promise<PlacementProfileResponse> {
+    return apiClient<PlacementProfileResponse>("/placement/profile", { method: "GET" });
+  },
+  async putPlacementProfile(profile: PlacementProfile): Promise<PlacementProfileResponse> {
+    return apiClient<PlacementProfileResponse>("/placement/profile", { method: "PUT", body: JSON.stringify(profile) });
+  },
+  async getPlacementDashboard(): Promise<PlacementDashboard> {
+    return apiClient<PlacementDashboard>("/placement/dashboard", { method: "GET" });
+  },
+  async refreshPlacement(): Promise<PlacementDashboard> {
+    return apiClient<PlacementDashboard>("/placement/refresh", { method: "POST", body: JSON.stringify({}) });
+  },
+  async generatePlacementPlan(body: PlacementGenerateRequest = {}): Promise<PlacementDashboard> {
+    return apiClient<PlacementDashboard>("/placement/plan/generate", { method: "POST", body: JSON.stringify(body) });
+  },
+  async placementTaskAction(taskId: string, body: PlacementTaskActionRequest): Promise<PlacementTask> {
+    return apiClient<PlacementTask>(`/placement/tasks/${encodeURIComponent(taskId)}/action`, { method: "POST", body: JSON.stringify(body) });
+  },
+  async placementAssistant(message: string): Promise<PlacementAssistantResponse> {
+    return apiClient<PlacementAssistantResponse>("/placement/assistant", { method: "POST", body: JSON.stringify({ message }) });
+  },
+  async applyPlacementChange(change: PlacementApplyChangeRequest["change"]): Promise<PlacementApplyChangeResponse> {
+    return apiClient<PlacementApplyChangeResponse>("/placement/changes/apply", { method: "POST", body: JSON.stringify({ change }) });
+  },
+  async deletePlacementData(): Promise<void> {
+    return apiClient<void>("/placement/data", { method: "DELETE" });
   },
 
   /** GraphQL Learning Lab: runs only against the Lab's own training API. */

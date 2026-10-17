@@ -5,6 +5,7 @@ import helmet from "helmet";
 import type { TokenVerifier } from "./auth/verifier.js";
 import type { GithubService } from "./github/service.js";
 import type { LabService } from "./graphqllab/service.js";
+import type { PlacementService } from "./placement/service.js";
 import type { MentorService } from "./mentor/service.js";
 import type { AnalyticsService } from "./analytics/service.js";
 import type { CodeService } from "./code/service.js";
@@ -14,7 +15,7 @@ import type { Logger } from "./logger.js";
 import type { LLMProvider } from "./llm/provider.js";
 import { requireAuth } from "./middleware/auth.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
-import { createCodeLimiters, createGithubLimiters, createLabLimiters, createMentorLimiter, createRateLimiters, DEFAULT_RATE_LIMITS, type RateLimitOptions } from "./middleware/rateLimit.js";
+import { createCodeLimiters, createGithubLimiters, createLabLimiters, createMentorLimiter, createPlacementLimiters, createRateLimiters, DEFAULT_RATE_LIMITS, type RateLimitOptions } from "./middleware/rateLimit.js";
 import { claimsRouter } from "./routes/claims.js";
 import { demoRouter } from "./routes/demo.js";
 import { fixTaskRouter } from "./routes/fixTask.js";
@@ -25,6 +26,7 @@ import { rolesRouter } from "./routes/roles.js";
 import { analyticsRouter } from "./routes/analytics.js";
 import { githubCallbackRouter, githubRouter } from "./routes/github.js";
 import { graphqlLabRouter } from "./routes/graphqlLab.js";
+import { placementRouter } from "./routes/placement.js";
 import { mentorRouter } from "./routes/mentor.js";
 import { codePrivateRouter, codePublicRouter } from "./routes/code.js";
 import { dsaCatalogueRouter, dsaProgressRouter } from "./routes/dsa.js";
@@ -50,6 +52,8 @@ export interface AppDeps {
   github: GithubService;
   /** The GraphQL Learning Lab: a controlled training API, curriculum, grading and per-student progress. */
   lab: LabService;
+  /** Unified placement intelligence: profile, evidence, skills, plan, tasks and the plan assistant. */
+  placement: PlacementService;
   llm: LLMProvider;
   logger: Logger;
   demoReportJson: string;
@@ -93,11 +97,12 @@ export function createApp(deps: AppDeps): Express {
   const githubLimiters = createGithubLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS);
   api.use(githubCallbackRouter(deps.github, githubLimiters.callback)); // GitHub's redirect carries no bearer token; identified by one-time state
   // Everything below is private student data: a verified Firebase ID token is required.
-  api.use(["/claims", "/interrogate", "/fix-task", "/report", "/sessions", "/me", "/code/run", "/code/submit", "/code/submissions", "/mentor", "/github", "/graphql-lab"], requireAuth(deps.verifier));
+  api.use(["/claims", "/interrogate", "/fix-task", "/report", "/sessions", "/me", "/code/run", "/code/submit", "/code/submissions", "/mentor", "/github", "/graphql-lab", "/placement"], requireAuth(deps.verifier));
   api.use(sessionsRouter(deps.service));
   api.use(dsaProgressRouter(deps.dsaProgress));
   api.use(analyticsRouter(deps.analytics));
   api.use(githubRouter(deps.github, githubLimiters));
+  api.use(placementRouter(deps.placement, createPlacementLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS)));
   api.use(graphqlLabRouter(deps.lab, createLabLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS)));
   api.use(mentorRouter(deps.mentor, createMentorLimiter(deps.rateLimits ?? DEFAULT_RATE_LIMITS)));
   api.use(codePrivateRouter(deps.code, createCodeLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS)));

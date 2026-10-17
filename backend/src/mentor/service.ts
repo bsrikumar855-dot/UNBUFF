@@ -41,7 +41,7 @@ import {
   type Draft,
   type RetentionConfig,
 } from "./memories.js";
-import { chatPrompt, CONTEXT_LIMITS, labSystemPrompt, summaryPrompt, SUMMARY_SYSTEM, systemPrompt } from "./prompts.js";
+import { chatPrompt, CONTEXT_LIMITS, labSystemPrompt, planSystemPrompt, summaryPrompt, SUMMARY_SYSTEM, systemPrompt } from "./prompts.js";
 import { selectMemories, topicsIn } from "./retrieve.js";
 import type { ConversationRecord, MemoryRecord, MentorStore, StoredMessage } from "./store.js";
 
@@ -257,7 +257,7 @@ export class MentorService {
    * `lab` is context prepared by the Lab from the real schema and a real execution result; it is untrusted data to the model.
    * Nothing is stored as a conversation. A memory is saved only when the student's own typed question states a supported fact.
    */
-  async tutorHelp(uid: string, input: { lab: string; message: string; topics: string[] }): Promise<{ reply: string; mock: boolean; memory_saved: MentorSavedMemory[] }> {
+  async tutorHelp(uid: string, input: { lab: string; message: string; topics: string[]; kind?: "lab" | "plan" }): Promise<{ reply: string; mock: boolean; memory_saved: MentorSavedMemory[] }> {
     if (this.inFlight.has(uid)) throw new ApiError("RATE_LIMITED", "Your previous mentor request is still being answered. Wait for it to finish.");
     this.inFlight.add(uid);
     try {
@@ -267,7 +267,7 @@ export class MentorService {
     }
   }
 
-  private async tutorOnce(uid: string, input: { lab: string; message: string; topics: string[] }) {
+  private async tutorOnce(uid: string, input: { lab: string; message: string; topics: string[]; kind?: "lab" | "plan" }) {
     const { store, llm, logger } = this.deps;
     const now = this.now();
     const message = stripControl(input.message).trim().slice(0, 500);
@@ -284,8 +284,8 @@ export class MentorService {
     let out;
     try {
       out = await llm.mentorChat({
-        system: labSystemPrompt(),
-        prompt: chatPrompt({ activity: "(not used in the GraphQL Lab)", profile: nonEmptyProfileJson(profile), memories: selected, recent: [], message: message || "(the student did not type a question; use the action named in <graphql_lab>)", lab: input.lab }),
+        system: input.kind === "plan" ? planSystemPrompt() : labSystemPrompt(),
+        prompt: chatPrompt({ activity: "(not used in the GraphQL Lab)", profile: nonEmptyProfileJson(profile), memories: selected, recent: [], message: message || "(the student did not type a question; use the context block)", ...(input.kind === "plan" ? { plan: input.lab } : { lab: input.lab }) }),
       });
     } catch (err) {
       if (err instanceof LlmError) throw new ApiError(err.code === "LLM_TIMEOUT" ? "LLM_TIMEOUT" : "LLM_INVALID_OUTPUT", "The mentor could not answer right now. The playground and exercises still work.");

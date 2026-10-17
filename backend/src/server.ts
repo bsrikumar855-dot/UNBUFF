@@ -5,6 +5,9 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createApp } from "./app.js";
 import { FirebaseTokenVerifier } from "./auth/verifier.js";
+import { EvidenceService } from "./placement/evidence.js";
+import { PlacementService } from "./placement/service.js";
+import { FirestorePlacementStore, MemoryPlacementStore, type PlacementStore } from "./placement/store.js";
 import { FirestoreLabStore, MemoryLabStore, type LabStore } from "./graphqllab/store.js";
 import { LabService } from "./graphqllab/service.js";
 import { GithubGraphQL } from "./github/client.js";
@@ -59,8 +62,8 @@ function createProvider(config: Config, logger: ReturnType<typeof createLogger>)
   });
 }
 
-function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore; github: GithubStore; lab: LabStore } {
-  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore(), mentor: new MemoryMentorStore(), github: new MemoryGithubStore(), lab: new MemoryLabStore() };
+function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore; github: GithubStore; lab: LabStore; placement: PlacementStore } {
+  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore(), mentor: new MemoryMentorStore(), github: new MemoryGithubStore(), lab: new MemoryLabStore(), placement: new MemoryPlacementStore() };
   const account = config.FIREBASE_SERVICE_ACCOUNT_JSON ? parseServiceAccount(config.FIREBASE_SERVICE_ACCOUNT_JSON) : null;
   const projectId = config.GOOGLE_CLOUD_PROJECT ?? account?.project_id ?? config.FIREBASE_PROJECT_ID;
   // Without a service-account secret, Application Default Credentials apply (Cloud Run identity, gcloud login, emulator).
@@ -69,7 +72,7 @@ function createStores(config: Config): { sessions: SessionStore; progress: Progr
     ignoreUndefinedProperties: true,
     ...(account ? { credentials: { client_email: account.client_email, private_key: account.private_key } } : {}),
   });
-  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db), mentor: new FirestoreMentorStore(undefined, db), github: new FirestoreGithubStore(db), lab: new FirestoreLabStore(db) };
+  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db), mentor: new FirestoreMentorStore(undefined, db), github: new FirestoreGithubStore(db), lab: new FirestoreLabStore(db), placement: new FirestorePlacementStore(db) };
 }
 
 /**
@@ -167,9 +170,10 @@ function main(): void {
     retention: { conversationDays: config.MENTOR_CONVERSATION_RETENTION_DAYS, summaryDays: config.MENTOR_SUMMARY_RETENTION_DAYS, learningDays: config.MENTOR_LEARNING_RETENTION_DAYS },
   });
   const lab = new LabService({ store: stores.lab, mentor, logger });
+  const suites = loadSuites(config, root, logger);
   const code = new CodeService({
     provider: createExecutionProvider(config, logger),
-    suites: loadSuites(config, root, logger),
+    suites,
     catalogue: () => catalogue,
     progress: dsaProgress,
     submissions: stores.submissions,
@@ -178,6 +182,19 @@ function main(): void {
     judgeDeadlineMs: config.CODE_JUDGE_DEADLINE_MS,
     providerVerified: config.EXECUTION_PROVIDER_VERIFIED,
     onJudged: (record) => analytics.recordSubmission(record),
+  });
+  const executionStatus = { configured: config.EXECUTION_PROVIDER === "judge0", verified: config.EXECUTION_PROVIDER === "judge0" && config.EXECUTION_PROVIDER_VERIFIED };
+  const placement = new PlacementService({
+    store: stores.placement,
+    evidence: new EvidenceService({ analytics, sessions: stores.sessions, roles, lab, github, mentor, catalogue: () => catalogue, suites, execution: executionStatus, llmMode: llm.mode, logger }),
+    roles,
+    topics: () => catalogue.allTopics(),
+    mentor,
+    logger,
+    suggestions: async (uid) => {
+      const p = (await mentor.getProfile(uid)).profile;
+      return { preferred_language: p.preferred_languages[0] ?? null, daily_minutes: p.daily_study_minutes };
+    },
   });
   const verifier = new FirebaseTokenVerifier(config.FIREBASE_PROJECT_ID);
   if (config.NODE_ENV === "production" && config.STORE === "memory") {
@@ -196,6 +213,7 @@ function main(): void {
     mentor,
     github,
     lab,
+    placement,
     llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
   const server = app.listen(config.PORT, "0.0.0.0", (err?: Error) => {
     if (err) {

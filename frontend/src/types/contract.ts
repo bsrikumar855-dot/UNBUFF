@@ -31,6 +31,8 @@ export type ErrorCode =
   | "MODULE_NOT_FOUND"
   | "EXERCISE_NOT_FOUND"
   | "GRAPHQL_LAB_UNAVAILABLE"
+  | "PLACEMENT_PROFILE_REQUIRED"
+  | "PLACEMENT_TASK_NOT_FOUND"
   | "EXECUTION_UNAVAILABLE"
   | "GRADING_UNAVAILABLE"
   | "ROLE_NOT_FOUND"
@@ -1138,6 +1140,183 @@ export interface LabHelpResponse {
 }
 export interface LabResetResponse {
   application_count: number;
+}
+
+// ---------- Unified Placement Intelligence (Phase 9) ----------
+// Everything here is computed by the application from stored records. The AI mentor explains it; it never supplies
+// a score, a task or a completion. There is deliberately no overall readiness score or offer probability.
+export type PlacementExperience = "beginner" | "intermediate" | "advanced";
+export type PlacementPriority = "dsa" | "interview" | "graphql" | "projects" | "communication";
+export type PlacementTaskType = "dsa_practice" | "dsa_revision" | "graphql" | "technical_interview" | "communication" | "project" | "diagnostic" | "general";
+export type PlacementTaskStatus = "planned" | "in_progress" | "completed" | "skipped" | "removed" | "superseded"; // postponing keeps "planned" and moves the due date
+export type PlacementTaskAction = "start" | "complete" | "postpone" | "skip" | "reschedule" | "remove" | "reopen";
+export type EvidenceProvenance = "verified" | "self_reported" | "demonstration" | "unavailable";
+export type EvidenceKind = "dsa_judged" | "interview_assessment" | "graphql_lab" | "github_context" | "none";
+export type SkillStatus = "strong" | "developing" | "weak" | "unassessed";
+export type EvidenceConfidence = "none" | "low" | "medium" | "high";
+export type EvidenceRecency = "recent" | "aging" | "stale" | "none";
+
+export interface PlacementProfile {
+  role_ids: string[]; // role catalogue ids, at most 3
+  target_companies: string[]; // free text, at most 10; used only as the student's own goal, never to claim company data
+  placement_date: string | null; // YYYY-MM-DD, today or later
+  available_weekdays: number[]; // 0 = Sunday .. 6 = Saturday, at least one
+  daily_minutes: number; // 15 to 480 minutes on each available day
+  preferred_language: CodeLanguageId | null;
+  experience_level: PlacementExperience | null; // self-reported
+  strengths: string[]; // self-reported topic names, at most 8
+  weak_areas: string[]; // self-reported topic names, at most 8
+  priorities: PlacementPriority[];
+}
+export interface PlacementProfileResponse {
+  profile: PlacementProfile | null;
+  updated_at: string | null;
+  suggestions: { preferred_language: CodeLanguageId | null; daily_minutes: number | null } | null; // from the AI mentor's saved memory; never applied without the student saving
+  roles: RoleSummary[];
+  topics: string[];
+}
+
+export interface EvidenceLimitation {
+  source: "dsa" | "interview" | "graphql" | "github" | "memory";
+  severity: "info" | "limits_accuracy";
+  message: string;
+}
+export interface SkillAssessment {
+  area: string; // stable key, for example dsa:Arrays, interview:react_state, graphql, project:github
+  label: string;
+  category: "dsa" | "interview" | "graphql" | "project";
+  status: SkillStatus;
+  estimate: number | null; // 0..1, only from verified results; null when there is not enough to estimate
+  evidence: { kind: EvidenceKind; provenance: EvidenceProvenance; count: number; unit: string; last_at: string | null; recency: EvidenceRecency };
+  confidence: EvidenceConfidence;
+  gaps: string[];
+  self_reported: string | null; // what the student said; never part of the estimate
+  next_assessment: { type: PlacementTaskType; description: string } | null;
+  note: string | null;
+}
+export interface PlacementSkillsResponse {
+  generated_at: string;
+  skills: SkillAssessment[];
+  coverage: { in_scope: number; sufficient_evidence: number; provisional: number; unassessed: number; definition: string };
+  limitations: EvidenceLimitation[];
+  method: string[]; // how the numbers are calculated, in words
+}
+
+export interface PlacementTask {
+  id: string; // deterministic from the activity, so the same activity is never planned twice
+  type: PlacementTaskType;
+  title: string;
+  description: string;
+  skill_area: string;
+  priority: 1 | 2 | 3 | 4 | 5; // 1 is most urgent
+  estimated_minutes: number;
+  due_date: string; // YYYY-MM-DD
+  original_due_date: string;
+  link: string; // the page where the work happens
+  ref: { kind: string; id: string }; // the question, revision item, lesson, role skill or repository this is about
+  completion_criteria: string;
+  completion_check: "verified_event" | "student"; // verified_event: completed automatically when the real record appears
+  evidence_source: string; // the record or rule behind the recommendation
+  reason: string; // why it is suggested
+  reason_codes: string[];
+  depends_on: string[];
+  blocked: boolean; // a task it depends on is not done yet
+  status: PlacementTaskStatus;
+  postponed_count: number;
+  skip_reason: string | null;
+  completed_at: string | null;
+  completed_by: "verified_event" | "student" | null;
+  student_scheduled: boolean; // the student chose the date; regeneration keeps it
+  created_at: string;
+  updated_at: string;
+  history: { at: string; event: string; detail: string | null }[];
+}
+export interface PlacementChange {
+  at: string;
+  kind: "plan_generated" | "task_added" | "task_completed" | "task_rescheduled" | "task_reprioritized" | "task_superseded" | "profile_changed" | "plan_adjusted";
+  summary: string;
+  reason: string;
+  task_id: string | null;
+}
+export interface PlacementFeasibility {
+  status: "no_deadline" | "ok" | "tight" | "insufficient";
+  required_minutes: number; // work that matters most (priority 1 and 2 plus first assessments)
+  available_minutes: number; // until the placement date, from your availability
+  message: string;
+  reduced: boolean; // a smaller, prioritised plan was made
+  deferred_task_ids: string[]; // tasks left out or pushed past the deadline for lack of time
+}
+export interface PlacementDay {
+  date: string;
+  weekday: string;
+  available: boolean;
+  capacity_minutes: number;
+  planned_minutes: number;
+  completed_minutes: number;
+  tasks: PlacementTask[];
+}
+export interface PlacementImprovement {
+  at: string | null;
+  area: string;
+  message: string;
+  source: "dsa_judged" | "graphql_lab" | "interview_assessment" | "plan";
+}
+export interface PlacementDashboard {
+  generated_at: string;
+  today: string;
+  needs_profile: boolean;
+  profile: PlacementProfile | null;
+  plan: { generation: number; generated_at: string | null; feasibility: PlacementFeasibility | null; days_until_placement: number | null } | null;
+  today_tasks: PlacementTask[]; // due today, plus work moved forward from missed days
+  today_minutes: number;
+  today_capacity_minutes: number;
+  week: PlacementDay[]; // the next 7 days
+  counts: { planned: number; in_progress: number; completed: number; skipped: number };
+  outstanding_priorities: PlacementTask[]; // priority 1 and 2, not done
+  skills: PlacementSkillsResponse;
+  history: {
+    recent_completed: PlacementTask[];
+    changes: PlacementChange[];
+    improvements: PlacementImprovement[]; // only from verified results
+    repeated_difficulties: { area: string; detail: string }[];
+    revision: { due: number; items: number };
+  };
+  readiness: { sufficient_evidence: string[]; weak: string[]; unassessed: string[]; next_diagnostics: { area: string; description: string }[]; note: string };
+  limitations: EvidenceLimitation[];
+}
+
+export interface PlacementTaskActionRequest {
+  action: PlacementTaskAction;
+  days?: number; // postpone: 1 to 14
+  date?: string; // reschedule: YYYY-MM-DD within the next 90 days
+  reason?: string; // skip: 3 to 200 characters
+}
+export interface PlacementGenerateRequest {
+  mode?: "default" | "reduced"; // reduced keeps only the highest-priority work
+}
+
+export type PlacementIntent = "today" | "why" | "changes" | "feasibility" | "weakest" | "lighter" | "revise" | "other";
+export type PlacementProposedChange =
+  | { kind: "lighter_day"; date: string; max_minutes: number; description: string }
+  | { kind: "postpone_day"; date: string; days: number; description: string }
+  | { kind: "set_daily_minutes"; minutes: number; description: string };
+export interface PlacementAssistantRequest {
+  message: string; // max 500 characters
+}
+export interface PlacementAssistantResponse {
+  intent: PlacementIntent;
+  answer: string; // built by the application from the stored plan and evidence; always present
+  mentor_reply: string | null; // the AI mentor's explanation, when available
+  mentor: { available: boolean; mock: boolean; error: string | null };
+  proposed_changes: PlacementProposedChange[]; // nothing changes until the student applies one
+  memory_saved: MentorSavedMemory[];
+}
+export interface PlacementApplyChangeRequest {
+  change: { kind: "lighter_day"; date: string; max_minutes: number } | { kind: "postpone_day"; date: string; days: number } | { kind: "set_daily_minutes"; minutes: number };
+}
+export interface PlacementApplyChangeResponse {
+  summary: string;
+  dashboard: PlacementDashboard;
 }
 
 export interface ApiErrorBody {

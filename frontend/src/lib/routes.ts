@@ -17,6 +17,7 @@ export const routes = {
   mentor: (questionId?: string) => (questionId ? `/mentor?question=${encodeURIComponent(questionId)}` : "/mentor"),
   mentorMemory: "/mentor/memory",
   settings: "/settings",
+  placement: "/placement",
   github: "/github",
   graphqlLab: "/graphql-lab",
   graphqlPlayground: "/graphql-lab/playground",
