@@ -5,10 +5,17 @@
 #   API=http://localhost:8080 bash scripts/smoke.sh
 #   SMOKE_DELAY=7 API=... bash scripts/smoke.sh     # live mode on a free-tier key
 #
+# Every endpoint except health, roles and the demo report needs a signed-in student. Give the script a Firebase ID
+# token with AUTH_TOKEN (never commit one). Against the Auth emulator you can create a throwaway user and token with:
+#   curl -s -X POST "http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake" #     -H 'Content-Type: application/json' -d '{"email":"smoke@example.test","password":"<a throwaway password>","returnSecureToken":true}'
+# and use the idToken from the answer (start the backend with FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099).
+#
 # Answers mix strong answers, a short answer and "I don't know". Works in mock and live mode.
 set -euo pipefail
 
 API="${API:-http://localhost:8080}/api"
+AUTH_ARGS=()
+if [[ -n "${AUTH_TOKEN:-}" ]]; then AUTH_ARGS=(-H "Authorization: Bearer ${AUTH_TOKEN}"); fi
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if command -v jq >/dev/null 2>&1; then
@@ -25,19 +32,19 @@ pause() { if [[ -n "${SMOKE_DELAY:-}" ]]; then sleep "$SMOKE_DELAY"; fi; }
 post() { # post <path> <json>
   local out status
   pause
-  out=$(curl -sS --max-time "${CURL_TIMEOUT:-90}" -w '\n%{http_code}' -X POST "$API$1" -H 'Content-Type: application/json' --data-binary "$2")
+  out=$(curl -sS --max-time "${CURL_TIMEOUT:-90}" -w '\n%{http_code}' -X POST "$API$1" ${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"} -H 'Content-Type: application/json' --data-binary "$2")
   status="${out##*$'\n'}"
   out="${out%$'\n'*}"
-  if [[ "$status" != 2* ]]; then echo "HTTP $status on POST $1: $out" >&2; return 1; fi
+  if [[ "$status" != 2* ]]; then echo "HTTP $status on POST $1: $out" >&2; [[ "$status" == 401 ]] && echo "Hint: set AUTH_TOKEN to a Firebase ID token (see the top of this script)." >&2; return 1; fi
   printf '%s' "$out"
 }
 
 get() {
   local out status
-  out=$(curl -sS --max-time "${CURL_TIMEOUT:-90}" -w '\n%{http_code}' "$API$1")
+  out=$(curl -sS --max-time "${CURL_TIMEOUT:-90}" -w '\n%{http_code}' ${AUTH_ARGS[@]+"${AUTH_ARGS[@]}"} "$API$1")
   status="${out##*$'\n'}"
   out="${out%$'\n'*}"
-  if [[ "$status" != 2* ]]; then echo "HTTP $status on GET $1: $out" >&2; return 1; fi
+  if [[ "$status" != 2* ]]; then echo "HTTP $status on GET $1: $out" >&2; [[ "$status" == 401 ]] && echo "Hint: set AUTH_TOKEN to a Firebase ID token (see the top of this script)." >&2; return 1; fi
   printf '%s' "$out"
 }
 

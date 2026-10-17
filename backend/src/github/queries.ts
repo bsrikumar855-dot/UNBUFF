@@ -90,9 +90,12 @@ export function readmesQuery(count: number): string {
 // ---------------- response schemas (lenient about extras, strict about the fields we use) ----------------
 
 const Count = z.object({ totalCount: z.number().int().nonnegative() });
+/** Every link we store or show comes from GitHub and must point at github.com over https (never javascript: or another host). */
+const GithubUrl = z.string().url().max(500).startsWith("https://github.com/");
+
 const RepoRef = z.object({ nameWithOwner: z.string().max(200), isPrivate: z.boolean() });
 
-export const ViewerData = z.object({ viewer: z.object({ id: z.string().min(1), databaseId: z.number().int().positive(), login: z.string().min(1).max(100), url: z.string().url() }) });
+export const ViewerData = z.object({ viewer: z.object({ id: z.string().min(1), databaseId: z.number().int().positive(), login: z.string().min(1).max(100), url: GithubUrl }) });
 
 export const ContributionsData = z.object({
   viewer: z.object({
@@ -121,7 +124,7 @@ const TreeEntry = z.object({ name: z.string().max(255), type: z.string().max(20)
 export const RepoNode = z.object({
   nameWithOwner: z.string().regex(/^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/).max(200),
   name: z.string().regex(/^[A-Za-z0-9._-]{1,100}$/),
-  url: z.string().url(),
+  url: GithubUrl,
   description: z.string().nullish(),
   isPrivate: z.boolean(),
   isFork: z.boolean(),
@@ -150,7 +153,7 @@ export const RepositoriesData = z.object({
   }),
 });
 
-const ItemNode = z.object({ title: z.string().max(500), url: z.string().url(), state: z.string().max(20), createdAt: z.string(), repository: RepoRef });
+const ItemNode = z.object({ title: z.string().max(500), url: GithubUrl, state: z.string().max(20), createdAt: z.string(), repository: RepoRef });
 export const ActivityData = z.object({
   viewer: z.object({
     pullRequests: z.object({ totalCount: z.number().int().nonnegative(), nodes: z.array(ItemNode.nullable()) }),
@@ -162,7 +165,7 @@ export const ActivityData = z.object({
             .object({
               occurredAt: z.string(),
               pullRequestReview: z.object({ state: z.string().max(30) }),
-              pullRequest: z.object({ title: z.string().max(500), url: z.string().url(), repository: RepoRef }),
+              pullRequest: z.object({ title: z.string().max(500), url: GithubUrl, repository: RepoRef }),
             })
             .nullable(),
         ),

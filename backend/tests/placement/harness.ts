@@ -4,7 +4,9 @@ import { AnalyticsService } from "../../src/analytics/service.js";
 import type { StatsRecord } from "../../src/analytics/stats.js";
 import { emptyFailures } from "../../src/analytics/stats.js";
 import { MemoryRevisionStore, MemoryStatsStore } from "../../src/analytics/stores.js";
+import { CodeService } from "../../src/code/service.js";
 import { MemorySubmissionStore } from "../../src/code/submissionStore.js";
+import { FakeProvider } from "../code/fakeProvider.js";
 import { parseSuiteFile, SuiteRegistry } from "../../src/code/suites.js";
 import { newClaim } from "../../src/core/claims.js";
 import { DsaProgressService } from "../../src/dsa/progressService.js";
@@ -99,6 +101,12 @@ export interface HarnessOptions {
   llm?: LLMProvider;
   llmMode?: "live" | "mock";
   placementStore?: PlacementStore;
+  /**
+   * Wire a real CodeService (with a stand-in execution provider whose result is chosen by a marker word in the source)
+   * into the same analytics the planner reads. `allowMockToCount` is the TEST-ONLY switch that lets that stand-in's
+   * results count; leave it false to see the production policy, which excludes them.
+   */
+  code?: { verified: boolean; allowMockToCount: boolean };
 }
 
 export function harness(opts: HarnessOptions = {}) {
@@ -112,7 +120,8 @@ export function harness(opts: HarnessOptions = {}) {
   const revisionStore = new MemoryRevisionStore();
   const sessionStore = new MemoryStore();
   const dsaProgress = new DsaProgressService(new MemoryProgressStore(), () => catalogue);
-  const analytics = new AnalyticsService({ stats: statsStore, revisions: revisionStore, submissions: new MemorySubmissionStore(), progress: dsaProgress, catalogue: () => catalogue, logger: silentLogger, now });
+  const submissionStore = new MemorySubmissionStore();
+  const analytics = new AnalyticsService({ stats: statsStore, revisions: revisionStore, submissions: submissionStore, progress: dsaProgress, catalogue: () => catalogue, logger: silentLogger, now });
   const mentor = new MentorService({ store: new MemoryMentorStore(), llm, stats: statsStore, revisions: revisionStore, analytics, progress: dsaProgress, catalogue: () => catalogue, sessions: sessionStore, roles, logger: silentLogger, now });
   const lab = new LabService({ store: new MemoryLabStore(), mentor, logger: silentLogger, now });
   const github = fakeGithub(opts.github ?? { status: "disconnected", cached: null });
@@ -130,7 +139,21 @@ export function harness(opts: HarnessOptions = {}) {
       return { preferred_language: p.preferred_languages[0] ?? null, daily_minutes: p.daily_study_minutes };
     },
   });
-  const app: Express = testApp({ autoAuth: false, llm, analytics, statsStore, revisionStore, store: sessionStore, lab, mentor, github, placement, catalogue });
+  const code = opts.code
+    ? new CodeService({
+        provider: new FakeProvider(),
+        suites,
+        catalogue: () => catalogue,
+        progress: dsaProgress,
+        submissions: submissionStore,
+        logger: silentLogger,
+        providerVerified: opts.code.verified,
+        allowMockToCount: opts.code.allowMockToCount,
+        onJudged: (r) => analytics.recordSubmission(r),
+        now,
+      })
+    : undefined;
+  const app: Express = testApp({ autoAuth: false, llm, analytics, statsStore, revisionStore, store: sessionStore, lab, mentor, github, placement, catalogue, submissionStore, progressStore: undefined, ...(code ? { code } : {}) });
   const auth = (uid: string) => ({ Authorization: bearer(uid) });
 
   const api = {

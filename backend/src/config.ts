@@ -144,6 +144,9 @@ const EnvSchema = z
     /** Optional service-account JSON (secret) for Firestore on hosts without a cloud identity, e.g. Render. */
     FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
+    /** Local emulator addresses. Declared only so production can refuse them (see below). */
+    FIREBASE_AUTH_EMULATOR_HOST: z.string().optional(),
+    FIRESTORE_EMULATOR_HOST: z.string().optional(),
   })
   .superRefine((env, ctx) => {
     const cors = parseCorsOrigins(env.CORS_ORIGIN ?? "");
@@ -155,6 +158,10 @@ const EnvSchema = z
       });
     }
     if (env.NODE_ENV === "production") {
+      // With an Auth emulator address set, the Admin SDK accepts unsigned tokens: anyone could sign in as anyone.
+      for (const name of ["FIREBASE_AUTH_EMULATOR_HOST", "FIRESTORE_EMULATOR_HOST"] as const) {
+        if (env[name]?.trim()) ctx.addIssue({ code: "custom", path: [name], message: `${name} must not be set when NODE_ENV=production (it disables real sign-in checks)` });
+      }
       if (!env.FIREBASE_PROJECT_ID?.trim()) {
         ctx.addIssue({ code: "custom", path: ["FIREBASE_PROJECT_ID"], message: "FIREBASE_PROJECT_ID is required when NODE_ENV=production" });
       }

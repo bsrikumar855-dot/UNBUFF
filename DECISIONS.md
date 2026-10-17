@@ -376,3 +376,12 @@ everything once gcloud is available.
 - **Stable ids make duplicates impossible and refresh idempotent.** Task ids derive from the activity (with a cycle key for revisions and weeks); open tasks keep their question rather than being re-picked, so refreshing does not grow the plan; finished, skipped and removed work is not recreated. Missed work moves forward without being counted as a failure; regeneration keeps history and student choices.
 - **Infeasible deadlines are disclosed.** Required priority 1 and 2 work is compared with the student's own available minutes; if it does not fit a reduced plan is made and the numbers are stated.
 - **Not verified live**: no live model, real Judge0, live GitHub or real Firestore; see docs/phase-9-placement-intelligence.md.
+
+## Phase 10 — end-to-end integration and release readiness
+
+- **Validate, do not add features.** Only confirmed integration defects were fixed: the smoke script had no sign-in support (401 since Phase 2); production could start with a Firebase emulator address set (which makes the Admin SDK accept unsigned tokens), so config now refuses it; GitHub links were only checked as "a URL", so they must now be `https://github.com/...`; there were no Firestore rules in the repository, so a deny-all `firestore.rules` was added (not deployed).
+- **Status labels are honest.** Each integration is PASS, LOCAL PASS, EMULATOR PASS, MOCK PASS, BLOCKED or FAIL; an emulator or stand-in never counts as proof about the real service. Judge0, a real Firebase project and GitHub OAuth are BLOCKED for lack of configuration; the live model path passed.
+- **`EXECUTION_PROVIDER_VERIFIED` is never set by tooling.** Only an operator, after reading a real smoke-test run.
+- **Journey test keeps mock and genuine apart.** The stand-in judge counts only through a test-only switch; the production-policy test proves stand-in results are excluded from analytics and the plan.
+- **Every route is audited for authentication by reading the route source**, so a new route cannot silently ship unauthenticated.
+- **Not production-ready**: see docs/phase-10-release-readiness.md for blockers and operator actions.

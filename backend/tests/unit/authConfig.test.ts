@@ -22,6 +22,13 @@ describe("production storage and auth configuration", () => {
     expect(() => loadConfig({ ...prod, STORE: "memory" })).toThrow(/STORE=firestore is required/);
   });
 
+  it("refuses to start in production with an emulator address set, which would accept unsigned tokens", () => {
+    expect(() => loadConfig({ ...prod, FIREBASE_AUTH_EMULATOR_HOST: "127.0.0.1:9099" })).toThrow(/FIREBASE_AUTH_EMULATOR_HOST must not be set/);
+    expect(() => loadConfig({ ...prod, FIRESTORE_EMULATOR_HOST: "127.0.0.1:8080" })).toThrow(/FIRESTORE_EMULATOR_HOST must not be set/);
+    expect(loadConfig({ ...prod, FIREBASE_AUTH_EMULATOR_HOST: "" }).STORE).toBe("firestore");
+    expect(loadConfig({ ...prod, NODE_ENV: "development", CORS_ORIGIN: "*", FIREBASE_AUTH_EMULATOR_HOST: "127.0.0.1:9099" }).NODE_ENV).toBe("development");
+  });
+
   it("allows memory in production only with an explicit opt-in", () => {
     expect(loadConfig({ ...prod, STORE: "memory", ALLOW_EPHEMERAL_STORE: "true" }).STORE).toBe("memory");
   });
