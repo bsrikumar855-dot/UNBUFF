@@ -5,6 +5,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createApp } from "./app.js";
 import { FirebaseTokenVerifier } from "./auth/verifier.js";
+import { AnalyticsService } from "./analytics/service.js";
+import { FirestoreRevisionStore, FirestoreStatsStore, MemoryRevisionStore, MemoryStatsStore, type RevisionStore, type StatsStore } from "./analytics/stores.js";
 import { Judge0Provider } from "./code/judge0.js";
 import { UnavailableProvider, type ExecutionProvider } from "./code/provider.js";
 import { CodeService } from "./code/service.js";
@@ -45,8 +47,8 @@ function createProvider(config: Config, logger: ReturnType<typeof createLogger>)
   });
 }
 
-function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore } {
-  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore() };
+function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore } {
+  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore() };
   const account = config.FIREBASE_SERVICE_ACCOUNT_JSON ? parseServiceAccount(config.FIREBASE_SERVICE_ACCOUNT_JSON) : null;
   const projectId = config.GOOGLE_CLOUD_PROJECT ?? account?.project_id ?? config.FIREBASE_PROJECT_ID;
   // Without a service-account secret, Application Default Credentials apply (Cloud Run identity, gcloud login, emulator).
@@ -55,7 +57,7 @@ function createStores(config: Config): { sessions: SessionStore; progress: Progr
     ignoreUndefinedProperties: true,
     ...(account ? { credentials: { client_email: account.client_email, private_key: account.private_key } } : {}),
   });
-  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db) };
+  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db) };
 }
 
 /** An explicit approved file wins; otherwise the labelled dev fixture locally and an honest empty catalogue in production. */
@@ -106,6 +108,17 @@ function main(): void {
   const stores = createStores(config);
   const catalogue = loadCatalogue(config, root, logger);
   const dsaProgress = new DsaProgressService(stores.progress, () => catalogue);
+  const analytics = new AnalyticsService({
+    stats: stores.stats,
+    revisions: stores.revisions,
+    submissions: stores.submissions,
+    progress: dsaProgress,
+    catalogue: () => catalogue,
+    logger,
+  });
+  if (config.EXECUTION_PROVIDER === "judge0" && !config.EXECUTION_PROVIDER_VERIFIED) {
+    logger.warn("EXECUTION_PROVIDER_VERIFIED is not true: judged submissions will not count toward analytics until the operator confirms the service is a real deployment");
+  }
   const code = new CodeService({
     provider: createExecutionProvider(config, logger),
     suites: loadSuites(config, root, logger),
@@ -115,6 +128,8 @@ function main(): void {
     logger,
     limits: { cpuTimeSeconds: config.CODE_CPU_TIME_SECONDS, memoryMb: config.CODE_MEMORY_MB },
     judgeDeadlineMs: config.CODE_JUDGE_DEADLINE_MS,
+    providerVerified: config.EXECUTION_PROVIDER_VERIFIED,
+    onJudged: (record) => analytics.recordSubmission(record),
   });
   const verifier = new FirebaseTokenVerifier(config.FIREBASE_PROJECT_ID);
   if (config.NODE_ENV === "production" && config.STORE === "memory") {
@@ -130,6 +145,7 @@ function main(): void {
     catalogue,
     dsaProgress,
     code,
+    analytics,
     llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
   const server = app.listen(config.PORT, "0.0.0.0", (err?: Error) => {
     if (err) {

@@ -320,3 +320,10 @@ everything once gcloud is available.
 - **Grading data is server-only** (`CODE_SUITES_PATH`), separate from the public catalogue; responses carry only the hidden-test count and, on failure, the failing test number. The bundled suites are three authored demonstration exercises (`development_fixture`), not real interview questions.
 - **Only an accepted judged submission marks a question solved**; runs are not stored; submissions (with source) are stored per owner and deletable.
 - **Monaco is bundled locally** (no CDN), lazy-loaded, with hover/markdown widgets omitted; `dompurify` is pinned to a patched release via an override.
+
+## Phase 5 — DSA analytics and revision
+
+- **Only counted judged submissions feed analytics.** A submission counts when it was judged against a non-demonstration suite by an execution service the operator declared real (`EXECUTION_PROVIDER_VERIFIED=true`) and the judge did not fail. The default is false, because a stand-in or mock Judge0 cannot be told apart from a real one in code. Runs, sample runs, demonstration exercises, judge errors, legacy records without provenance and self-reported progress marks never count.
+- **Per student and question rollup** (`unbluff_dsa_stats`) is the aggregation layer, updated at submit time and idempotent per submission id; `POST /api/me/dsa-analytics/refresh` rebuilds it from stored submissions. Revision items (`unbluff_dsa_revision`) are one per student and question.
+- **Weakness detection is rules with explicit thresholds** (`src/analytics/config.ts`), never a model; technical failures are reported separately from algorithmic ones.
+- **Index:** `firestore.indexes.json` adds (owner_uid, created_at desc) for `unbluff_code_submissions`; an operator must deploy it. Without it only the excluded-submission counts degrade (reported as unavailable).

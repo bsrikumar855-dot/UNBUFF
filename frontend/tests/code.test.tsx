@@ -69,6 +69,7 @@ const sub = (over: Partial<CodeSubmission> = {}): CodeSubmission => ({
   memory_kb: 3000,
   test_revision: "demo-1",
   progress_updated: false,
+  analytics_status: "counted",
   created_at: "2026-03-01T00:00:00.000Z",
   ...over,
 });

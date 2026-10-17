@@ -31,6 +31,8 @@ const DsaQuestionsPage = lazy(() => import("@/pages/DsaQuestionsPage"));
 const DsaQuestionPage = lazy(() => import("@/pages/DsaQuestionPage"));
 const DsaProgressPage = lazy(() => import("@/pages/DsaProgressPage"));
 const CodeWorkspacePage = lazy(() => import("@/pages/CodeWorkspacePage"));
+const DsaAnalyticsPage = lazy(() => import("@/pages/DsaAnalyticsPage"));
+const DsaRevisionPage = lazy(() => import("@/pages/DsaRevisionPage"));
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   cn(
@@ -132,6 +134,8 @@ export const AppRoutes: React.FC = () => (
         <Route path="/report/:sessionId" element={<ReportPage />} />
         <Route path="/sessions" element={<SessionsPage />} />
         <Route path="/dsa/progress" element={<DsaProgressPage />} />
+        <Route path="/dsa/analytics" element={<DsaAnalyticsPage />} />
+        <Route path="/dsa/revision" element={<DsaRevisionPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

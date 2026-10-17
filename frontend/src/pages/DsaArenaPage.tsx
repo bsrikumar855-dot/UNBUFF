@@ -52,9 +52,17 @@ export const DsaArenaPage: React.FC = () => {
             Browse all questions
           </Link>
           {status === "signedIn" && (
-            <Link to={routes.dsaProgress} className={buttonClasses("secondary", "sm")}>
-              My progress
-            </Link>
+            <>
+              <Link to={routes.dsaProgress} className={buttonClasses("secondary", "sm")}>
+                My progress
+              </Link>
+              <Link to={routes.dsaAnalytics} className={buttonClasses("secondary", "sm")}>
+                Analytics
+              </Link>
+              <Link to={routes.dsaRevision} className={buttonClasses("secondary", "sm")}>
+                Revision
+              </Link>
+            </>
           )}
         </div>
       </div>

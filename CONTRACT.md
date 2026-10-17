@@ -48,6 +48,7 @@ backend code decides pass/fail, verdicts, proficiency, readiness, coverage and p
 | 404 | `ROLE_NOT_FOUND` | Unknown `role_id` |
 | 404 | `COMPANY_NOT_FOUND` | Unknown company id |
 | 404 | `QUESTION_NOT_FOUND` | Unknown question id |
+| 404 | `REVISION_NOT_FOUND` | Unknown revision item, or one the caller does not own |
 | 404 | `SUBMISSION_NOT_FOUND` | Unknown submission id, or one the caller does not own |
 | 409 | `GRADING_UNAVAILABLE` | The question has no validated hidden test suite, so it cannot be judged |
 | 503 | `EXECUTION_UNAVAILABLE` | No execution service configured, or it is unreachable, timed out or returned an invalid response |
@@ -102,6 +103,7 @@ export type ErrorCode =
   | "COMPANY_NOT_FOUND"
   | "QUESTION_NOT_FOUND"
   | "SUBMISSION_NOT_FOUND"
+  | "REVISION_NOT_FOUND"
   | "EXECUTION_UNAVAILABLE"
   | "GRADING_UNAVAILABLE"
   | "ROLE_NOT_FOUND"
@@ -525,6 +527,7 @@ export interface CodeSubmission {
   memory_kb: number | null; // largest test
   test_revision: string;
   progress_updated: boolean; // true only when this accepted submission marked the question solved
+  analytics_status: AnalyticsStatus; // whether this submission counts toward real-practice analytics
   created_at: string;
 }
 
@@ -534,6 +537,179 @@ export interface CodeSubmissionDetail extends CodeSubmission {
 
 export interface CodeSubmissionsResponse {
   submissions: CodeSubmission[]; // the caller's own, newest first
+}
+
+// ---------- DSA analytics and revision (Phase 5) ----------
+/** Whether a stored submission counts toward real-practice analytics, and if not, why. */
+export type AnalyticsStatus =
+  | "counted"
+  | "excluded_demonstration" // judged against a demonstration/fixture exercise
+  | "excluded_unverified_provider" // the execution service was not declared to be a verified real deployment
+  | "excluded_judge_error" // the judge failed; says nothing about the student's code
+  | "excluded_unknown_provenance"; // stored before provenance was recorded; treated conservatively
+
+/** A ratio with its sample size. `value` is null (and `available` false) when there is too little data. */
+export interface RateMetric {
+  value: number | null; // 0..1
+  numerator: number;
+  denominator: number;
+  available: boolean;
+  min_sample: number;
+  note: string | null;
+}
+
+export interface BreakdownRow {
+  key: string; // topic name or difficulty
+  attempts: number; // eligible judged submissions
+  accepted: number; // accepted submissions
+  questions_attempted: number; // distinct questions with at least one eligible submission
+  questions_solved: number; // distinct questions with at least one accepted eligible submission
+  accuracy: RateMetric; // accepted / attempts
+  solve_rate: RateMetric; // questions_solved / questions_attempted
+}
+
+export type WeaknessStatus = "weak" | "watch" | "technical_issues" | "strong" | "insufficient_data";
+export type WeaknessTrend = "improving" | "declining" | "stable" | "insufficient_data";
+
+export interface TopicWeakness {
+  topic: string;
+  status: WeaknessStatus;
+  trend: WeaknessTrend;
+  explanation: string[]; // plain-language reasons, each backed by the counts below
+  evidence: {
+    questions_attempted: number;
+    questions_solved: number;
+    attempts: number;
+    accepted: number;
+    algorithmic_failures: number; // wrong answer or time limit exceeded
+    technical_failures: number; // compilation or runtime errors
+    repeated_failure_questions: number;
+    revision_regressions: number; // solved questions that later failed again
+  };
+}
+
+export interface WeeklyBucket {
+  week_start: string; // Monday, YYYY-MM-DD (UTC)
+  attempts: number;
+  accepted: number;
+  first_solves: number; // questions solved for the first time that week
+}
+
+export interface RecentActivity {
+  submission_id: string;
+  question_id: string;
+  title: string | null;
+  verdict: SubmissionVerdict;
+  at: string;
+}
+
+export interface RepeatedFailure {
+  question_id: string;
+  title: string | null;
+  consecutive_failures: number;
+  attempts: number;
+  last_verdict: SubmissionVerdict | null;
+  last_attempt_at: string | null;
+}
+
+export interface PeriodStats {
+  from: string;
+  to: string;
+  attempts: number;
+  accepted: number;
+  accuracy: RateMetric;
+}
+
+export interface PeriodComparison {
+  available: boolean;
+  note: string | null;
+  current: PeriodStats; // last 28 days
+  previous: PeriodStats; // the 28 days before that
+}
+
+export interface DsaAnalyticsResponse {
+  generated_at: string;
+  totals: { solved_unique: number; attempted_unique: number; eligible_attempts: number; accepted_attempts: number };
+  first_attempt_success: RateMetric;
+  submission_success: RateMetric;
+  topics: BreakdownRow[];
+  difficulties: BreakdownRow[];
+  weaknesses: TopicWeakness[];
+  untouched_topics: string[]; // catalogue topics with no eligible activity yet
+  weekly: WeeklyBucket[];
+  recent: RecentActivity[];
+  repeated_failures: RepeatedFailure[];
+  comparison: PeriodComparison;
+  self_reported: { solved: number; attempted: number; needs_revision: number; bookmarked: number }; // from the student's own progress marks, not judged
+  exclusions: { available: boolean; sampled_submissions: number; demonstration: number; unverified_provider: number; judge_error: number; unknown_provenance: number };
+  has_eligible_activity: boolean;
+  revision_due: number;
+}
+
+export interface AnalyticsHistoryResponse {
+  from: string;
+  to: string;
+  weekly: WeeklyBucket[];
+}
+
+export type RevisionReason = "repeated_failure" | "unsolved_attempted" | "spaced_review" | "topic_weakness";
+export type RevisionStatus = "pending" | "in_progress" | "scheduled" | "postponed";
+export type RevisionEventKind = "created" | "failed" | "started" | "completed" | "postponed" | "revisited" | "solved" | "added";
+
+export interface RevisionEvent {
+  at: string;
+  event: RevisionEventKind;
+  detail: string | null;
+}
+
+export interface RevisionItem {
+  question_id: string;
+  title: string | null;
+  reason: RevisionReason;
+  priority: 1 | 2 | 3 | 4 | 5; // 1 repeated failure, 2 unsolved with attempts, 3 spaced review overdue, 4 spaced review upcoming, 5 topic weakness
+  due_at: string;
+  due: boolean;
+  status: RevisionStatus;
+  stage: number; // index into the review interval schedule
+  last_reviewed_at: string | null;
+  postponed_count: number;
+  created_at: string;
+  updated_at: string;
+  context: {
+    attempts: number;
+    failures: number;
+    consecutive_failures: number;
+    last_verdict: SubmissionVerdict | null;
+    topics: string[];
+    difficulty: DsaDifficulty | null;
+    solved: boolean;
+  };
+  explanation: string;
+  history: RevisionEvent[]; // newest last, at most 20
+}
+
+export interface RevisionSuggestion {
+  question_id: string;
+  title: string;
+  topic: string;
+  difficulty: DsaDifficulty;
+  reason: string;
+}
+
+export interface RevisionQueueResponse extends PageInfo {
+  items: RevisionItem[];
+  counts: { due: number; upcoming: number; total: number };
+  suggestions: RevisionSuggestion[]; // weak-topic questions the student could add; never added automatically
+}
+
+export interface RevisionActionRequest {
+  action: "start" | "complete" | "postpone" | "revisit";
+  outcome?: "remembered" | "struggled"; // required for complete
+  days?: number; // optional for postpone (1 to 14)
+}
+
+export interface RevisionAddRequest {
+  question_id: string;
 }
 
 export interface ApiErrorBody {
@@ -604,6 +780,24 @@ Code runs only in an isolated execution service (Judge0) behind a server-side ad
 - Hidden test inputs and expected outputs are never returned. A failing submission reveals only which test number failed.
 - Limits: source at most 50,000 bytes, `stdin` at most 20,000 bytes. Execution time and memory limits are enforced by the execution service. `run` and `submit` are rate limited per user; a user has at most one judging job in flight (`429 RATE_LIMITED`).
 - `503 EXECUTION_UNAVAILABLE`: no execution service is configured, it is unreachable, timed out or returned something invalid. `404 SUBMISSION_NOT_FOUND` covers unknown ids and other users' submissions alike.
+
+### DSA analytics and revision *(Phase 5)*
+
+Everything here is derived from the student's own stored, **judged** submissions. A submission counts (`analytics_status: "counted"`) only if it was judged against a real (non-demonstration) suite by an execution service the operator has declared verified, and the judge itself did not fail. Run actions, sample runs, demonstration exercises, judge errors and records without provenance never count, and a self-reported progress mark never counts as solved.
+
+| Method | Path | Auth | Notes | 200 response |
+|---|---|---|---|---|
+| GET | `/api/me/dsa-analytics` | **token** | `weeks` (1-26, default 8) | `DsaAnalyticsResponse` (totals, rates, topics, difficulties, weaknesses, trends) |
+| GET | `/api/me/dsa-analytics/history` | **token** | `from`, `to` (YYYY-MM-DD, at most 365 days apart) | `AnalyticsHistoryResponse` |
+| POST | `/api/me/dsa-analytics/refresh` | **token** | rebuilds the caller's statistics from their stored submissions (repair after a partial failure) | `DsaAnalyticsResponse` |
+| GET | `/api/me/dsa-revision` | **token** | `view` (`due`\|`upcoming`\|`all`, default `due`), `page`, `page_size` | `RevisionQueueResponse` |
+| GET | `/api/me/dsa-revision/:questionId` | **token** | | `RevisionItem` |
+| POST | `/api/me/dsa-revision` | **token** | `RevisionAddRequest` (adds a suggested weak-topic question) | `RevisionItem` |
+| POST | `/api/me/dsa-revision/:questionId/actions` | **token** | `RevisionActionRequest` | `RevisionItem` |
+
+- Percentages carry their numerator, denominator and sample size; below the minimum sample `value` is null and `available` is false.
+- One revision item exists per student and question. A new eligible failed submission updates it instead of adding another; an accepted submission moves it to spaced review.
+- `404 REVISION_NOT_FOUND` covers unknown items and other students' items alike. The `CodeSubmission` type gained `analytics_status`.
 
 ### `POST /api/claims/extract`
 - *(added)* Optional `mode`: `"prepare"` (teach as you go) or `"defense"` (default, interview simulation). Stored on the session and echoed as `ClaimsResponse.mode` / `Report.mode`.

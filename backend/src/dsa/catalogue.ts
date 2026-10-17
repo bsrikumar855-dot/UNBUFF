@@ -226,6 +226,22 @@ export class Catalogue {
     };
   }
 
+  /** Every topic that appears on at least one question. */
+  allTopics(): string[] {
+    const topics = new Set<string>();
+    for (const q of this.questionsById.values()) q.topics.forEach((t) => topics.add(t));
+    return [...topics].sort((a, b) => a.localeCompare(b));
+  }
+
+  /** Questions carrying a topic (exact match), in a stable order. */
+  topicQuestions(topic: string): QuestionSummary[] {
+    return [...this.questionsById.values()].filter((q) => q.topics.includes(topic)).sort((a, b) => a.id.localeCompare(b.id));
+  }
+
+  summary(id: string): QuestionSummary | null {
+    return this.questionsById.get(id) ?? null;
+  }
+
   questionDetail(id: string): QuestionDetailResponse | null {
     const question = this.questionsById.get(id);
     if (!question) return null;

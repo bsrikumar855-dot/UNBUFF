@@ -9,6 +9,7 @@ const ERROR_COPY: Record<ErrorCode, string> = {
   UNAUTHENTICATED: "Please sign in to continue.",
   BAD_REQUEST: "That request wasn't valid. Check the form and try again.",
   NOT_FOUND: "That page or resource doesn't exist.",
+  REVISION_NOT_FOUND: "That revision item no longer exists.",
   SUBMISSION_NOT_FOUND: "We couldn't find that submission.",
   EXECUTION_UNAVAILABLE: "Code execution is not available right now. Try again in a moment.",
   GRADING_UNAVAILABLE: "This question has no test suite yet, so it can't be judged. You can still run your code.",

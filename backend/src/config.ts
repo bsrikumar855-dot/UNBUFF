@@ -73,6 +73,14 @@ const EnvSchema = z
     /** none: running code is reported as unavailable. judge0: use the Judge0 service at JUDGE0_URL. */
     EXECUTION_PROVIDER: z.enum(["none", "judge0"]).default("none"),
     JUDGE0_URL: z.string().optional(),
+    /**
+     * Operator's declaration that EXECUTION_PROVIDER points at a real, verified deployment. Until it is "true",
+     * judged submissions are excluded from analytics: the code cannot tell a real service from a stand-in.
+     */
+    EXECUTION_PROVIDER_VERIFIED: z
+      .enum(["true", "false", "1", "0"])
+      .default("false")
+      .transform((v) => v === "true" || v === "1"),
     /** Secret. Sent only from the server, in a header. */
     JUDGE0_AUTH_TOKEN: z.string().optional(),
     JUDGE0_AUTH_HEADER: z.string().regex(/^[A-Za-z0-9-]{1,60}$/, "must be a plain header name").default("X-Auth-Token"),

@@ -4,6 +4,7 @@ import type { Logger } from "../logger.js";
 import type { Catalogue } from "../dsa/catalogue.js";
 import type { DsaProgressService } from "../dsa/progressService.js";
 import type {
+  AnalyticsStatus,
   CodeExerciseResponse,
   CodeLanguageId,
   CodeLanguagesResponse,
@@ -37,6 +38,14 @@ export interface CodeServiceDeps {
   judgeDeadlineMs?: number;
   languageCacheMs?: number;
   testConcurrency?: number;
+  /**
+   * The operator's declaration that the execution service is a real, verified deployment. False (the default)
+   * means every judged submission is excluded from analytics, because mocked or stand-in services cannot be
+   * told apart from a real one by the code.
+   */
+  providerVerified?: boolean;
+  /** Called after a judged submission is stored. Failures are logged and never fail the submission. */
+  onJudged?: (record: SubmissionRecord) => Promise<void>;
 }
 
 const LIMIT_RUNS_IN_FLIGHT = 2;
@@ -176,6 +185,11 @@ export class CodeService {
         }
       }
 
+      const demonstration = suite.is_demonstration || suite.source.license_status === "development_fixture";
+      const providerVerified = this.deps.providerVerified === true;
+      const analyticsStatus: AnalyticsStatus =
+        verdict === "judge_error" ? "excluded_judge_error" : demonstration ? "excluded_demonstration" : !providerVerified ? "excluded_unverified_provider" : "counted";
+
       const record: SubmissionRecord = {
         id: `sub_${randomUUID()}`,
         owner_uid: uid,
@@ -192,8 +206,18 @@ export class CodeService {
         test_revision: suite.revision,
         progress_updated: progressUpdated,
         created_at: this.now().toISOString(),
+        analytics_status: analyticsStatus,
+        provider: this.deps.provider.name,
+        provider_verified: providerVerified,
+        suite_license: suite.source.license_status,
       };
       await this.deps.submissions.save(record);
+      try {
+        await this.deps.onJudged?.(record);
+      } catch (err) {
+        // The submission is stored; statistics can be rebuilt from it (POST /api/me/dsa-analytics/refresh).
+        this.deps.logger.error({ submission: record.id, err: (err as Error).message }, "analytics update failed after judging");
+      }
       this.deps.logger.info({ submission: record.id, question: record.question_id, language: record.language, verdict, passed, total }, "submission judged");
       return toPublic(record);
     });
@@ -210,8 +234,8 @@ export class CodeService {
     const record = await this.deps.submissions.get(id);
     // Unknown and someone else's are indistinguishable.
     if (!record || record.owner_uid !== uid) throw new ApiError("SUBMISSION_NOT_FOUND", `Submission ${id} not found`);
-    const { owner_uid: _o, ...detail } = record;
-    return detail;
+    const { owner_uid: _o, provider: _p, provider_verified: _v, suite_license: _l, ...detail } = record;
+    return { ...detail, analytics_status: record.analytics_status ?? "excluded_unknown_provenance" };
   }
 
   async deleteSubmission(uid: string, id: string): Promise<void> {
@@ -308,6 +332,6 @@ function unavailable(): ApiError {
 }
 
 function toPublic(r: SubmissionRecord): CodeSubmission {
-  const { owner_uid: _o, source: _s, ...rest } = r;
-  return rest;
+  const { owner_uid: _o, source: _s, provider: _p, provider_verified: _v, suite_license: _l, ...rest } = r;
+  return { ...rest, analytics_status: r.analytics_status ?? "excluded_unknown_provenance" };
 }

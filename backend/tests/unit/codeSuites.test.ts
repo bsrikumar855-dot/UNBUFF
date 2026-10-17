@@ -110,6 +110,12 @@ describe("execution configuration", () => {
     expect(loadConfig({ LLM_MODE: "mock" })).toMatchObject({ EXECUTION_PROVIDER: "none", CODE_CPU_TIME_SECONDS: 2, CODE_MEMORY_MB: 128 });
   });
 
+  it("never treats the execution service as verified unless the operator says so", () => {
+    expect(loadConfig({ LLM_MODE: "mock" }).EXECUTION_PROVIDER_VERIFIED).toBe(false);
+    expect(loadConfig({ LLM_MODE: "mock", EXECUTION_PROVIDER_VERIFIED: "true" }).EXECUTION_PROVIDER_VERIFIED).toBe(true);
+    expect(() => loadConfig({ LLM_MODE: "mock", EXECUTION_PROVIDER_VERIFIED: "yes" })).toThrow(/EXECUTION_PROVIDER_VERIFIED/);
+  });
+
   it("requires a valid JUDGE0_URL when judge0 is selected, over https (http only for localhost outside production)", () => {
     const base = { LLM_MODE: "mock", EXECUTION_PROVIDER: "judge0" };
     expect(() => loadConfig(base)).toThrow(/JUDGE0_URL is required/);

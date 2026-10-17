@@ -3,6 +3,7 @@ import cors from "cors";
 import express, { type Express } from "express";
 import helmet from "helmet";
 import type { TokenVerifier } from "./auth/verifier.js";
+import type { AnalyticsService } from "./analytics/service.js";
 import type { CodeService } from "./code/service.js";
 import type { Catalogue } from "./dsa/catalogue.js";
 import type { DsaProgressService } from "./dsa/progressService.js";
@@ -18,6 +19,7 @@ import { healthRouter } from "./routes/health.js";
 import { interrogateRouter } from "./routes/interrogate.js";
 import { reportRouter } from "./routes/report.js";
 import { rolesRouter } from "./routes/roles.js";
+import { analyticsRouter } from "./routes/analytics.js";
 import { codePrivateRouter, codePublicRouter } from "./routes/code.js";
 import { dsaCatalogueRouter, dsaProgressRouter } from "./routes/dsa.js";
 import { sessionsRouter } from "./routes/sessions.js";
@@ -34,6 +36,8 @@ export interface AppDeps {
   dsaProgress: DsaProgressService;
   /** Code execution and judging. Student code only ever runs in the external execution service. */
   code: CodeService;
+  /** DSA analytics and the revision queue (derived from counted judged submissions). */
+  analytics: AnalyticsService;
   llm: LLMProvider;
   logger: Logger;
   demoReportJson: string;
@@ -78,6 +82,7 @@ export function createApp(deps: AppDeps): Express {
   api.use(["/claims", "/interrogate", "/fix-task", "/report", "/sessions", "/me", "/code/run", "/code/submit", "/code/submissions"], requireAuth(deps.verifier));
   api.use(sessionsRouter(deps.service));
   api.use(dsaProgressRouter(deps.dsaProgress));
+  api.use(analyticsRouter(deps.analytics));
   api.use(codePrivateRouter(deps.code, createCodeLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS)));
   api.use(claimsRouter(deps.service, limiters.llm));
   api.use(interrogateRouter(deps.service, limiters.llm));

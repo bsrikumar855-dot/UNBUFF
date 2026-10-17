@@ -27,6 +27,10 @@ import type {
   CodeSubmission,
   CodeSubmissionDetail,
   CodeSubmissionsResponse,
+  DsaAnalyticsResponse,
+  RevisionQueueResponse,
+  RevisionItem,
+  RevisionActionRequest,
 } from "@/types/contract";
 
 /**
@@ -139,6 +143,31 @@ export const api = {
   /** GET /api/questions/:questionId */
   async getQuestion(questionId: string): Promise<QuestionDetailResponse> {
     return apiClient<QuestionDetailResponse>(`/questions/${encodeURIComponent(questionId)}`, { method: "GET" });
+  },
+
+  /** GET /api/me/dsa-analytics: metrics from the student's own counted, judged submissions. */
+  async getDsaAnalytics(weeks = 8): Promise<DsaAnalyticsResponse> {
+    return apiClient<DsaAnalyticsResponse>(`/me/dsa-analytics?weeks=${weeks}`, { method: "GET" });
+  },
+
+  /** POST /api/me/dsa-analytics/refresh: rebuilds the caller's statistics from stored submissions. */
+  async refreshDsaAnalytics(): Promise<DsaAnalyticsResponse> {
+    return apiClient<DsaAnalyticsResponse>("/me/dsa-analytics/refresh", { method: "POST" });
+  },
+
+  /** GET /api/me/dsa-revision */
+  async getRevisionQueue(params: { view?: "due" | "upcoming" | "all"; page?: number; page_size?: number } = {}): Promise<RevisionQueueResponse> {
+    return apiClient<RevisionQueueResponse>(`/me/dsa-revision${queryString(params)}`, { method: "GET" });
+  },
+
+  /** POST /api/me/dsa-revision: add a suggested weak-topic question. */
+  async addRevision(questionId: string): Promise<RevisionItem> {
+    return apiClient<RevisionItem>("/me/dsa-revision", { method: "POST", body: JSON.stringify({ question_id: questionId }) });
+  },
+
+  /** POST /api/me/dsa-revision/:questionId/actions */
+  async revisionAction(questionId: string, body: RevisionActionRequest): Promise<RevisionItem> {
+    return apiClient<RevisionItem>(`/me/dsa-revision/${encodeURIComponent(questionId)}/actions`, { method: "POST", body: JSON.stringify(body) });
   },
 
   /** GET /api/code/languages: only what the execution service really offers. */
