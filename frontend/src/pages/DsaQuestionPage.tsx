@@ -113,6 +113,14 @@ const DsaQuestionPage: React.FC = () => {
               <span className="sr-only">(opens in a new tab)</span>
             </a>
           </p>
+          <p className="mt-3">
+            <Link
+              to={routes.dsaCode(data.question.id)}
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-dark"
+            >
+              Open code workspace
+            </Link>
+          </p>
           <SourceBanner source={data.source} className="mt-6" />
 
           <section aria-labelledby="progress-heading" className="mt-8 rounded-lg border border-line bg-white p-5">

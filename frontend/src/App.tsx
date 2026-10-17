@@ -7,6 +7,7 @@ import type { AuthClient } from "@/auth/types";
 
 import { SessionProvider } from "@/state/SessionContext";
 import { InterrogationProvider } from "@/state/InterrogationContext";
+import { clearDrafts } from "@/lib/drafts";
 import { useInterrogationState, useSessionState } from "@/state/useSession";
 import { LandingPage } from "@/pages/LandingPage";
 import { SetupPage } from "@/pages/SetupPage";
@@ -29,6 +30,7 @@ const SessionsPage = lazy(() => import("@/pages/SessionsPage"));
 const DsaQuestionsPage = lazy(() => import("@/pages/DsaQuestionsPage"));
 const DsaQuestionPage = lazy(() => import("@/pages/DsaQuestionPage"));
 const DsaProgressPage = lazy(() => import("@/pages/DsaProgressPage"));
+const CodeWorkspacePage = lazy(() => import("@/pages/CodeWorkspacePage"));
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   cn(
@@ -44,7 +46,9 @@ const AppNav: React.FC = () => {
   const sid = state.sessionId;
 
   const signOut = async () => {
+    const uid = auth.user?.uid;
     await auth.signOut();
+    if (uid) clearDrafts(uid); // don't leave this account's code in the browser
     // Never leave one student's claims or answers in memory for the next person on this browser.
     dispatch({ type: "CLEAR_SESSION" });
     interrogation.dispatch({ type: "CLEAR_INTERROGATION" });
@@ -119,6 +123,8 @@ export const AppRoutes: React.FC = () => (
       <Route path="/dsa/questions" element={<DsaQuestionsPage />} />
       <Route path="/dsa/companies/:companyId" element={<DsaQuestionsPage />} />
       <Route path="/dsa/questions/:questionId" element={<DsaQuestionPage />} />
+      {/* Anyone can read the exercise; running, submitting and history require sign-in. */}
+      <Route path="/dsa/questions/:questionId/code" element={<CodeWorkspacePage />} />
       <Route element={<RequireAuth />}>
         <Route path="/setup" element={<SetupPage />} />
         <Route path="/ledger" element={<LedgerPage />} />

@@ -19,6 +19,9 @@ export type ErrorCode =
   | "NOT_FOUND"
   | "COMPANY_NOT_FOUND"
   | "QUESTION_NOT_FOUND"
+  | "SUBMISSION_NOT_FOUND"
+  | "EXECUTION_UNAVAILABLE"
+  | "GRADING_UNAVAILABLE"
   | "ROLE_NOT_FOUND"
   | "SESSION_NOT_FOUND"
   | "CLAIM_NOT_FOUND"
@@ -366,6 +369,89 @@ export interface DsaProgressUpdate {
   status?: DsaStatus;
   bookmarked?: boolean;
   notes?: string; // at most 5000 characters
+}
+
+// ---------- Coding workspace (Phase 4) ----------
+export type CodeLanguageId = "python" | "javascript" | "cpp" | "java";
+export type RunStatus = "completed" | "compile_error" | "runtime_error" | "time_limit_exceeded" | "judge_error";
+export type SubmissionVerdict = "accepted" | "wrong_answer" | "compile_error" | "runtime_error" | "time_limit_exceeded" | "judge_error";
+
+/** A language the execution service actually offers. `name` is the provider's own label (with its real version). */
+export interface CodeLanguage {
+  id: CodeLanguageId;
+  name: string;
+  starter_code: string;
+}
+
+export interface CodeLanguagesResponse {
+  languages: CodeLanguage[]; // empty when no execution service is configured or reachable
+  execution_available: boolean;
+}
+
+export interface CodeSample {
+  input: string;
+  expected_output: string;
+}
+
+/** Public part of an exercise. Hidden grading tests never appear here, only how many there are. */
+export interface CodeExerciseResponse {
+  question_id: string;
+  statement: string | null; // only for authored demonstration exercises; real problems are linked, never copied
+  is_demonstration: boolean;
+  samples: CodeSample[];
+  starter_code: Partial<Record<CodeLanguageId, string>>;
+  gradable: boolean; // true only when a validated hidden test suite is configured
+  hidden_test_count: number;
+  test_revision: string | null;
+  limits: { cpu_time_seconds: number; memory_mb: number };
+}
+
+export interface CodeRunRequest {
+  language: CodeLanguageId;
+  source: string;
+  stdin?: string; // custom input
+  question_id?: string; // with sample_index: run one of that exercise's visible samples
+  sample_index?: number;
+}
+
+export interface CodeRunResponse {
+  status: RunStatus;
+  stdout: string;
+  stderr: string;
+  compile_output: string;
+  time_ms: number | null;
+  memory_kb: number | null;
+  sample_passed: boolean | null; // null unless a sample was run
+}
+
+export interface CodeSubmitRequest {
+  question_id: string;
+  language: CodeLanguageId;
+  source: string;
+}
+
+export interface CodeSubmission {
+  id: string;
+  question_id: string;
+  language: CodeLanguageId;
+  verdict: SubmissionVerdict;
+  passed: number; // hidden tests passed
+  total: number; // hidden tests in the suite
+  failed_test: number | null; // 1-based index of the first failing hidden test; its contents are never revealed
+  compile_output: string | null;
+  time_ms: number | null; // slowest test
+  memory_kb: number | null; // largest test
+  test_revision: string;
+  progress_updated: boolean; // true only when this accepted submission marked the question solved
+  created_at: string;
+}
+
+export interface CodeSubmissionDetail extends CodeSubmission {
+  source: string;
+}
+
+export interface CodeSubmissionsResponse {
+  submissions: CodeSubmission[]; // the caller's own, newest first
 }
 
 export interface ApiErrorBody {

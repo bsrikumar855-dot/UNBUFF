@@ -19,6 +19,14 @@ import type {
   DsaProgress,
   DsaProgressListResponse,
   DsaProgressUpdate,
+  CodeLanguagesResponse,
+  CodeExerciseResponse,
+  CodeRunRequest,
+  CodeRunResponse,
+  CodeSubmitRequest,
+  CodeSubmission,
+  CodeSubmissionDetail,
+  CodeSubmissionsResponse,
 } from "@/types/contract";
 
 /**
@@ -131,6 +139,41 @@ export const api = {
   /** GET /api/questions/:questionId */
   async getQuestion(questionId: string): Promise<QuestionDetailResponse> {
     return apiClient<QuestionDetailResponse>(`/questions/${encodeURIComponent(questionId)}`, { method: "GET" });
+  },
+
+  /** GET /api/code/languages: only what the execution service really offers. */
+  async getCodeLanguages(): Promise<CodeLanguagesResponse> {
+    return apiClient<CodeLanguagesResponse>("/code/languages", { method: "GET" });
+  },
+
+  /** GET /api/code/exercises/:questionId: samples and metadata; hidden tests never leave the server. */
+  async getCodeExercise(questionId: string): Promise<CodeExerciseResponse> {
+    return apiClient<CodeExerciseResponse>(`/code/exercises/${encodeURIComponent(questionId)}`, { method: "GET" });
+  },
+
+  /** POST /api/code/run: runs in the isolated service; never changes progress. */
+  async runCode(payload: CodeRunRequest): Promise<CodeRunResponse> {
+    return apiClient<CodeRunResponse>("/code/run", { method: "POST", body: JSON.stringify(payload), timeoutMs: 60_000 });
+  },
+
+  /** POST /api/code/submit: judged against hidden tests on the server. */
+  async submitCode(payload: CodeSubmitRequest): Promise<CodeSubmission> {
+    return apiClient<CodeSubmission>("/code/submit", { method: "POST", body: JSON.stringify(payload), timeoutMs: 120_000 });
+  },
+
+  /** GET /api/code/submissions: the signed-in student's own history. */
+  async getCodeSubmissions(questionId?: string): Promise<CodeSubmissionsResponse> {
+    return apiClient<CodeSubmissionsResponse>(`/code/submissions${questionId ? `?question_id=${encodeURIComponent(questionId)}` : ""}`, { method: "GET" });
+  },
+
+  /** GET /api/code/submissions/:id (includes the source). */
+  async getCodeSubmission(id: string): Promise<CodeSubmissionDetail> {
+    return apiClient<CodeSubmissionDetail>(`/code/submissions/${encodeURIComponent(id)}`, { method: "GET" });
+  },
+
+  /** DELETE /api/code/submissions/:id */
+  async deleteCodeSubmission(id: string): Promise<void> {
+    return apiClient<void>(`/code/submissions/${encodeURIComponent(id)}`, { method: "DELETE" });
   },
 
   /** GET /api/me/dsa-progress: the signed-in student's own records. */

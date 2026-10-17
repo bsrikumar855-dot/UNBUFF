@@ -5,6 +5,9 @@ import type { ApiErrorBody } from "../types.js";
 export interface RateLimitOptions {
   globalPerMinute: number;
   llmPerMinute: number;
+  /** Per signed-in user (not per IP). Defaults apply when omitted. */
+  codeRunPerMinute?: number;
+  codeSubmitPerMinute?: number;
 }
 
 export const DEFAULT_RATE_LIMITS: RateLimitOptions = { globalPerMinute: 300, llmPerMinute: 40 };
@@ -21,6 +24,23 @@ function limiter(limit: number): RequestHandler {
     legacyHeaders: false,
     handler: (_req, res) => void res.status(429).json(body),
   });
+}
+
+/** Limits keyed by the verified uid, so one student cannot burn the shared execution service. Mount after requireAuth. */
+function userLimiter(limit: number): RequestHandler {
+  return rateLimit({
+    windowMs: 60_000,
+    limit,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    keyGenerator: (_req, res) => `uid:${String(res.locals.uid)}`,
+    validate: { keyGeneratorIpFallback: false },
+    handler: (_req, res) => void res.status(429).json(body),
+  });
+}
+
+export function createCodeLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
+  return { run: userLimiter(opts.codeRunPerMinute ?? 20), submit: userLimiter(opts.codeSubmitPerMinute ?? 8) };
 }
 
 /** Global limiter for all routes, plus a tighter one for routes that call the LLM (cost control). */

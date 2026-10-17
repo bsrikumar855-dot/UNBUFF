@@ -12,6 +12,7 @@ export const routes = {
   dsa: "/dsa",
   dsaQuestions: "/dsa/questions",
   dsaProgress: "/dsa/progress",
+  dsaCode: (questionId: string) => `/dsa/questions/${encodeURIComponent(questionId)}/code`,
   dsaCompany: (companyId: string) => `/dsa/companies/${encodeURIComponent(companyId)}`,
   dsaQuestion: (questionId: string) => `/dsa/questions/${encodeURIComponent(questionId)}`,
   report: (sessionId: string) => `/report/${encodeURIComponent(sessionId)}`,

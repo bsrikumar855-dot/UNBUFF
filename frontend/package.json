@@ -12,9 +12,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "clsx": "^2.1.1",
     "firebase": "^13.0.0",
     "lucide-react": "^0.468.0",
+    "monaco-editor": "^0.57.0",
     "pdfjs-dist": "^6.3.289",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -45,6 +47,7 @@
     "vitest": "^2.1.8"
   },
   "overrides": {
-    "@grpc/grpc-js": "~1.13.6"
+    "@grpc/grpc-js": "~1.13.6",
+    "dompurify": "~3.4.16"
   }
 }

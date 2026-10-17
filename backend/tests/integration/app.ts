@@ -6,6 +6,10 @@ import type { TokenVerifier } from "../../src/auth/verifier.js";
 import { MockProvider } from "../../src/llm/mock.js";
 import type { LLMProvider } from "../../src/llm/provider.js";
 import type { RateLimitOptions } from "../../src/middleware/rateLimit.js";
+import { CodeService } from "../../src/code/service.js";
+import { MemorySubmissionStore, type SubmissionStore } from "../../src/code/submissionStore.js";
+import { SuiteRegistry, parseSuiteFile } from "../../src/code/suites.js";
+import { ExecutionError, UnavailableProvider, type ExecutionProvider } from "../../src/code/provider.js";
 import { Catalogue, parseCatalogueFile } from "../../src/dsa/catalogue.js";
 import { DsaProgressService } from "../../src/dsa/progressService.js";
 import { MemoryProgressStore, type ProgressStore } from "../../src/dsa/progressStore.js";
@@ -37,6 +41,11 @@ export function countingProvider(inner: LLMProvider = new MockProvider()) {
 export const fixtureCatalogue = () =>
   new Catalogue(parseCatalogueFile(JSON.parse(readFileSync(join(import.meta.dirname, "..", "..", "data", "dsa", "fixture.json"), "utf8"))));
 
+export const fixtureSuites = () =>
+  new SuiteRegistry(parseSuiteFile(JSON.parse(readFileSync(join(import.meta.dirname, "..", "..", "data", "code", "fixture-suites.json"), "utf8"))));
+
+export { ExecutionError };
+
 /** Test verifier: "test:<uid>" is a valid token; anything else (including "expired") is rejected. */
 export const fakeVerifier: TokenVerifier = {
   async verify(token) {
@@ -55,17 +64,26 @@ export const DEFAULT_TEST_UID = "student-a";
  * 401 behaviour. The wrapper only touches headers; the app under test is unchanged.
  */
 export function testApp(
-  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier } = {},
+  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService } = {},
 ): Express {
   const llm = opts.llm ?? new MockProvider();
   const catalogue = opts.catalogue ?? fixtureCatalogue();
+  const dsaProgress = new DsaProgressService(opts.progressStore ?? new MemoryProgressStore(), () => catalogue);
   const service = new AssessmentService({ store: opts.store ?? new MemoryStore(), llm, roles, logger: silentLogger });
   const app = createApp({
     service,
     roles,
     verifier: opts.verifier ?? fakeVerifier,
     catalogue,
-    dsaProgress: new DsaProgressService(opts.progressStore ?? new MemoryProgressStore(), () => catalogue),
+    dsaProgress,
+    code: opts.code ?? new CodeService({
+      provider: opts.provider ?? new UnavailableProvider(),
+      suites: opts.suites ?? fixtureSuites(),
+      catalogue: () => catalogue,
+      progress: dsaProgress,
+      submissions: opts.submissionStore ?? new MemorySubmissionStore(),
+      logger: silentLogger,
+    }),
     llm,
     logger: silentLogger,
     demoReportJson,

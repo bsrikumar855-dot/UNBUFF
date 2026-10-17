@@ -313,3 +313,10 @@ everything once gcloud is available.
 - **Catalogue = validated JSON file loaded at startup** (like roles), not a second database. Personal progress is separate (`unbluff_dsa_progress`, doc id `<uid>~<questionId>`) so refreshes never touch it.
 - **Catalogue endpoints are public; `/api/me/*` requires the verified token.** Contract updated (§5), including the previously missing Phase 2 `/api/sessions` rows.
 - **Production without `DSA_CATALOGUE_PATH` serves an empty catalogue**, never the fixture.
+
+## Phase 4 — coding workspace
+
+- **Execution only through an adapter to Judge0** (`ExecutionProvider` interface). Language ids are never hard-coded: they are resolved by name from the service's own `GET /languages`. With no provider configured every run/submit answers `503 EXECUTION_UNAVAILABLE`; there is no fake-success mode in the product.
+- **Grading data is server-only** (`CODE_SUITES_PATH`), separate from the public catalogue; responses carry only the hidden-test count and, on failure, the failing test number. The bundled suites are three authored demonstration exercises (`development_fixture`), not real interview questions.
+- **Only an accepted judged submission marks a question solved**; runs are not stored; submissions (with source) are stored per owner and deletable.
+- **Monaco is bundled locally** (no CDN), lazy-loaded, with hover/markdown widgets omitted; `dompurify` is pinned to a patched release via an override.

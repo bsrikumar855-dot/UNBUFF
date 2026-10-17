@@ -32,6 +32,23 @@ export function parseServiceAccount(raw: string): { client_email: string; privat
   return null;
 }
 
+/** Returns why a Judge0 base URL is unacceptable, or null. Only ever read from the environment, never from a request. */
+export function judge0UrlProblem(raw: string | undefined, production: boolean): string | null {
+  if (!raw?.trim()) return "JUDGE0_URL is required when EXECUTION_PROVIDER=judge0";
+  let u: URL;
+  try {
+    u = new URL(raw.trim());
+  } catch {
+    return "JUDGE0_URL must be a valid URL";
+  }
+  if (u.username || u.password || u.search || u.hash) return "JUDGE0_URL must not contain credentials, a query or a fragment";
+  const local = ["localhost", "127.0.0.1", "[::1]"].includes(u.hostname);
+  if (u.protocol !== "https:" && !(u.protocol === "http:" && local && !production)) {
+    return production ? "JUDGE0_URL must use https in production" : "JUDGE0_URL must use https (http is allowed only for localhost outside production)";
+  }
+  return null;
+}
+
 const EnvSchema = z
   .object({
     LLM_MODE: z.enum(["live", "mock"]).default("live"),
@@ -53,6 +70,17 @@ const EnvSchema = z
     GOOGLE_CLOUD_LOCATION: z.string().optional(),
     PORT: z.coerce.number().int().positive().default(8080),
     NODE_ENV: z.string().optional(),
+    /** none: running code is reported as unavailable. judge0: use the Judge0 service at JUDGE0_URL. */
+    EXECUTION_PROVIDER: z.enum(["none", "judge0"]).default("none"),
+    JUDGE0_URL: z.string().optional(),
+    /** Secret. Sent only from the server, in a header. */
+    JUDGE0_AUTH_TOKEN: z.string().optional(),
+    JUDGE0_AUTH_HEADER: z.string().regex(/^[A-Za-z0-9-]{1,60}$/, "must be a plain header name").default("X-Auth-Token"),
+    CODE_CPU_TIME_SECONDS: z.coerce.number().min(0.5).max(15).default(2),
+    CODE_MEMORY_MB: z.coerce.number().min(16).max(512).default(128),
+    CODE_JUDGE_DEADLINE_MS: z.coerce.number().int().min(5_000).max(300_000).default(60_000),
+    /** Server-only hidden test suites (see npm run code:import-suite). Unset: the dev fixture locally, none in production. */
+    CODE_SUITES_PATH: z.string().optional(),
     /** Path to an approved DSA catalogue JSON (see npm run dsa:import). Unset: the dev fixture locally, an empty catalogue in production. */
     DSA_CATALOGUE_PATH: z.string().optional(),
     /** Comma-separated allowed origins. Required (and never "*") when NODE_ENV=production. */
@@ -96,6 +124,10 @@ const EnvSchema = z
       } else if (cors.wildcard) {
         ctx.addIssue({ code: "custom", path: ["CORS_ORIGIN"], message: 'CORS_ORIGIN must not be "*" when NODE_ENV=production' });
       }
+    }
+    if (env.EXECUTION_PROVIDER === "judge0") {
+      const problem = judge0UrlProblem(env.JUDGE0_URL, env.NODE_ENV === "production");
+      if (problem) ctx.addIssue({ code: "custom", path: ["JUDGE0_URL"], message: problem });
     }
     if (env.FIREBASE_SERVICE_ACCOUNT_JSON && !parseServiceAccount(env.FIREBASE_SERVICE_ACCOUNT_JSON)) {
       ctx.addIssue({

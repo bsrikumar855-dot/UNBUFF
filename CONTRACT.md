@@ -48,6 +48,9 @@ backend code decides pass/fail, verdicts, proficiency, readiness, coverage and p
 | 404 | `ROLE_NOT_FOUND` | Unknown `role_id` |
 | 404 | `COMPANY_NOT_FOUND` | Unknown company id |
 | 404 | `QUESTION_NOT_FOUND` | Unknown question id |
+| 404 | `SUBMISSION_NOT_FOUND` | Unknown submission id, or one the caller does not own |
+| 409 | `GRADING_UNAVAILABLE` | The question has no validated hidden test suite, so it cannot be judged |
+| 503 | `EXECUTION_UNAVAILABLE` | No execution service configured, or it is unreachable, timed out or returned an invalid response |
 | 404 | `SESSION_NOT_FOUND` | Unknown `session_id`, or a session the caller does not own |
 | 404 | `CLAIM_NOT_FOUND` | Unknown `claim_id` in that session |
 | 429 | `RATE_LIMITED` | Too many requests; retry later |
@@ -98,6 +101,9 @@ export type ErrorCode =
   | "NOT_FOUND"
   | "COMPANY_NOT_FOUND"
   | "QUESTION_NOT_FOUND"
+  | "SUBMISSION_NOT_FOUND"
+  | "EXECUTION_UNAVAILABLE"
+  | "GRADING_UNAVAILABLE"
   | "ROLE_NOT_FOUND"
   | "SESSION_NOT_FOUND"
   | "CLAIM_NOT_FOUND"
@@ -447,6 +453,89 @@ export interface DsaProgressUpdate {
   notes?: string; // at most 5000 characters
 }
 
+// ---------- Coding workspace (Phase 4) ----------
+export type CodeLanguageId = "python" | "javascript" | "cpp" | "java";
+export type RunStatus = "completed" | "compile_error" | "runtime_error" | "time_limit_exceeded" | "judge_error";
+export type SubmissionVerdict = "accepted" | "wrong_answer" | "compile_error" | "runtime_error" | "time_limit_exceeded" | "judge_error";
+
+/** A language the execution service actually offers. `name` is the provider's own label (with its real version). */
+export interface CodeLanguage {
+  id: CodeLanguageId;
+  name: string;
+  starter_code: string;
+}
+
+export interface CodeLanguagesResponse {
+  languages: CodeLanguage[]; // empty when no execution service is configured or reachable
+  execution_available: boolean;
+}
+
+export interface CodeSample {
+  input: string;
+  expected_output: string;
+}
+
+/** Public part of an exercise. Hidden grading tests never appear here, only how many there are. */
+export interface CodeExerciseResponse {
+  question_id: string;
+  statement: string | null; // only for authored demonstration exercises; real problems are linked, never copied
+  is_demonstration: boolean;
+  samples: CodeSample[];
+  starter_code: Partial<Record<CodeLanguageId, string>>;
+  gradable: boolean; // true only when a validated hidden test suite is configured
+  hidden_test_count: number;
+  test_revision: string | null;
+  limits: { cpu_time_seconds: number; memory_mb: number };
+}
+
+export interface CodeRunRequest {
+  language: CodeLanguageId;
+  source: string;
+  stdin?: string; // custom input
+  question_id?: string; // with sample_index: run one of that exercise's visible samples
+  sample_index?: number;
+}
+
+export interface CodeRunResponse {
+  status: RunStatus;
+  stdout: string;
+  stderr: string;
+  compile_output: string;
+  time_ms: number | null;
+  memory_kb: number | null;
+  sample_passed: boolean | null; // null unless a sample was run
+}
+
+export interface CodeSubmitRequest {
+  question_id: string;
+  language: CodeLanguageId;
+  source: string;
+}
+
+export interface CodeSubmission {
+  id: string;
+  question_id: string;
+  language: CodeLanguageId;
+  verdict: SubmissionVerdict;
+  passed: number; // hidden tests passed
+  total: number; // hidden tests in the suite
+  failed_test: number | null; // 1-based index of the first failing hidden test; its contents are never revealed
+  compile_output: string | null;
+  time_ms: number | null; // slowest test
+  memory_kb: number | null; // largest test
+  test_revision: string;
+  progress_updated: boolean; // true only when this accepted submission marked the question solved
+  created_at: string;
+}
+
+export interface CodeSubmissionDetail extends CodeSubmission {
+  source: string;
+}
+
+export interface CodeSubmissionsResponse {
+  submissions: CodeSubmission[]; // the caller's own, newest first
+}
+
 export interface ApiErrorBody {
   error: { code: ErrorCode; message: string };
 }
@@ -495,6 +584,26 @@ Personal progress (**requires a token**; the owner is always the verified uid, n
 | DELETE | `/api/me/dsa-progress/:questionId` | — | `204 No Content` |
 
 Progress records are independent of the catalogue: a catalogue refresh never changes or deletes them, and a record whose question has since left the catalogue is still returned by the list.
+
+### Coding workspace *(Phase 4)*
+
+Code runs only in an isolated execution service (Judge0) behind a server-side adapter; it never runs in the API process, and the browser never talks to the provider or sees its credentials. Which languages exist comes from the service itself (`GET /languages`), not from hard-coded ids.
+
+| Method | Path | Auth | Body / query | 200 response |
+|---|---|---|---|---|
+| GET | `/api/code/languages` | public | | `CodeLanguagesResponse` |
+| GET | `/api/code/exercises/:questionId` | public | | `CodeExerciseResponse` (public data only) |
+| POST | `/api/code/run` | **token** | `CodeRunRequest` | `CodeRunResponse` |
+| POST | `/api/code/submit` | **token** | `CodeSubmitRequest` | `CodeSubmission` |
+| GET | `/api/code/submissions` | **token** | `question_id` (optional) | `CodeSubmissionsResponse` |
+| GET | `/api/code/submissions/:submissionId` | **token** | | `CodeSubmissionDetail` |
+| DELETE | `/api/code/submissions/:submissionId` | **token** | | `204 No Content` |
+
+- **Run** executes the source against custom `stdin`, or against one of a question's visible samples (`question_id` + `sample_index`; then `sample_passed` says whether the output matched). Running never changes progress and is not stored.
+- **Submit** grades against the question's hidden test suite on the server. If the question has no validated suite it returns `409 GRADING_UNAVAILABLE`; nothing is judged and nothing is recorded. Each submission is stored (including the source, so the history can show it) under the caller's uid. An `accepted` verdict (every hidden test passed) is the only thing that marks the DSA question `solved`; other verdicts never change progress.
+- Hidden test inputs and expected outputs are never returned. A failing submission reveals only which test number failed.
+- Limits: source at most 50,000 bytes, `stdin` at most 20,000 bytes. Execution time and memory limits are enforced by the execution service. `run` and `submit` are rate limited per user; a user has at most one judging job in flight (`429 RATE_LIMITED`).
+- `503 EXECUTION_UNAVAILABLE`: no execution service is configured, it is unreachable, timed out or returned something invalid. `404 SUBMISSION_NOT_FOUND` covers unknown ids and other users' submissions alike.
 
 ### `POST /api/claims/extract`
 - *(added)* Optional `mode`: `"prepare"` (teach as you go) or `"defense"` (default, interview simulation). Stored on the session and echoed as `ClaimsResponse.mode` / `Report.mode`.
