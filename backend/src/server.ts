@@ -5,6 +5,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createApp } from "./app.js";
 import { FirebaseTokenVerifier } from "./auth/verifier.js";
+import { FirestoreLabStore, MemoryLabStore, type LabStore } from "./graphqllab/store.js";
+import { LabService } from "./graphqllab/service.js";
 import { GithubGraphQL } from "./github/client.js";
 import { GithubOAuth } from "./github/oauth.js";
 import { GithubService } from "./github/service.js";
@@ -57,8 +59,8 @@ function createProvider(config: Config, logger: ReturnType<typeof createLogger>)
   });
 }
 
-function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore; github: GithubStore } {
-  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore(), mentor: new MemoryMentorStore(), github: new MemoryGithubStore() };
+function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore; github: GithubStore; lab: LabStore } {
+  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore(), mentor: new MemoryMentorStore(), github: new MemoryGithubStore(), lab: new MemoryLabStore() };
   const account = config.FIREBASE_SERVICE_ACCOUNT_JSON ? parseServiceAccount(config.FIREBASE_SERVICE_ACCOUNT_JSON) : null;
   const projectId = config.GOOGLE_CLOUD_PROJECT ?? account?.project_id ?? config.FIREBASE_PROJECT_ID;
   // Without a service-account secret, Application Default Credentials apply (Cloud Run identity, gcloud login, emulator).
@@ -67,7 +69,7 @@ function createStores(config: Config): { sessions: SessionStore; progress: Progr
     ignoreUndefinedProperties: true,
     ...(account ? { credentials: { client_email: account.client_email, private_key: account.private_key } } : {}),
   });
-  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db), mentor: new FirestoreMentorStore(undefined, db), github: new FirestoreGithubStore(db) };
+  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db), mentor: new FirestoreMentorStore(undefined, db), github: new FirestoreGithubStore(db), lab: new FirestoreLabStore(db) };
 }
 
 /**
@@ -164,6 +166,7 @@ function main(): void {
     github,
     retention: { conversationDays: config.MENTOR_CONVERSATION_RETENTION_DAYS, summaryDays: config.MENTOR_SUMMARY_RETENTION_DAYS, learningDays: config.MENTOR_LEARNING_RETENTION_DAYS },
   });
+  const lab = new LabService({ store: stores.lab, mentor, logger });
   const code = new CodeService({
     provider: createExecutionProvider(config, logger),
     suites: loadSuites(config, root, logger),
@@ -192,6 +195,7 @@ function main(): void {
     analytics,
     mentor,
     github,
+    lab,
     llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
   const server = app.listen(config.PORT, "0.0.0.0", (err?: Error) => {
     if (err) {

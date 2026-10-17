@@ -354,3 +354,15 @@ everything once gcloud is available.
 - **Checklist states only what was observed**: "unknown" when GitHub did not return enough, never "missing". README text is pattern-matched, never executed, and never sent to the model.
 - **Mentor gets a minimised summary only for GitHub or project questions**: counts, repository names, languages, dates and checklist flags, no descriptions or file text. GitHub activity never feeds DSA analytics.
 - **Not verified against real GitHub or a real Firebase project**: see docs/phase-7-github-insights.md.
+
+## Phase 8 — GraphQL Learning Lab
+
+- **One new dependency, `graphql` 16 (graphql-js).** Nothing GraphQL-capable existed. Version 16 was chosen over 17 because the backend declares Node >= 20 and 16 is the long-established stable line; `npm audit --omit=dev` stays at 0.
+- **A closed training API, not a proxy.** A fixed invented dataset (campus placement hub), an SDL schema and deterministic resolvers. Students send only a document and variables; no URL, header, token or code is accepted anywhere. Parsing, validation, depth/field/size/time limits and result-size limits run before and around execution; unexpected exceptions are never shown.
+- **Per-student mutable state.** Each student's applications live in their own record, serialised per student; grading runs on scratch copies of the starting data and never touches real state. If state cannot be loaded the playground degrades to read-only instead of failing.
+- **Grading executes, it does not string-match.** Query and mutation exercises are validated, executed (with hidden variable sets) and compared with a trusted reference by response and resulting data, plus structural rules (aliases, fragments, variables) on the parsed document. References, answer keys and rubrics exist only in server code; hints are served one at a time. Written answers use a deterministic rubric (no model decides a pass).
+- **Completion only from a passing check; idempotent.** Attempts are keyed by a client id, counted once, and a pass is never undone. Prerequisites are recommended, not enforced.
+- **The same Phase 6 mentor, minimal context.** The Lab sends the real schema excerpt, the student's query and the *server-run* result; the mentor never receives the reference, hidden checks or hints, so it cannot leak them. A learning memory is saved only through the existing evidence-quote guard from the student's own typed question.
+- **Monaco reused, no second editor library.** A small GraphQL tokenizer was registered in the existing build. Autocomplete popups were not added (they would pull in Monaco's markdown renderer, which that build deliberately excludes); the schema reference with insert buttons, built from the real schema, replaces them.
+- **Separate from DSA analytics and readiness.** Lab metrics have their own definitions and are not combined with anything; the cross-module readiness orchestrator was not built.
+- **Not verified against a live model, live Firestore or real students**: see docs/phase-8-graphql-lab.md.

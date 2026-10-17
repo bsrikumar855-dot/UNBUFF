@@ -35,6 +35,9 @@ const DsaAnalyticsPage = lazy(() => import("@/pages/DsaAnalyticsPage"));
 const DsaRevisionPage = lazy(() => import("@/pages/DsaRevisionPage"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
 const GithubInsightsPage = lazy(() => import("@/pages/GithubInsightsPage"));
+const GraphqlLabPage = lazy(() => import("@/pages/GraphqlLabPage"));
+const GraphqlLabModulePage = lazy(() => import("@/pages/GraphqlLabModulePage"));
+const GraphqlPlaygroundPage = lazy(() => import("@/pages/GraphqlPlaygroundPage"));
 const MentorPage = lazy(() => import("@/pages/MentorPage"));
 const MentorMemoryPage = lazy(() => import("@/pages/MentorMemoryPage"));
 
@@ -91,6 +94,9 @@ const AppNav: React.FC = () => {
         <>
           <NavLink to={routes.mentor()} className={navClass}>
             AI Mentor
+          </NavLink>
+          <NavLink to={routes.graphqlLab} className={navClass}>
+            GraphQL Lab
           </NavLink>
           <NavLink to={routes.github} className={navClass}>
             GitHub
@@ -153,6 +159,9 @@ export const AppRoutes: React.FC = () => (
         <Route path="/mentor/memory" element={<MentorMemoryPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/github" element={<GithubInsightsPage />} />
+        <Route path="/graphql-lab" element={<GraphqlLabPage />} />
+        <Route path="/graphql-lab/playground" element={<GraphqlPlaygroundPage />} />
+        <Route path="/graphql-lab/modules/:moduleId" element={<GraphqlLabModulePage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

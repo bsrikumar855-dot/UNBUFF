@@ -7,6 +7,8 @@ import { MockProvider } from "../../src/llm/mock.js";
 import type { LLMProvider } from "../../src/llm/provider.js";
 import type { RateLimitOptions } from "../../src/middleware/rateLimit.js";
 import { GithubGraphQL } from "../../src/github/client.js";
+import { LabService } from "../../src/graphqllab/service.js";
+import { MemoryLabStore, type LabStore } from "../../src/graphqllab/store.js";
 import { GithubService } from "../../src/github/service.js";
 import { MemoryGithubStore } from "../../src/github/store.js";
 import { MentorService } from "../../src/mentor/service.js";
@@ -71,7 +73,7 @@ export const DEFAULT_TEST_UID = "student-a";
  * 401 behaviour. The wrapper only touches headers; the app under test is unchanged.
  */
 export function testApp(
-  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService } = {},
+  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService; lab?: LabService; labStore?: LabStore } = {},
 ): Express {
   const llm = opts.llm ?? new MockProvider();
   const catalogue = opts.catalogue ?? fixtureCatalogue();
@@ -109,6 +111,7 @@ export function testApp(
       logger: silentLogger,
       github,
     });
+  const lab = opts.lab ?? new LabService({ store: opts.labStore ?? new MemoryLabStore(), mentor, logger: silentLogger });
   const service = new AssessmentService({ store: sessionStore, llm, roles, logger: silentLogger });
   const app = createApp({
     service,
@@ -128,6 +131,7 @@ export function testApp(
     analytics,
     mentor,
     github,
+    lab,
     llm,
     logger: silentLogger,
     demoReportJson,

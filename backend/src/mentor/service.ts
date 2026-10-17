@@ -41,7 +41,7 @@ import {
   type Draft,
   type RetentionConfig,
 } from "./memories.js";
-import { chatPrompt, CONTEXT_LIMITS, summaryPrompt, SUMMARY_SYSTEM, systemPrompt } from "./prompts.js";
+import { chatPrompt, CONTEXT_LIMITS, labSystemPrompt, summaryPrompt, SUMMARY_SYSTEM, systemPrompt } from "./prompts.js";
 import { selectMemories, topicsIn } from "./retrieve.js";
 import type { ConversationRecord, MemoryRecord, MentorStore, StoredMessage } from "./store.js";
 
@@ -248,6 +248,65 @@ export class MentorService {
       mock: llm.mode === "mock",
       ...(githubMeta ? { github_context: githubMeta } : {}),
     };
+  }
+
+  // ---------------- GraphQL Learning Lab tutoring ----------------
+
+  /**
+   * One-shot contextual help for the GraphQL Lab, answered by the same mentor, model, memory store and safeguards as chat.
+   * `lab` is context prepared by the Lab from the real schema and a real execution result; it is untrusted data to the model.
+   * Nothing is stored as a conversation. A memory is saved only when the student's own typed question states a supported fact.
+   */
+  async tutorHelp(uid: string, input: { lab: string; message: string; topics: string[] }): Promise<{ reply: string; mock: boolean; memory_saved: MentorSavedMemory[] }> {
+    if (this.inFlight.has(uid)) throw new ApiError("RATE_LIMITED", "Your previous mentor request is still being answered. Wait for it to finish.");
+    this.inFlight.add(uid);
+    try {
+      return await this.serialize(uid, () => this.tutorOnce(uid, input));
+    } finally {
+      this.inFlight.delete(uid);
+    }
+  }
+
+  private async tutorOnce(uid: string, input: { lab: string; message: string; topics: string[] }) {
+    const { store, llm, logger } = this.deps;
+    const now = this.now();
+    const message = stripControl(input.message).trim().slice(0, 500);
+    let allMemories: MemoryRecord[] = [];
+    let memoryReadFailed = false;
+    try {
+      allMemories = (await store.listMemories(uid, MAX_MEMORY_SCAN)).filter((m) => !isExpired(m.expires_at, now));
+    } catch (err) {
+      memoryReadFailed = true;
+      logger.warn({ err: (err as Error).message }, "mentor: memory could not be read for lab help; answering without it");
+    }
+    const selected = selectMemories(allMemories, { topics: input.topics, now });
+    const profile = profileFromMemories(allMemories).profile;
+    let out;
+    try {
+      out = await llm.mentorChat({
+        system: labSystemPrompt(),
+        prompt: chatPrompt({ activity: "(not used in the GraphQL Lab)", profile: nonEmptyProfileJson(profile), memories: selected, recent: [], message: message || "(the student did not type a question; use the action named in <graphql_lab>)", lab: input.lab }),
+      });
+    } catch (err) {
+      if (err instanceof LlmError) throw new ApiError(err.code === "LLM_TIMEOUT" ? "LLM_TIMEOUT" : "LLM_INVALID_OUTPUT", "The mentor could not answer right now. The playground and exercises still work.");
+      throw err;
+    }
+    const saved: MentorSavedMemory[] = [];
+    if (!memoryReadFailed && message !== "" && out.memory_updates.length > 0) {
+      const { drafts } = validateProposals(out.memory_updates, message, this.deps.catalogue());
+      if (drafts.length > 0) {
+        const result = applyDrafts(uid, drafts, allMemories, null, now.toISOString(), this.retention);
+        try {
+          for (const m of result.saved) await store.saveMemory(m);
+          for (const id of result.removed) await store.deleteMemory(id);
+          for (const m of result.saved) saved.push({ id: m.id, type: m.type, content: m.content, provenance: m.provenance });
+        } catch (err) {
+          saved.length = 0;
+          logger.error({ err: (err as Error).message }, "mentor: memory could not be saved for lab help");
+        }
+      }
+    }
+    return { reply: stripControl(out.reply).trim().slice(0, 6000), mock: llm.mode === "mock", memory_saved: saved };
   }
 
   // ---------------- conversations ----------------

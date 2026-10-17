@@ -11,6 +11,9 @@ export interface RateLimitOptions {
   mentorChatPerMinute?: number;
   githubConnectPerMinute?: number;
   githubSyncPerMinute?: number;
+  labExecutePerMinute?: number;
+  labSubmitPerMinute?: number;
+  labHelpPerMinute?: number;
 }
 
 export const DEFAULT_RATE_LIMITS: RateLimitOptions = { globalPerMinute: 300, llmPerMinute: 40 };
@@ -49,6 +52,11 @@ export function createCodeLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS)
 /** Per-user limit for AI mentor messages (each one is a model call). Mount after requireAuth. */
 export function createMentorLimiter(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
   return userLimiter(opts.mentorChatPerMinute ?? 12);
+}
+
+/** GraphQL Learning Lab: running queries, grading submissions and mentor help, each per student. Mount after requireAuth. */
+export function createLabLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
+  return { execute: userLimiter(opts.labExecutePerMinute ?? 60), submit: userLimiter(opts.labSubmitPerMinute ?? 30), help: userLimiter(opts.labHelpPerMinute ?? 12) };
 }
 
 /** GitHub: connecting/disconnecting and manual syncs are per user; the OAuth callback (no token) is per IP. */

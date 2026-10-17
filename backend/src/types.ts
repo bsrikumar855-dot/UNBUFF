@@ -28,6 +28,9 @@ export type ErrorCode =
   | "GITHUB_REAUTH_REQUIRED"
   | "GITHUB_RATE_LIMITED"
   | "GITHUB_UNAVAILABLE"
+  | "MODULE_NOT_FOUND"
+  | "EXERCISE_NOT_FOUND"
+  | "GRAPHQL_LAB_UNAVAILABLE"
   | "EXECUTION_UNAVAILABLE"
   | "GRADING_UNAVAILABLE"
   | "ROLE_NOT_FOUND"
@@ -905,6 +908,236 @@ export interface GithubSyncResponse {
   connection: GithubConnection;
   unavailable_sections: GithubSection[]; // sections GitHub did not return this time (older data, if any, is kept and labelled)
   rate_limit_remaining: number | null;
+}
+
+// ---------- GraphQL Learning Lab (Phase 8) ----------
+// An educational module. Students run queries against a small, controlled TRAINING API (never an external server).
+// Results here are separate from DSA analytics and from any readiness score.
+export type LabDifficulty = "beginner" | "intermediate" | "advanced";
+export type LabExerciseType = "query" | "mutation" | "multiple_choice" | "schema_reading" | "explanation";
+export type LabModuleStatus = "not_started" | "in_progress" | "completed";
+export type LabErrorCategory = "syntax" | "validation" | "variables" | "execution" | "authorization" | "limits";
+export type LabPhase = "ok" | "syntax" | "validation" | "variables" | "execution";
+export type LabHelpAction = "explain_query" | "explain_error" | "hint" | "explain_schema" | "practice_question" | "explain_result";
+
+export type LabBlock =
+  | { kind: "p"; text: string }
+  | { kind: "list"; items: string[] }
+  | { kind: "code"; code: string; language: "graphql" | "json" }
+  | { kind: "try"; label: string; query: string; variables?: Record<string, unknown> }; // a runnable example
+
+export interface LabError {
+  message: string;
+  locations?: { line: number; column: number }[];
+  path?: (string | number)[];
+  category: LabErrorCategory;
+  code: string | null;
+}
+export interface LabResult {
+  data?: unknown;
+  errors?: LabError[];
+}
+export interface LabExecuteRequest {
+  query: string; // max 4000 characters
+  variables?: Record<string, unknown> | null; // max 2000 characters as JSON
+  operation_name?: string;
+}
+export interface LabExecuteResponse {
+  phase: LabPhase; // where it stopped: syntax, validation, variables (coercion) or execution; "ok" when it ran
+  operation: "query" | "mutation" | "subscription" | null;
+  result: LabResult; // a standard GraphQL response ({ data, errors })
+  state_changed: boolean; // true when a mutation changed YOUR training data
+  training_data: "per_student" | "read_only"; // read_only: storage is unavailable, so mutations are refused
+}
+
+export interface LabModuleSummary {
+  id: string;
+  order: number;
+  title: string;
+  summary: string;
+  difficulty: LabDifficulty;
+  prerequisites: string[]; // module ids; recommended first, not enforced
+  recommended_first: string[]; // the prerequisites this student has not completed yet
+  lesson_count: number;
+  exercise_count: number;
+  status: LabModuleStatus;
+  lessons_completed: number;
+  exercises_passed: number;
+}
+export interface LabModulesResponse {
+  modules: LabModuleSummary[];
+  current_module_id: string | null;
+}
+export interface LabLesson {
+  id: string;
+  title: string;
+  objectives: string[];
+  blocks: LabBlock[];
+  exercise_ids: string[];
+  completed: boolean;
+}
+export interface LabChoiceOption {
+  id: string;
+  text: string;
+}
+export interface LabExerciseStudent {
+  attempts: number;
+  passed: boolean;
+  passed_at: string | null;
+  hints_used: number;
+  last_attempt_at: string | null;
+}
+export interface LabExercise {
+  id: string;
+  module_id: string;
+  lesson_id: string;
+  order: number;
+  title: string;
+  type: LabExerciseType;
+  difficulty: LabDifficulty;
+  description: string;
+  objectives: string[];
+  concepts: string[];
+  requirements: string[]; // what the solution must do; each is checked by the grader
+  starter_query: string | null;
+  starter_variables: Record<string, unknown> | null;
+  example: { query: string; variables?: Record<string, unknown> } | null;
+  options: LabChoiceOption[] | null; // choice and schema-reading questions
+  multi_select: boolean;
+  schema_excerpt: string | null;
+  hints_total: number;
+  max_answer_chars: number | null; // explanation questions
+  grading: string; // how it is graded, in words
+  version: number;
+  provenance: "authored_original";
+  student: LabExerciseStudent;
+}
+export interface LabModuleDetail {
+  module: LabModuleSummary;
+  objectives: string[];
+  completion_criteria: string;
+  lessons: LabLesson[];
+  exercises: LabExercise[];
+}
+export interface LabExercisesResponse {
+  exercises: LabExercise[];
+}
+
+export interface LabSchemaArg {
+  name: string;
+  type: string;
+  default: string | null;
+  description: string | null;
+}
+export interface LabSchemaField {
+  name: string;
+  type: string;
+  description: string | null;
+  args: LabSchemaArg[];
+}
+export interface LabSchemaType {
+  name: string;
+  kind: "OBJECT" | "INPUT_OBJECT" | "ENUM" | "UNION" | "INTERFACE" | "SCALAR";
+  description: string | null;
+  fields: LabSchemaField[]; // object types and input objects
+  enum_values: { name: string; description: string | null }[];
+  possible_types: string[]; // unions
+}
+export interface LabTrainingSchemaResponse {
+  sdl: string; // the actual schema the server executes against
+  types: LabSchemaType[]; // derived from that same schema
+  query_type: string;
+  mutation_type: string | null;
+  limits: { max_query_chars: number; max_variables_chars: number; max_depth: number; max_fields: number; max_result_bytes: number };
+}
+
+export interface LabSubmitRequest {
+  client_attempt_id: string; // 8 to 64 letters, digits, - or _; a retry with the same id returns the stored result
+  query?: string;
+  variables?: Record<string, unknown> | null;
+  answer?: string | string[]; // choice ids, or the written explanation
+}
+export interface LabCheck {
+  label: string;
+  passed: boolean;
+}
+export interface LabAttempt {
+  id: string;
+  exercise_id: string;
+  at: string;
+  passed: boolean;
+  query: string | null;
+  variables: Record<string, unknown> | null;
+  answer: string | string[] | null;
+  feedback: string;
+  checks: LabCheck[];
+}
+export interface LabSubmitResponse {
+  attempt: LabAttempt;
+  outcome: "passed" | "needs_improvement";
+  feedback: string;
+  checks: LabCheck[];
+  hint: string | null; // a nudge when it did not pass (never the answer)
+  explanation: string | null; // shown only after passing
+  lesson: { module_id: string; lesson_id: string; title: string };
+  newly_completed: { lesson: boolean; module: boolean };
+  exercise: LabExerciseStudent;
+  execution: LabExecuteResponse | null; // the result of running the student's own query, when there was one
+  replayed: boolean; // true when this was a retry of an earlier submission
+}
+export interface LabAttemptsResponse {
+  attempts: LabAttempt[];
+}
+export interface LabHintResponse {
+  hint: string;
+  hint_number: number;
+  hints_total: number;
+}
+
+export interface LabModuleProgress {
+  module_id: string;
+  title: string;
+  status: LabModuleStatus;
+  lessons_completed: number;
+  lessons_total: number;
+  exercises_passed: number;
+  exercises_total: number;
+}
+export interface LabProgressResponse {
+  has_started: boolean;
+  totals: {
+    modules_started: number;
+    modules_completed: number;
+    modules_total: number;
+    lessons_completed: number;
+    lessons_total: number;
+    exercises_attempted: number;
+    exercises_passed: number;
+    exercises_total: number;
+    attempts: number;
+  };
+  current_module_id: string | null;
+  modules: LabModuleProgress[];
+  recent_activity: { at: string; kind: "passed" | "attempt" | "hint"; exercise_id: string; exercise_title: string; module_id: string }[];
+  needs_another_attempt: { concept: string; exercise_ids: string[] }[]; // concepts of exercises attempted but not yet passed
+  definitions: { metric: string; meaning: string }[];
+}
+
+export interface LabHelpRequest {
+  action: LabHelpAction;
+  exercise_id?: string;
+  query?: string;
+  variables?: Record<string, unknown> | null;
+  message?: string; // the student's own question, max 500 characters
+}
+export interface LabHelpResponse {
+  reply: string;
+  mock: boolean; // true when the built-in mock mentor answered
+  query_status: { phase: LabPhase; error_count: number } | null; // what actually happened when the server ran the student's query
+  memory_saved: MentorSavedMemory[];
+}
+export interface LabResetResponse {
+  application_count: number;
 }
 
 export interface ApiErrorBody {
