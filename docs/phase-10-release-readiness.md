@@ -218,3 +218,51 @@ There are no known critical code defects. Blockers 1 to 3 need external configur
 * New: `backend/tests/integration/e2eJourney.test.ts`, `routeAudit.test.ts`, `backend/tests/github/urlSafety.test.ts`, `backend/scripts/live_ai_check.ts`, `firestore.rules`, this report.
 * Modified: `backend/scripts/smoke.sh` (sign-in support), `backend/tests/placement/harness.ts` (optional real code service with a stand-in provider), `backend/src/config.ts` (production refuses emulator addresses), `backend/tests/unit/authConfig.test.ts`, `backend/src/github/queries.ts` (link check), `firebase.json` (rules entry).
 * Not done, by instruction: commit, push, deploy, cloud resource creation, production data changes, setting `EXECUTION_PROVIDER_VERIFIED`.
+
+---
+
+# Phase 10.1: Live integration verification (2026-10-17)
+
+Starting point: HEAD `b9ac2f3`, clean working tree, 11 commits ahead of `origin/main`. Nothing was committed, pushed, deployed or created; `EXECUTION_PROVIDER_VERIFIED` was not touched. No secret value was printed.
+
+## What is actually configured
+
+Checked by variable **name and whether it has a value** only (in `backend/.env`, `frontend/.env` and the process environment), plus the Firebase CLI login state, Google Application Default Credentials file, and a local Judge0 port probe.
+
+| Service | Configured? | Evidence |
+|---|---|---|
+| AI model (Gemini) | **Yes** | `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL` have values (`LLM_MODE=mock` in `.env`; the live check builds the real provider directly) |
+| Judge0 | **No** | no `EXECUTION_PROVIDER`, `JUDGE0_URL` or token; nothing listening on 127.0.0.1:2358; Docker not installed |
+| Firebase Auth / Firestore | **No** | no `FIREBASE_*` variable; Firebase CLI: "No authorized accounts"; no Application Default Credentials file; frontend has no `VITE_FIREBASE_*`; `STORE=memory` |
+| GitHub OAuth | **No** | no `GITHUB_*` variable |
+
+An example file listing a name was not treated as configuration.
+
+## Results
+
+| Area | Status | Detail |
+|---|---|---|
+| Judge0 (Python, C++, Java, JavaScript, error handling, genuine accepted submission) | **BLOCKED** | `npm run smoke:judge0` refused to run (exit 2): `EXECUTION_PROVIDER` must be `judge0` and `JUDGE0_URL` is required. No request was sent. Provider flag left unverified. |
+| Firebase Auth, token verification, Firestore, isolation, persistence, index | **BLOCKED** (live). EMULATOR PASS from Phase 10 (34 tests) | no project, credentials or login. Nothing created or deployed. |
+| AI mentor, live model | **PASS** | `npx tsx scripts/live_ai_check.ts`, exit 0, 17/17 checks, model `gemini-3.1-flash-lite`: a real non-empty (752 characters) non-mock reply; memory saved with application-set provenance; retrieved in a separate conversation; second student sees none of it and cannot read the first student's conversation; deletion honoured; prompts and logs contain neither the key nor the message text; timeout and bad key handled. Synthetic data only. |
+| AI mentor, persistence across restarts / real storage | **BLOCKED** | the check uses in-memory storage; durable persistence needs real Firestore |
+| GitHub OAuth callback, state, token exchange, GraphQL, rate limits, disconnect | **BLOCKED** (MOCK PASS from Phase 7/10) | no OAuth app. With no `GITHUB_*` variables the integration stays disconnected; this is covered by the configuration tests. |
+| End-to-end journey | **LOCAL PASS / MOCK PASS only** | cannot be run live: it needs Judge0 (real judged submissions), Firebase (real sign-in and storage) and GitHub. It is not claimed as verified. |
+| Regression after this phase | **LOCAL PASS** | no code changed; backend 54 files / 843 tests passed; frontend 15 files / 199 tests passed |
+
+Commands run: `git status`, `git rev-list --count origin/main..HEAD`, `npx firebase-tools login:list`, a local port probe, `npm run smoke:judge0` (refused), `npx tsx scripts/live_ai_check.ts` (17/17), `npm test` in backend and frontend.
+
+## Genuinely verified so far
+
+* The live Gemini request path, structured output, memory rules, isolation between two students, deletion, failure handling and log hygiene (against the real model, in-memory storage).
+* Everything in the Phase 10 local, emulator and mock results.
+
+## Not verified (operator must act)
+
+Nothing about Judge0, Firebase, GitHub or the full journey has been verified against a real service. Required, in this order, all in **non-production** services (exact steps are in section 9 above):
+
+1. **Judge0:** run
+   `EXECUTION_PROVIDER=judge0 JUDGE0_URL=https://<your-judge0-host> JUDGE0_AUTH_TOKEN=<token> npm run smoke:judge0` from `backend`, read the output for all four languages, then decide yourself whether to set `EXECUTION_PROVIDER_VERIFIED=true`.
+2. **Firebase:** log in (`firebase login`), choose a non-production project, supply `FIREBASE_PROJECT_ID` and credentials and the `VITE_FIREBASE_*` web config; with your authorisation run `firebase deploy --only firestore --project <id>` (index and deny-all rules); `npm run indexes:check`; run with `STORE=firestore`, repeat the journey and restart the server to prove persistence.
+3. **GitHub:** create a non-production OAuth App (no scopes; callback `https://<api-host>/api/github/oauth/callback`), set the four `GITHUB_*` variables, then connect, sync and disconnect with a test account.
+4. Then re-run this phase to turn the BLOCKED rows into PASS and run the full journey live.
