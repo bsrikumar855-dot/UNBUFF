@@ -320,3 +320,89 @@ Service used: Judge0's **public community instance** `https://ce.judge0.com` (no
 | Full live student journey | **Not fully verified** | the counting path above, plus the frontend click-through, were not exercised live |
 
 Caveats: the public instance is rate-limited, shared and outside this project's control; it must not be the production judge. A production release still needs the operator's own Judge0 deployment, its own smoke-test run, and the operator's decision to set the flag.
+
+---
+
+# Phase 10.2: Live browser verification (2026-10-17)
+
+Everything below was run locally against the **non-production** Firebase project (`unbluff-test-babus01-91131`), Judge0's **public community instance** (`https://ce.judge0.com`, no credential), the real Gemini model and the test GitHub OAuth App. Nothing was deployed, committed or pushed in this phase. No secret was printed; logs were scanned for secrets (below).
+
+## Environment used (names only, no values)
+
+* Backend: `npm start` on port 8094 with `STORE=firestore`, `LLM_MODE=live`, `EXECUTION_PROVIDER=judge0`, `JUDGE0_URL` (public instance), the first-party practice pack and suites, `CORS_ORIGIN=http://localhost:5173`, GitHub variables from `backend/.env`. **`EXECUTION_PROVIDER_VERIFIED=true` was set only in the process environment of these test runs**; it is in no file and was never committed. Health reported `llm_mode: live` and `store: firestore`, before and after the restart (no fallback to memory).
+* Frontend: Vite dev server on `127.0.0.1:5173` with `VITE_API_URL` pointing at the backend; the browser used `http://localhost:5173` (same origin as the CORS setting and the GitHub return address).
+* Needed to run: the frontend also requires `VITE_FIREBASE_APP_ID` (a public identifier). It was missing, so the login page said Firebase was not configured. It was added to the git-ignored `frontend/.env`. Port 8080 is held by an unrelated Windows service, so the backend runs on 8094.
+* Test account: one throwaway account created by the operator in the browser (the assistant does not enter passwords or create accounts). Its test data remains in the test project.
+* No Playwright or similar exists in the repository; the built-in browser pane was used.
+
+## 1. Flag-on judged-submission run: PASS
+
+Judge0 smoke (`EXECUTION_PROVIDER=judge0 JUDGE0_URL=https://ce.judge0.com npm run smoke:judge0`): exit 0, `RESULT: PASS` (71 languages; Python, JavaScript, C++ and Java ran and printed the expected output; invalid C++ and Java reported as compile errors).
+
+Flag-on check (sanitised command; the flag is set for this invocation only):
+
+```
+EXECUTION_PROVIDER_VERIFIED=true JUDGE0_URL=https://ce.judge0.com FIREBASE_PROJECT_ID=unbluff-test-babus01-91131 npx tsx scripts/live_judge0_check.ts
+```
+
+* **First run: exit 1, one FAIL (36 passed).** Eligible attempts were 6, expected 7. Cause: the 7th submission was a compile error. Judging stops after the first test on a compile error, so the record said 1 test judged out of 12, and the eligibility rule (every hidden test must have a provider result) refused to count it, although the documented analytics treat compile errors as counted "technical" failures. This is a **real defect found only by the live run**; local tests used synthetic records and never hit it.
+* **Fix** (`backend/src/code/service.ts`): when the first result is a compile error it holds for every test, so the record counts all tests as judged. Nothing else about eligibility changed. Regression test added: `backend/tests/integration/compileCounting.test.ts`.
+* **Second run: exit 0, 37 of 37 checks passed**, including:
+  * two wrong answers (counted failures) created **exactly one** revision item (pending, due now); analytics showed 2 eligible attempts and nothing solved; progress was not marked solved;
+  * the first accepted submission set `progress_updated` and turned the revision item into **spaced review** (`scheduled`, stage 0), not a second item (a clean first-try solve creates none, per the documented rules);
+  * correct Python, JavaScript, C++ and Java solutions each judged **accepted 12/12** in the real sandbox; broken C++ judged `compile_error`;
+  * final analytics: 1 solved, 4 accepted attempts, 7 eligible attempts; solved for this student only; one revision item, no duplicates; student B had none;
+  * hidden inputs and expected outputs never appeared in any response; sample runs are not stored; seven submissions stored for the owner on real Firestore (the composite index is in use);
+  * all test records and both throwaway users were deleted afterwards (verified: 0 left).
+* **Still excluded, but not exercised live (LOCAL PASS only):** demonstration exercises, stand-in or mock providers, and an unverified provider. A real-Judge0 run cannot create those cases; they are covered by the Phase 5 and Phase 10 local tests.
+
+## 2. Browser journey
+
+| Step | Result | Evidence |
+|---|---|---|
+| A. Authentication | **PASS** | signed out, `/placement` redirected to `/login`; after the operator signed in with Firebase the protected page opened; with the API forced to return 401 (by patching `fetch` in the page, not a real token expiry) the app redirected to login with "Your session expired. Please sign in again." |
+| B. Profile and plan | **PASS** | goals saved (Frontend Developer, 60 min, Mon to Fri); plan built from real first-party questions (Balanced Brackets, Pair Count, First Not Less) and GraphQL exercises; a task was postponed and still showed "postponed to 2026-10-20" after a reload and after a backend restart. Tasks were not marked done by hand; one completed automatically from a verified record (step H). |
+| C. DSA editor and live execution | **PASS** | exercise page listed the four live languages; a sample run executed on real Judge0 and is labelled as never changing progress; a wrong answer gave "Wrong answer, 4 of 12 hidden tests passed (first failure: test 2)"; a correct solution gave "Accepted, 12 of 12" and "marked solved"; the browser's network responses held no hidden inputs or outputs (`analytics_status: counted`, `progress_updated: true`); both submissions listed under the signed-in student; analytics page: 1 solved, 1 attempted, 2 counted submissions, 1 accepted, with honest "not enough data" notices; revision page: 1 upcoming item, 0 due, no duplicate |
+| D. Restart persistence on real Firestore | **PASS** | backend stopped and restarted (health showed `store: firestore`); after reloading the frontend the plan (version 1), the postponed task, DSA evidence ("Verified result, 2 judged submissions"), the GraphQL result, mentor conversation history, memories and the GitHub connection were all still there |
+| D. Cross-account isolation in the browser | **Not re-run in the browser** | needs a second signed-in UI account. Isolation was **PASS with two real accounts** in the Phase 10.1 scripts (`live_firebase_check.ts`, `live_judge0_check.ts`). Here only unauthenticated and bad-token requests were checked: both `401 UNAUTHENTICATED` |
+| E. Live mentor with durable memory | **PASS** | real Gemini reply; it said "you have solved 1 question according to our verified records" (matches the real count); two memories saved (a Frontend Developer goal and "finds stacks difficult"); **after the backend restart** a new conversation recalled both from Firestore; deleting the "stacks" note in the UI (with its confirmation step) made a further new conversation say no difficult topic is saved, while the goal was still recalled. **Live model and Firestore-backed memory were tested together.** Cross-user memory rejection: PASS in the Phase 10.1 live scripts, not repeated in the browser. |
+| F. GitHub OAuth | **PASS** | connect started from the frontend; the operator signed in and authorised on github.com (no scopes); the real callback ran (backend log: account connected, 302 to the frontend); sync completed; the page showed the authorised account's contributions and repositories (including this project's own repository with today's push date; 38 public repositories); private activity was shown as a count only; the connection and synced data persisted across the backend restart; disconnect (with confirmation) returned the UI to "Connect GitHub", the backend logged `revoked: true`, and the planner then **removed** the GitHub project task with the stated reason. A real rate-limit exhaustion was not provoked. |
+| G. GraphQL Lab | **PASS** | the valid starter query ran against the training API; an invalid query showed the real validation error ("Cannot query field nonexistentField on type Role", line 1, column 17); the graded multiple-choice exercise passed and the module showed "1 of 4 exercises passed"; the result persisted across reload and restart and appeared on the dashboard as "1 of 55 exercises passed"; the mentor's explanation used the server-run result and schema excerpt and no secrets |
+| H. Integrated dashboard | **PASS** | "First measurement, Stack: Balanced Brackets" shown **done**, completed automatically from the verified record; the DSA Stack area showed "Verified result, 2 judged submissions" with "not enough evidence" for a confident estimate (no invented score); the next GraphQL exercises were scheduled; GraphQL "Developing: 2%, 1 of 55 passed"; GitHub appeared only as context and only while connected; the revision item was upcoming, not due, so no revision task was created |
+
+Observation (low severity, model wording): when asked "Why did you prioritize this?", the live assistant also described the GitHub project task as something it had added, although the planner had already removed that task on disconnect (the plan and its change log are correct). The explanation draws on plan history and can mention superseded tasks as if still current.
+
+## 3. Security checks
+
+* Another user's records: no endpoint accepts a user id; unauthenticated and bad-token requests returned `401 UNAUTHENTICATED` after the restart. Two-account isolation: PASS in the Phase 10.1 live scripts.
+* Backend logs (194 lines across both runs): no Gemini key, GitHub client secret or encryption key; no token or JWT pattern; no submitted source code; no stack traces. (A first version of this scan read empty files because of a path mismatch and was discarded; the result above is from the shell-based re-run.)
+* The served frontend files contained none of the three secret values; the frontend environment holds only `VITE_` names (public configuration).
+* Hidden grading cases: never in any browser response inspected (exercise and submit responses).
+* Student code ran only in Judge0's sandbox, never in the backend process.
+* A disconnected GitHub account produced no fabricated data; the planner removed the dependent task.
+* The restart did not fall back to memory storage (health reported Firestore both times).
+* The backend binds `0.0.0.0` by design (not changed here). On this machine that makes port 8094 reachable from the local network while it runs; use a firewall or bind to localhost for development.
+* Errors seen in the browser were the application's own messages; no stack trace or secret appeared.
+
+## 4. Regression results (after the compile-error fix)
+
+| Command | Result |
+|---|---|
+| backend `npm run lint`, `typecheck`, `build` | exit 0, 0, 0 |
+| backend `npm run test:coverage` | 55 files, **844 tests passed** (843 plus the new regression test); statements 90.08 % |
+| backend `npm run test:emulator` | 9 files, **34 tests passed** (EMULATOR PASS) |
+| frontend `lint`, `typecheck`, `npm test` | 0, 0; 15 files, **199 tests passed** |
+
+## 5. Classification and what remains
+
+| Area | Status |
+|---|---|
+| Flag-on counting path (real Judge0, real Firestore) | **PASS** |
+| Browser journey A to H on live services | **PASS** (two items not repeated in the browser are marked in the table) |
+| Live Gemini mentor with Firestore memory, tested together | **PASS** |
+| GitHub OAuth through the frontend | **PASS** |
+| Demonstration, stand-in and unverified-provider exclusions, live | **LOCAL PASS** only |
+| Second-account isolation through the browser UI | **Not run** (live-script PASS from 10.1) |
+| Real Judge0 rate-limit behaviour, GitHub rate-limit exhaustion, load | **Not run** |
+
+**This does not make the product production-ready.** Remaining release concerns: the public Judge0 instance is shared and not yours, so production needs your own deployment, its own smoke run and your own decision on `EXECUTION_PROVIDER_VERIFIED`; the deployment files (`render.yaml`, `deploy.sh`) still lack the Judge0, GitHub and mentor variables and CI lacks emulator, index and audit steps; the production HTTPS callback and `CORS_ORIGIN` are untested; there is no backup, retention or encryption-key rotation procedure; the `react-router` advisory is open; there is no monitoring or load testing; and the compile-error fix is uncommitted.
