@@ -1,0 +1,1507 @@
+{
+  "session_id": "s_demo",
+  "mode": "prepare",
+  "role": {
+    "id": "frontend_developer",
+    "name": "Frontend Developer"
+  },
+  "generated_at": "2026-09-26T09:09:35.000Z",
+  "readiness": 45,
+  "coverage": 90,
+  "claims": [
+    {
+      "id": "CL-001",
+      "text": "Built a React e-commerce dashboard with Redux handling 10k+ products",
+      "resume_line": "Built a React e-commerce dashboard with Redux handling 10k+ products",
+      "skill_id": "react_state",
+      "source": "resume",
+      "verdict": "shaky",
+      "levels_passed": 1,
+      "proficiency": 0.25,
+      "missing_concepts": [
+        "Reconciliation: the new element tree is diffed against the previous one; the virtual DOM is not a cache",
+        "How useSelector subscribes to the store and triggers a re-render when the selected value changes"
+      ],
+      "evidence": [
+        {
+          "level": 1,
+          "criterion": "accuracy",
+          "passed": true,
+          "quote": "I wrote the products slice and the cart slice with Redux Toolkit"
+        },
+        {
+          "level": 1,
+          "criterion": "specificity",
+          "passed": true,
+          "quote": "the ProductTable and FilterBar components"
+        },
+        {
+          "level": 1,
+          "criterion": "mechanism",
+          "passed": true,
+          "quote": "The products slice held the paginated list of 10k items"
+        },
+        {
+          "level": 1,
+          "criterion": "ownership",
+          "passed": true,
+          "quote": "I wrote the products slice and the cart slice"
+        },
+        {
+          "level": 1,
+          "criterion": "tradeoff",
+          "passed": true,
+          "quote": "held the paginated list of 10k items and the active filters"
+        },
+        {
+          "level": 2,
+          "criterion": "accuracy",
+          "passed": false,
+          "quote": "hooks make the app faster and the virtual DOM caches everything"
+        },
+        {
+          "level": 2,
+          "criterion": "specificity",
+          "passed": true,
+          "quote": "only the changed rows update"
+        },
+        {
+          "level": 2,
+          "criterion": "ownership",
+          "passed": true,
+          "quote": "React re-renders because hooks make the app faster"
+        }
+      ],
+      "qa": [
+        {
+          "level": 1,
+          "kind": "question",
+          "mode": "assess",
+          "question": "In the dashboard, which Redux slices and React components did you personally write, and what data did each hold?",
+          "answer": "I wrote the products slice and the cart slice with Redux Toolkit, and the ProductTable and FilterBar components. The products slice held the paginated list of 10k items and the active filters.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": true,
+                "evidence_quote": "I wrote the products slice and the cart slice with Redux Toolkit",
+                "missing_concept": null
+              },
+              "specificity": {
+                "passed": true,
+                "evidence_quote": "the ProductTable and FilterBar components",
+                "missing_concept": null
+              },
+              "mechanism": {
+                "passed": true,
+                "evidence_quote": "The products slice held the paginated list of 10k items",
+                "missing_concept": null
+              },
+              "ownership": {
+                "passed": true,
+                "evidence_quote": "I wrote the products slice and the cart slice",
+                "missing_concept": null
+              },
+              "tradeoff": {
+                "passed": true,
+                "evidence_quote": "held the paginated list of 10k items and the active filters",
+                "missing_concept": null
+              }
+            },
+            "admits_gap": false,
+            "needs_clarification": false,
+            "level_passed": true,
+            "guard_flips": [],
+            "root_cause": null
+          },
+          "asked_at": "2026-09-26T09:00:46.000Z"
+        },
+        {
+          "level": 2,
+          "kind": "question",
+          "mode": "assess",
+          "question": "When a user changes a filter in FilterBar, walk me through what happens from the dispatch to the table re-rendering.",
+          "answer": "React re-renders because hooks make the app faster and the virtual DOM caches everything, so only the changed rows update automatically.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": false,
+                "evidence_quote": "hooks make the app faster and the virtual DOM caches everything",
+                "missing_concept": "Reconciliation: the new element tree is diffed against the previous one; the virtual DOM is not a cache"
+              },
+              "specificity": {
+                "passed": true,
+                "evidence_quote": "only the changed rows update",
+                "missing_concept": null
+              },
+              "mechanism": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": "How useSelector subscribes to the store and triggers a re-render when the selected value changes"
+              },
+              "ownership": {
+                "passed": true,
+                "evidence_quote": "React re-renders because hooks make the app faster",
+                "missing_concept": null
+              },
+              "tradeoff": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": null
+              }
+            },
+            "admits_gap": false,
+            "needs_clarification": false,
+            "level_passed": false,
+            "guard_flips": [],
+            "root_cause": "Reconciliation"
+          },
+          "asked_at": "2026-09-26T09:01:09.000Z"
+        }
+      ],
+      "retest": null,
+      "fix_task": {
+        "claim_id": "CL-001",
+        "skill_id": "react_state",
+        "root_cause": "Reconciliation",
+        "missing_concepts": [
+          "Reconciliation: the new element tree is diffed against the previous one; the virtual DOM is not a cache",
+          "How useSelector subscribes to the store and triggers a re-render when the selected value changes"
+        ],
+        "explanation": "The virtual DOM is **not a cache**. On `dispatch`, Redux runs the reducer and notifies subscribers; each `useSelector` re-runs its selector and compares the result with `===`. If it changed, that component **re-renders**: React calls it again, builds a new element tree, **diffs** it against the previous one (reconciliation, matching list rows by `key`) and **commits** only the changed DOM nodes. Hooks don't make anything faster; they're how components subscribe.",
+        "exercise": "Build a 50-row product table with a Redux filter. Add `console.count` in each row and use React DevTools \"Highlight updates\". Change the filter and explain which components re-rendered and why. Then memoize the row and select only what it needs.\n\n**Done when** changing the filter re-renders only the table and the rows whose data changed."
+      },
+      "rewrite": "Built React + Redux Toolkit product and cart slices for a 10k-item dashboard (learning render/reconciliation internals)",
+      "root_cause": "Reconciliation",
+      "retest_status": "scheduled",
+      "retest_unlocks_after": 2
+    },
+    {
+      "id": "CL-002",
+      "text": "Implemented REST API integration with Axios and JWT auth",
+      "resume_line": "Implemented REST API integration with Axios and JWT auth",
+      "skill_id": "rest_apis",
+      "source": "resume",
+      "verdict": "defended",
+      "levels_passed": 3,
+      "proficiency": 0.85,
+      "missing_concepts": [],
+      "evidence": [
+        {
+          "level": 1,
+          "criterion": "accuracy",
+          "passed": true,
+          "quote": "a request interceptor that adds the Authorization Bearer token"
+        },
+        {
+          "level": 1,
+          "criterion": "specificity",
+          "passed": true,
+          "quote": "GET /products, POST /cart and POST /auth/login"
+        },
+        {
+          "level": 1,
+          "criterion": "mechanism",
+          "passed": true,
+          "quote": "a request interceptor that adds the Authorization Bearer token from memory"
+        },
+        {
+          "level": 1,
+          "criterion": "ownership",
+          "passed": true,
+          "quote": "I wrote an Axios instance with a request interceptor"
+        },
+        {
+          "level": 1,
+          "criterion": "tradeoff",
+          "passed": true,
+          "quote": "adds the Authorization Bearer token from memory"
+        },
+        {
+          "level": 2,
+          "criterion": "accuracy",
+          "passed": true,
+          "quote": "catches the 401, calls POST /auth/refresh once"
+        },
+        {
+          "level": 2,
+          "criterion": "specificity",
+          "passed": true,
+          "quote": "calls POST /auth/refresh once, stores the new token"
+        },
+        {
+          "level": 2,
+          "criterion": "mechanism",
+          "passed": true,
+          "quote": "stores the new token, and replays the original request"
+        },
+        {
+          "level": 2,
+          "criterion": "ownership",
+          "passed": true,
+          "quote": "The response interceptor catches the 401"
+        },
+        {
+          "level": 2,
+          "criterion": "tradeoff",
+          "passed": true,
+          "quote": "If refresh also fails it clears the token and redirects to login"
+        },
+        {
+          "level": 3,
+          "criterion": "accuracy",
+          "passed": true,
+          "quote": "localStorage is readable by any injected script, so an XSS bug would leak the token"
+        },
+        {
+          "level": 3,
+          "criterion": "specificity",
+          "passed": true,
+          "quote": "Keeping it in memory with an httpOnly refresh cookie is safer"
+        },
+        {
+          "level": 3,
+          "criterion": "mechanism",
+          "passed": true,
+          "quote": "logged out on a hard refresh until the refresh call runs"
+        },
+        {
+          "level": 3,
+          "criterion": "ownership",
+          "passed": true,
+          "quote": "which added a loading flash we had to handle"
+        },
+        {
+          "level": 3,
+          "criterion": "tradeoff",
+          "passed": true,
+          "quote": "Keeping it in memory with an httpOnly refresh cookie is safer, but the user is logged out on a hard refresh"
+        }
+      ],
+      "qa": [
+        {
+          "level": 1,
+          "kind": "question",
+          "mode": "assess",
+          "question": "Which endpoints did you call with Axios, and what exactly did you implement for JWT auth?",
+          "answer": "I called GET /products, POST /cart and POST /auth/login. I wrote an Axios instance with a request interceptor that adds the Authorization Bearer token from memory.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": true,
+                "evidence_quote": "a request interceptor that adds the Authorization Bearer token",
+                "missing_concept": null
+              },
+              "specificity": {
+                "passed": true,
+                "evidence_quote": "GET /products, POST /cart and POST /auth/login",
+                "missing_concept": null
+              },
+              "mechanism": {
+                "passed": true,
+                "evidence_quote": "a request interceptor that adds the Authorization Bearer token from memory",
+                "missing_concept": null
+              },
+              "ownership": {
+                "passed": true,
+                "evidence_quote": "I wrote an Axios instance with a request interceptor",
+                "missing_concept": null
+              },
+              "tradeoff": {
+                "passed": true,
+                "evidence_quote": "adds the Authorization Bearer token from memory",
+                "missing_concept": null
+              }
+            },
+            "admits_gap": false,
+            "needs_clarification": false,
+            "level_passed": true,
+            "guard_flips": [],
+            "root_cause": null
+          },
+          "asked_at": "2026-09-26T09:01:55.000Z"
+        },
+        {
+          "level": 2,
+          "kind": "question",
+          "mode": "assess",
+          "question": "What happens in your client when a request comes back 401 because the token expired?",
+          "answer": "The response interceptor catches the 401, calls POST /auth/refresh once, stores the new token, and replays the original request. If refresh also fails it clears the token and redirects to login.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": true,
+                "evidence_quote": "catches the 401, calls POST /auth/refresh once",
+                "missing_concept": null
+              },
+              "specificity": {
+                "passed": true,
+                "evidence_quote": "calls POST /auth/refresh once, stores the new token",
+                "missing_concept": null
+              },
+              "mechanism": {
+                "passed": true,
+                "evidence_quote": "stores the new token, and replays the original request",
+                "missing_concept": null
+              },
+              "ownership": {
+                "passed": true,
+                "evidence_quote": "The response interceptor catches the 401",
+                "missing_concept": null
+              },
+              "tradeoff": {
+                "passed": true,
+                "evidence_quote": "If refresh also fails it clears the token and redirects to login",
+                "missing_concept": null
+              }
+            },
+            "admits_gap": false,
+            "needs_clarification": false,
+            "level_passed": true,
+            "guard_flips": [],
+            "root_cause": null
+          },
+          "asked_at": "2026-09-26T09:02:18.000Z"
+        },
+        {
+          "level": 3,
+          "kind": "question",
+          "mode": "assess",
+          "question": "Why keep the token in memory instead of localStorage, and what did that choice cost you?",
+          "answer": "localStorage is readable by any injected script, so an XSS bug would leak the token. Keeping it in memory with an httpOnly refresh cookie is safer, but the user is logged out on a hard refresh until the refresh call runs, which added a loading flash we had to handle.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": true,
+                "evidence_quote": "localStorage is readable by any injected script, so an XSS bug would leak the token",
+                "missing_concept": null
+              },
+              "specificity": {
+                "passed": true,
+                "evidence_quote": "Keeping it in memory with an httpOnly refresh cookie is safer",
+                "missing_concept": null
+              },
+              "mechanism": {
+                "passed": true,
+                "evidence_quote": "logged out on a hard refresh until the refresh call runs",
+                "missing_concept": null
+              },
+              "ownership": {
+                "passed": true,
+                "evidence_quote": "which added a loading flash we had to handle",
+                "missing_concept": null
+              },
+              "tradeoff": {
+                "passed": true,
+                "evidence_quote": "Keeping it in memory with an httpOnly refresh cookie is safer, but the user is logged out on a hard refresh",
+                "missing_concept": null
+              }
+            },
+            "admits_gap": false,
+            "needs_clarification": false,
+            "level_passed": true,
+            "guard_flips": [],
+            "root_cause": null
+          },
+          "asked_at": "2026-09-26T09:02:41.000Z"
+        }
+      ],
+      "retest": null,
+      "fix_task": null,
+      "rewrite": null,
+      "root_cause": null,
+      "retest_status": "none",
+      "retest_unlocks_after": null
+    },
+    {
+      "id": "CL-003",
+      "text": "Made the site fully responsive using CSS Grid and Flexbox",
+      "resume_line": "Made the site fully responsive using CSS Grid and Flexbox",
+      "skill_id": "responsive_css",
+      "source": "resume",
+      "verdict": "defended",
+      "levels_passed": 3,
+      "proficiency": 1,
+      "missing_concepts": [],
+      "evidence": [
+        {
+          "level": 1,
+          "criterion": "accuracy",
+          "passed": true,
+          "quote": "repeat(auto-fill, minmax(220px, 1fr)) for the cards"
+        },
+        {
+          "level": 1,
+          "criterion": "specificity",
+          "passed": true,
+          "quote": "CSS Grid with repeat(auto-fill, minmax(220px, 1fr))"
+        },
+        {
+          "level": 1,
+          "criterion": "mechanism",
+          "passed": true,
+          "quote": "The listing uses CSS Grid with repeat(auto-fill, minmax(220px, 1fr)) for the cards"
+        },
+        {
+          "level": 1,
+          "criterion": "ownership",
+          "passed": true,
+          "quote": "I did the product listing and checkout pages"
+        },
+        {
+          "level": 1,
+          "criterion": "tradeoff",
+          "passed": true,
+          "quote": "the header and checkout form rows use Flexbox"
+        },
+        {
+          "level": 2,
+          "criterion": "accuracy",
+          "passed": true,
+          "quote": "fits as many 220px tracks as the container allows"
+        },
+        {
+          "level": 2,
+          "criterion": "specificity",
+          "passed": true,
+          "quote": "the 1fr max shares the leftover space equally"
+        },
+        {
+          "level": 2,
+          "criterion": "mechanism",
+          "passed": true,
+          "quote": "fits as many 220px tracks as the container allows, then the 1fr max shares the leftover space equally"
+        },
+        {
+          "level": 2,
+          "criterion": "ownership",
+          "passed": true,
+          "quote": "The browser fits as many 220px tracks"
+        },
+        {
+          "level": 2,
+          "criterion": "tradeoff",
+          "passed": true,
+          "quote": "columns grow until another 220px track fits"
+        },
+        {
+          "level": 3,
+          "criterion": "specificity",
+          "passed": true,
+          "quote": "it looks better on mobile"
+        },
+        {
+          "level": 3,
+          "criterion": "ownership",
+          "passed": true,
+          "quote": "Grid was just easier I think"
+        },
+        {
+          "level": 3,
+          "criterion": "accuracy",
+          "passed": true,
+          "quote": "the last row of 7 items stretches its orphan cards wider than the rest, while Grid keeps every track the same width"
+        },
+        {
+          "level": 3,
+          "criterion": "specificity",
+          "passed": true,
+          "quote": "minmax(min(220px, 100%), 1fr)"
+        },
+        {
+          "level": 3,
+          "criterion": "mechanism",
+          "passed": true,
+          "quote": "Grid keeps every track the same width"
+        },
+        {
+          "level": 3,
+          "criterion": "ownership",
+          "passed": true,
+          "quote": "Keep Grid."
+        },
+        {
+          "level": 3,
+          "criterion": "tradeoff",
+          "passed": true,
+          "quote": "With flex-wrap and flex: 1 1 220px the last row of 7 items stretches its orphan cards wider than the rest"
+        }
+      ],
+      "qa": [
+        {
+          "level": 1,
+          "kind": "question",
+          "mode": "assess",
+          "question": "Which pages did you make responsive, and where did you use Grid versus Flexbox?",
+          "answer": "I did the product listing and checkout pages. The listing uses CSS Grid with repeat(auto-fill, minmax(220px, 1fr)) for the cards, and the header and checkout form rows use Flexbox.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": true,
+                "evidence_quote": "repeat(auto-fill, minmax(220px, 1fr)) for the cards",
+                "missing_concept": null
+              },
+              "specificity": {
+                "passed": true,
+                "evidence_quote": "CSS Grid with repeat(auto-fill, minmax(220px, 1fr))",
+                "missing_concept": null
+              },
+              "mechanism": {
+                "passed": true,
+                "evidence_quote": "The listing uses CSS Grid with repeat(auto-fill, minmax(220px, 1fr)) for the cards",
+                "missing_concept": null
+              },
+              "ownership": {
+                "passed": true,
+                "evidence_quote": "I did the product listing and checkout pages",
+                "missing_concept": null
+              },
+              "tradeoff": {
+                "passed": true,
+                "evidence_quote": "the header and checkout form rows use Flexbox",
+                "missing_concept": null
+              }
+            },
+            "admits_gap": false,
+            "needs_clarification": false,
+            "level_passed": true,
+            "guard_flips": [],
+            "root_cause": null
+          },
+          "asked_at": "2026-09-26T09:03:27.000Z"
+        },
+        {
+          "level": 2,
+          "kind": "question",
+          "mode": "assess",
+          "question": "How does repeat(auto-fill, minmax(220px, 1fr)) decide how many columns to render at a given width?",
+          "answer": "The browser fits as many 220px tracks as the container allows, then the 1fr max shares the leftover space equally, so columns grow until another 220px track fits and the count jumps.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": true,
+                "evidence_quote": "fits as many 220px tracks as the container allows",
+                "missing_concept": null
+              },
+              "specificity": {
+                "passed": true,
+                "evidence_quote": "the 1fr max shares the leftover space equally",
+                "missing_concept": null
+              },
+              "mechanism": {
+                "passed": true,
+                "evidence_quote": "fits as many 220px tracks as the container allows, then the 1fr max shares the leftover space equally",
+                "missing_concept": null
+              },
+              "ownership": {
+                "passed": true,
+                "evidence_quote": "The browser fits as many 220px tracks",
+                "missing_concept": null
+              },
+              "tradeoff": {
+                "passed": true,
+                "evidence_quote": "columns grow until another 220px track fits",
+                "missing_concept": null
+              }
+            },
+            "admits_gap": false,
+            "needs_clarification": false,
+            "level_passed": true,
+            "guard_flips": [],
+            "root_cause": null
+          },
+          "asked_at": "2026-09-26T09:03:50.000Z"
+        },
+        {
+          "level": 3,
+          "kind": "question",
+          "mode": "assess",
+          "question": "Why Grid for the card list instead of a Flexbox wrap layout, and what broke?",
+          "answer": "Grid was just easier I think, it looks better on mobile.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": "Grid aligns items in two dimensions; flex-wrap leaves an uneven last row"
+              },
+              "specificity": {
+                "passed": true,
+                "evidence_quote": "it looks better on mobile",
+                "missing_concept": null
+              },
+              "mechanism": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": null
+              },
+              "ownership": {
+                "passed": true,
+                "evidence_quote": "Grid was just easier I think",
+                "missing_concept": null
+              },
+              "tradeoff": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": "Concrete trade-off between Grid and flex-wrap for card lists, and a real layout bug"
+              }
+            },
+            "admits_gap": false,
+            "needs_clarification": false,
+            "level_passed": false,
+            "guard_flips": [],
+            "root_cause": "CSS Grid tracks & fr"
+          },
+          "asked_at": "2026-09-26T09:04:13.000Z"
+        },
+        {
+          "level": 3,
+          "kind": "retest",
+          "mode": "retest",
+          "question": "A product manager asks for the card list to keep a perfectly aligned last row even with 7 items, and the design must also work in a 280px sidebar. Would you keep Grid or switch to flex-wrap, and what breaks with the other one?",
+          "answer": "Keep Grid. With flex-wrap and flex: 1 1 220px the last row of 7 items stretches its orphan cards wider than the rest, while Grid keeps every track the same width. In a 280px sidebar minmax(220px, 1fr) still fits one column, but I'd use minmax(min(220px, 100%), 1fr) so it never overflows below 220px.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": true,
+                "evidence_quote": "the last row of 7 items stretches its orphan cards wider than the rest, while Grid keeps every track the same width",
+                "missing_concept": null
+              },
+              "specificity": {
+                "passed": true,
+                "evidence_quote": "minmax(min(220px, 100%), 1fr)",
+                "missing_concept": null
+              },
+              "mechanism": {
+                "passed": true,
+                "evidence_quote": "Grid keeps every track the same width",
+                "missing_concept": null
+              },
+              "ownership": {
+                "passed": true,
+                "evidence_quote": "Keep Grid.",
+                "missing_concept": null
+              },
+              "tradeoff": {
+                "passed": true,
+                "evidence_quote": "With flex-wrap and flex: 1 1 220px the last row of 7 items stretches its orphan cards wider than the rest",
+                "missing_concept": null
+              }
+            },
+            "admits_gap": false,
+            "needs_clarification": false,
+            "level_passed": true,
+            "guard_flips": [],
+            "root_cause": null
+          },
+          "asked_at": "2026-09-26T09:06:54.000Z"
+        }
+      ],
+      "retest": {
+        "attempted": true,
+        "passed": true,
+        "before": 0.6,
+        "after": 1,
+        "interleaved_claims": 2
+      },
+      "fix_task": null,
+      "rewrite": null,
+      "root_cause": null,
+      "retest_status": "done",
+      "retest_unlocks_after": null
+    },
+    {
+      "id": "CL-004",
+      "text": "Wrote unit tests with Jest achieving 80% coverage",
+      "resume_line": "Wrote unit tests with Jest achieving 80% coverage",
+      "skill_id": "testing",
+      "source": "resume",
+      "verdict": "bluff",
+      "levels_passed": 0,
+      "proficiency": 0,
+      "missing_concepts": [
+        "What line/branch coverage measures and what it doesn't",
+        "Tests you personally wrote and what they asserted"
+      ],
+      "evidence": [
+        {
+          "level": 1,
+          "criterion": "accuracy",
+          "passed": false,
+          "quote": "The project template came with tests"
+        },
+        {
+          "level": 1,
+          "criterion": "specificity",
+          "passed": true,
+          "quote": "our coverage was 80% overall"
+        }
+      ],
+      "qa": [
+        {
+          "level": 1,
+          "kind": "question",
+          "mode": "assess",
+          "question": "Which components or functions did you write Jest tests for, and what did the 80% coverage number measure?",
+          "answer": "The project template came with tests and a coverage report, and our coverage was 80% overall. I mostly ran npm test before pushing.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": false,
+                "evidence_quote": "The project template came with tests",
+                "missing_concept": "What line/branch coverage measures and what it doesn't"
+              },
+              "specificity": {
+                "passed": true,
+                "evidence_quote": "our coverage was 80% overall",
+                "missing_concept": null
+              },
+              "mechanism": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": null
+              },
+              "ownership": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": "Tests you personally wrote and what they asserted"
+              },
+              "tradeoff": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": null
+              }
+            },
+            "admits_gap": false,
+            "needs_clarification": false,
+            "level_passed": false,
+            "guard_flips": [],
+            "root_cause": "What coverage measures"
+          },
+          "asked_at": "2026-09-26T09:04:59.000Z"
+        }
+      ],
+      "retest": null,
+      "fix_task": {
+        "claim_id": "CL-004",
+        "skill_id": "testing",
+        "root_cause": "What coverage measures",
+        "missing_concepts": [
+          "What line/branch coverage measures and what it doesn't",
+          "Tests you personally wrote and what they asserted"
+        ],
+        "explanation": "Coverage counts which **lines and branches ran** during tests, not whether behaviour is correct. A test isolates a unit by **rendering** it (e.g. Testing Library), **mocking** its dependencies such as `fetch`, and **asserting** on what the user sees. Owning a test means you can say what it asserts and which bug it would catch.",
+        "exercise": "Write 3 Vitest + Testing Library tests for a `<CartSummary>` component: empty cart, one item, and a failed price fetch (mock `fetch` to reject). Run coverage and find one covered line whose bug your tests would *not* catch.\n\n**Done when** all 3 pass and you can name that uncaught bug."
+      },
+      "rewrite": "Ran and maintained an existing Jest test suite (80% template coverage); writing my own component tests",
+      "root_cause": "What coverage measures",
+      "retest_status": "none",
+      "retest_unlocks_after": null
+    },
+    {
+      "id": "CL-005",
+      "text": "Used Git and GitHub for version control in a 4-member team",
+      "resume_line": "Used Git and GitHub for version control in a 4-member team",
+      "skill_id": "git",
+      "source": "resume",
+      "verdict": "honest_gap",
+      "levels_passed": 1,
+      "proficiency": 0,
+      "missing_concepts": [
+        "Explains what a commit is (snapshot + parent pointer) and how a merge or rebase combines histories",
+        "Explains how a merge conflict arises and the steps to resolve it"
+      ],
+      "evidence": [
+        {
+          "level": 1,
+          "criterion": "accuracy",
+          "passed": true,
+          "quote": "worked on a feature branch and opened a pull request to main"
+        },
+        {
+          "level": 1,
+          "criterion": "specificity",
+          "passed": true,
+          "quote": "resolved conflicts in package.json twice"
+        },
+        {
+          "level": 1,
+          "criterion": "mechanism",
+          "passed": true,
+          "quote": "opened a pull request to main"
+        },
+        {
+          "level": 1,
+          "criterion": "ownership",
+          "passed": true,
+          "quote": "I reviewed PRs for the frontend folder"
+        },
+        {
+          "level": 1,
+          "criterion": "tradeoff",
+          "passed": true,
+          "quote": "Each of us worked on a feature branch"
+        }
+      ],
+      "qa": [
+        {
+          "level": 1,
+          "kind": "question",
+          "mode": "assess",
+          "question": "What was your team's Git workflow, and what did you personally do in it?",
+          "answer": "Each of us worked on a feature branch and opened a pull request to main. I reviewed PRs for the frontend folder and resolved conflicts in package.json twice.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": true,
+                "evidence_quote": "worked on a feature branch and opened a pull request to main",
+                "missing_concept": null
+              },
+              "specificity": {
+                "passed": true,
+                "evidence_quote": "resolved conflicts in package.json twice",
+                "missing_concept": null
+              },
+              "mechanism": {
+                "passed": true,
+                "evidence_quote": "opened a pull request to main",
+                "missing_concept": null
+              },
+              "ownership": {
+                "passed": true,
+                "evidence_quote": "I reviewed PRs for the frontend folder",
+                "missing_concept": null
+              },
+              "tradeoff": {
+                "passed": true,
+                "evidence_quote": "Each of us worked on a feature branch",
+                "missing_concept": null
+              }
+            },
+            "admits_gap": false,
+            "needs_clarification": false,
+            "level_passed": true,
+            "guard_flips": [],
+            "root_cause": null
+          },
+          "asked_at": "2026-09-26T09:05:45.000Z"
+        },
+        {
+          "level": 2,
+          "kind": "question",
+          "mode": "assess",
+          "question": "When you resolved that package.json conflict, what did Git actually have to compare to decide it was a conflict?",
+          "answer": "Honestly I don't know how Git decides that internally, I just fixed the lines it marked.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": null
+              },
+              "specificity": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": null
+              },
+              "mechanism": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": null
+              },
+              "ownership": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": null
+              },
+              "tradeoff": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": null
+              }
+            },
+            "admits_gap": true,
+            "needs_clarification": false,
+            "level_passed": false,
+            "guard_flips": [],
+            "root_cause": null
+          },
+          "asked_at": "2026-09-26T09:06:08.000Z"
+        }
+      ],
+      "retest": null,
+      "fix_task": {
+        "claim_id": "CL-005",
+        "skill_id": "git",
+        "root_cause": null,
+        "missing_concepts": [
+          "Explains what a commit is (snapshot + parent pointer) and how a merge or rebase combines histories",
+          "Explains how a merge conflict arises and the steps to resolve it"
+        ],
+        "explanation": "A commit is a **snapshot plus a pointer to its parent(s)**. To merge, Git finds the **merge base** (common ancestor) and does a 3-way comparison: base vs yours vs theirs. If both sides changed the **same lines** differently, Git can't choose and writes conflict markers `<<<<<<<`, `=======`, `>>>>>>>`.",
+        "exercise": "In a scratch repo, create `main` and `feature`, edit the same line of `package.json` differently on each, then merge. Run `git merge-base main feature` and `git show :1:package.json` / `:2:` / `:3:` to see base, ours and theirs.\n\n**Done when** you can explain the conflict using those three versions."
+      },
+      "rewrite": "Used feature branches and pull requests in a 4-person team; reviewed PRs and resolved merge conflicts",
+      "root_cause": null,
+      "retest_status": "none",
+      "retest_unlocks_after": null
+    },
+    {
+      "id": "CL-006",
+      "text": "Optimized page load time by 40% using lazy loading and code splitting",
+      "resume_line": "Optimized page load time by 40% using lazy loading and code splitting",
+      "skill_id": "js_fundamentals",
+      "source": "resume",
+      "verdict": "shaky",
+      "levels_passed": 2,
+      "proficiency": 0.6,
+      "missing_concepts": [
+        "Route vs component splitting: chunk count, waterfalls and cache reuse",
+        "A real cost of code splitting, such as loading waterfalls or a spinner flash on navigation"
+      ],
+      "evidence": [
+        {
+          "level": 1,
+          "criterion": "accuracy",
+          "passed": true,
+          "quote": "lazy loading things"
+        },
+        {
+          "level": 1,
+          "criterion": "accuracy",
+          "passed": true,
+          "quote": "wrapped the Reports and Admin routes in React.lazy with Suspense"
+        },
+        {
+          "level": 1,
+          "criterion": "specificity",
+          "passed": true,
+          "quote": "main bundle going from 1.1 MB to 640 kB and LCP from 4.2s to 2.5s"
+        },
+        {
+          "level": 1,
+          "criterion": "mechanism",
+          "passed": true,
+          "quote": "moved the chart library into that chunk"
+        },
+        {
+          "level": 1,
+          "criterion": "ownership",
+          "passed": true,
+          "quote": "I wrapped the Reports and Admin routes in React.lazy"
+        },
+        {
+          "level": 1,
+          "criterion": "tradeoff",
+          "passed": true,
+          "quote": "moved the chart library into that chunk"
+        },
+        {
+          "level": 2,
+          "criterion": "accuracy",
+          "passed": true,
+          "quote": "React.lazy calls the dynamic import(), which makes the browser fetch the Reports chunk"
+        },
+        {
+          "level": 2,
+          "criterion": "specificity",
+          "passed": true,
+          "quote": "the Suspense boundary shows the fallback spinner"
+        },
+        {
+          "level": 2,
+          "criterion": "mechanism",
+          "passed": true,
+          "quote": "Until the promise resolves, the Suspense boundary shows the fallback spinner, then React renders the real component"
+        },
+        {
+          "level": 2,
+          "criterion": "ownership",
+          "passed": true,
+          "quote": "React.lazy calls the dynamic import()"
+        },
+        {
+          "level": 2,
+          "criterion": "tradeoff",
+          "passed": true,
+          "quote": "fetch the Reports chunk over the network"
+        },
+        {
+          "level": 3,
+          "criterion": "ownership",
+          "passed": true,
+          "quote": "Route splitting was what the tutorial did so I followed it"
+        }
+      ],
+      "qa": [
+        {
+          "level": 1,
+          "kind": "question",
+          "mode": "assess",
+          "question": "What exactly did you lazy load, and how did you measure the 40% improvement?",
+          "answer": "I made the pages load faster by lazy loading things.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": true,
+                "evidence_quote": "lazy loading things",
+                "missing_concept": null
+              },
+              "specificity": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": "Which routes or components were split, and the before/after numbers"
+              },
+              "mechanism": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": null
+              },
+              "ownership": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": "What you personally changed"
+              },
+              "tradeoff": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": null
+              }
+            },
+            "admits_gap": false,
+            "needs_clarification": true,
+            "level_passed": false,
+            "guard_flips": [],
+            "root_cause": null
+          },
+          "asked_at": "2026-09-26T09:07:40.000Z"
+        },
+        {
+          "level": 1,
+          "kind": "clarify",
+          "mode": "assess",
+          "question": "Which routes or components did you split out, and what were the before and after numbers?",
+          "answer": "I wrapped the Reports and Admin routes in React.lazy with Suspense and moved the chart library into that chunk. Lighthouse showed the main bundle going from 1.1 MB to 640 kB and LCP from 4.2s to 2.5s, about 40%.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": true,
+                "evidence_quote": "wrapped the Reports and Admin routes in React.lazy with Suspense",
+                "missing_concept": null
+              },
+              "specificity": {
+                "passed": true,
+                "evidence_quote": "main bundle going from 1.1 MB to 640 kB and LCP from 4.2s to 2.5s",
+                "missing_concept": null
+              },
+              "mechanism": {
+                "passed": true,
+                "evidence_quote": "moved the chart library into that chunk",
+                "missing_concept": null
+              },
+              "ownership": {
+                "passed": true,
+                "evidence_quote": "I wrapped the Reports and Admin routes in React.lazy",
+                "missing_concept": null
+              },
+              "tradeoff": {
+                "passed": true,
+                "evidence_quote": "moved the chart library into that chunk",
+                "missing_concept": null
+              }
+            },
+            "admits_gap": false,
+            "needs_clarification": false,
+            "level_passed": true,
+            "guard_flips": [],
+            "root_cause": null
+          },
+          "asked_at": "2026-09-26T09:08:03.000Z"
+        },
+        {
+          "level": 2,
+          "kind": "question",
+          "mode": "assess",
+          "question": "What happens at runtime between a user clicking the Reports link and the lazy component rendering?",
+          "answer": "React.lazy calls the dynamic import(), which makes the browser fetch the Reports chunk over the network. Until the promise resolves, the Suspense boundary shows the fallback spinner, then React renders the real component.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": true,
+                "evidence_quote": "React.lazy calls the dynamic import(), which makes the browser fetch the Reports chunk",
+                "missing_concept": null
+              },
+              "specificity": {
+                "passed": true,
+                "evidence_quote": "the Suspense boundary shows the fallback spinner",
+                "missing_concept": null
+              },
+              "mechanism": {
+                "passed": true,
+                "evidence_quote": "Until the promise resolves, the Suspense boundary shows the fallback spinner, then React renders the real component",
+                "missing_concept": null
+              },
+              "ownership": {
+                "passed": true,
+                "evidence_quote": "React.lazy calls the dynamic import()",
+                "missing_concept": null
+              },
+              "tradeoff": {
+                "passed": true,
+                "evidence_quote": "fetch the Reports chunk over the network",
+                "missing_concept": null
+              }
+            },
+            "admits_gap": false,
+            "needs_clarification": false,
+            "level_passed": true,
+            "guard_flips": [],
+            "root_cause": null
+          },
+          "asked_at": "2026-09-26T09:08:26.000Z"
+        },
+        {
+          "level": 3,
+          "kind": "question",
+          "mode": "assess",
+          "question": "Why split by route rather than by component, and what went wrong after you shipped it?",
+          "answer": "Route splitting was what the tutorial did so I followed it. Nothing really went wrong.",
+          "grade": {
+            "criteria": {
+              "accuracy": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": "Route vs component splitting: chunk count, waterfalls and cache reuse"
+              },
+              "specificity": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": null
+              },
+              "mechanism": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": null
+              },
+              "ownership": {
+                "passed": true,
+                "evidence_quote": "Route splitting was what the tutorial did so I followed it",
+                "missing_concept": null
+              },
+              "tradeoff": {
+                "passed": false,
+                "evidence_quote": null,
+                "missing_concept": "A real cost of code splitting, such as loading waterfalls or a spinner flash on navigation"
+              }
+            },
+            "admits_gap": false,
+            "needs_clarification": false,
+            "level_passed": false,
+            "guard_flips": [],
+            "root_cause": "ES modules & dynamic import"
+          },
+          "asked_at": "2026-09-26T09:08:49.000Z"
+        }
+      ],
+      "retest": null,
+      "fix_task": {
+        "claim_id": "CL-006",
+        "skill_id": "js_fundamentals",
+        "root_cause": "ES modules & dynamic import",
+        "missing_concepts": [
+          "Route vs component splitting: chunk count, waterfalls and cache reuse",
+          "A real cost of code splitting, such as loading waterfalls or a spinner flash on navigation"
+        ],
+        "explanation": "**Route-level** splitting gives few, large chunks that cache well and load once per page. **Component-level** splitting gives many small chunks but can create **waterfalls** (a chunk that imports another chunk) and spinner flashes during navigation. Mitigations are **prefetching** on hover or idle and grouping libraries shared by several routes.",
+        "exercise": "In a Vite app, lazy-load two routes that share a chart library. Build with `vite build` and inspect the chunk list. Then add `import()` prefetch on link hover and compare the Network waterfall.\n\n**Done when** you can show the chunk graph and explain one waterfall you removed."
+      },
+      "rewrite": "Cut main bundle from 1.1 MB to 640 kB with route-level React.lazy code splitting (LCP 4.2s → 2.5s)",
+      "root_cause": "ES modules & dynamic import",
+      "retest_status": "none",
+      "retest_unlocks_after": null
+    },
+    {
+      "id": "CL-007",
+      "text": "Organised the college coding club hackathon for 200 students",
+      "resume_line": "Organised the college coding club hackathon for 200 students",
+      "skill_id": null,
+      "source": "resume",
+      "verdict": "pending",
+      "levels_passed": 0,
+      "proficiency": 0,
+      "missing_concepts": [],
+      "evidence": [],
+      "qa": [],
+      "retest": null,
+      "fix_task": null,
+      "rewrite": null,
+      "root_cause": null,
+      "retest_status": "none",
+      "retest_unlocks_after": null
+    }
+  ],
+  "skills": [
+    {
+      "skill_id": "js_fundamentals",
+      "name": "JavaScript Fundamentals",
+      "weight": 0.2,
+      "state": "ready",
+      "proficiency": 0.6,
+      "claim_ids": [
+        "CL-006"
+      ],
+      "history": [
+        {
+          "at": "2026-09-26T09:09:12.000Z",
+          "mode": "assess",
+          "claim_id": "CL-006",
+          "proficiency": 0.6
+        }
+      ]
+    },
+    {
+      "skill_id": "react_state",
+      "name": "React State & Rendering",
+      "weight": 0.2,
+      "state": "needs_work",
+      "proficiency": 0.25,
+      "claim_ids": [
+        "CL-001"
+      ],
+      "history": [
+        {
+          "at": "2026-09-26T09:01:32.000Z",
+          "mode": "assess",
+          "claim_id": "CL-001",
+          "proficiency": 0.25
+        }
+      ]
+    },
+    {
+      "skill_id": "rest_apis",
+      "name": "REST APIs & Async",
+      "weight": 0.15,
+      "state": "ready",
+      "proficiency": 0.85,
+      "claim_ids": [
+        "CL-002"
+      ],
+      "history": [
+        {
+          "at": "2026-09-26T09:03:04.000Z",
+          "mode": "assess",
+          "claim_id": "CL-002",
+          "proficiency": 0.85
+        }
+      ]
+    },
+    {
+      "skill_id": "responsive_css",
+      "name": "HTML/CSS & Responsive UI",
+      "weight": 0.15,
+      "state": "ready",
+      "proficiency": 1,
+      "claim_ids": [
+        "CL-003"
+      ],
+      "history": [
+        {
+          "at": "2026-09-26T09:04:36.000Z",
+          "mode": "assess",
+          "claim_id": "CL-003",
+          "proficiency": 0.6
+        },
+        {
+          "at": "2026-09-26T09:07:17.000Z",
+          "mode": "retest",
+          "claim_id": "CL-003",
+          "proficiency": 1
+        }
+      ]
+    },
+    {
+      "skill_id": "accessibility",
+      "name": "Accessibility",
+      "weight": 0.1,
+      "state": "blind_spot",
+      "proficiency": 0,
+      "claim_ids": [],
+      "history": []
+    },
+    {
+      "skill_id": "testing",
+      "name": "Testing & Debugging",
+      "weight": 0.1,
+      "state": "needs_work",
+      "proficiency": 0,
+      "claim_ids": [
+        "CL-004"
+      ],
+      "history": [
+        {
+          "at": "2026-09-26T09:05:22.000Z",
+          "mode": "assess",
+          "claim_id": "CL-004",
+          "proficiency": 0
+        }
+      ]
+    },
+    {
+      "skill_id": "git",
+      "name": "Git",
+      "weight": 0.1,
+      "state": "needs_work",
+      "proficiency": 0,
+      "claim_ids": [
+        "CL-005"
+      ],
+      "history": [
+        {
+          "at": "2026-09-26T09:06:31.000Z",
+          "mode": "assess",
+          "claim_id": "CL-005",
+          "proficiency": 0
+        }
+      ]
+    }
+  ],
+  "deprioritized_claim_ids": [
+    "CL-007"
+  ],
+  "blind_spots": [
+    {
+      "skill_id": "accessibility",
+      "name": "Accessibility",
+      "weight": 0.1
+    }
+  ],
+  "resume_lines": [
+    {
+      "index": 0,
+      "text": "Priya Sharma - B.Tech Computer Science, 2026",
+      "verdict": null,
+      "claim_ids": []
+    },
+    {
+      "index": 1,
+      "text": "Built a React e-commerce dashboard with Redux handling 10k+ products",
+      "verdict": "shaky",
+      "claim_ids": [
+        "CL-001"
+      ]
+    },
+    {
+      "index": 2,
+      "text": "Implemented REST API integration with Axios and JWT auth",
+      "verdict": "defended",
+      "claim_ids": [
+        "CL-002"
+      ]
+    },
+    {
+      "index": 3,
+      "text": "Made the site fully responsive using CSS Grid and Flexbox",
+      "verdict": "defended",
+      "claim_ids": [
+        "CL-003"
+      ]
+    },
+    {
+      "index": 4,
+      "text": "Wrote unit tests with Jest achieving 80% coverage",
+      "verdict": "bluff",
+      "claim_ids": [
+        "CL-004"
+      ]
+    },
+    {
+      "index": 5,
+      "text": "Used Git and GitHub for version control in a 4-member team",
+      "verdict": "honest_gap",
+      "claim_ids": [
+        "CL-005"
+      ]
+    },
+    {
+      "index": 6,
+      "text": "Optimized page load time by 40% using lazy loading and code splitting",
+      "verdict": "shaky",
+      "claim_ids": [
+        "CL-006"
+      ]
+    },
+    {
+      "index": 7,
+      "text": "Organised the college coding club hackathon for 200 students",
+      "verdict": "pending",
+      "claim_ids": [
+        "CL-007"
+      ]
+    }
+  ],
+  "priorities": [
+    {
+      "rank": 1,
+      "skill_id": "react_state",
+      "claim_id": "CL-001",
+      "score": 0.15,
+      "reason": "20% role weight, failed at L2 (root cause: Reconciliation)"
+    },
+    {
+      "rank": 2,
+      "skill_id": "accessibility",
+      "claim_id": null,
+      "score": 0.1,
+      "reason": "Required by role, never claimed"
+    },
+    {
+      "rank": 3,
+      "skill_id": "testing",
+      "claim_id": "CL-004",
+      "score": 0.1,
+      "reason": "10% role weight, failed at L1 (root cause: What coverage measures)"
+    }
+  ],
+  "plan": [
+    {
+      "day": 1,
+      "skill_id": "react_state",
+      "claim_id": "CL-001",
+      "title": "React State & Rendering: Built a React e-commerce dashboard with Redux handling 10k+…",
+      "task": "Build a 50-row product table with a Redux filter. Add `console.count` in each row and use React DevTools \"Highlight updates\". Change the filter and explain which components re-rendered and why. Then memoize the row and select only what it needs.\n\n**Done when** changing the filter re-renders only the table and the rows whose data changed."
+    },
+    {
+      "day": 1,
+      "skill_id": "accessibility",
+      "claim_id": null,
+      "title": "Accessibility: cover the basics",
+      "task": "Never claimed but required. Build one small example that shows:\n- Names concrete accessibility work done (labels, alt text, keyboard support, contrast fixes) on specific components\n- States what they personally tested or fixed\n- Explains how screen readers use the accessibility tree built from semantic elements, names and roles\n- Explains focus management: tab order, focus trapping in dialogs, returning focus"
+    },
+    {
+      "day": 2,
+      "skill_id": "testing",
+      "claim_id": "CL-004",
+      "title": "Testing & Debugging: Wrote unit tests with Jest achieving 80% coverage",
+      "task": "Write 3 Vitest + Testing Library tests for a `<CartSummary>` component: empty cart, one item, and a failed price fetch (mock `fetch` to reject). Run coverage and find one covered line whose bug your tests would *not* catch.\n\n**Done when** all 3 pass and you can name that uncaught bug."
+    },
+    {
+      "day": 2,
+      "skill_id": "git",
+      "claim_id": "CL-005",
+      "title": "Git: Used Git and GitHub for version control in a 4-member team",
+      "task": "In a scratch repo, create `main` and `feature`, edit the same line of `package.json` differently on each, then merge. Run `git merge-base main feature` and `git show :1:package.json` / `:2:` / `:3:` to see base, ours and theirs.\n\n**Done when** you can explain the conflict using those three versions."
+    },
+    {
+      "day": 3,
+      "skill_id": "js_fundamentals",
+      "claim_id": "CL-006",
+      "title": "JavaScript Fundamentals: Optimized page load time by 40% using lazy loading and code…",
+      "task": "In a Vite app, lazy-load two routes that share a chart library. Build with `vite build` and inspect the chunk list. Then add `import()` prefetch on link hover and compare the Network waterfall.\n\n**Done when** you can show the chunk graph and explain one waterfall you removed."
+    }
+  ],
+  "progress": {
+    "claims_total": 7,
+    "claims_done": 6,
+    "next_claim_id": "CL-007",
+    "next_mode": "assess"
+  }
+}

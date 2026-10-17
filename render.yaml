@@ -1,0 +1,33 @@
+# Render Blueprint: UNBLUFF backend on Render's free Docker web service.
+# Dashboard → New → Blueprint → pick this repo. Render prompts for GEMINI_API_KEY (never committed).
+services:
+  - type: web
+    name: unbluff-api
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    buildFilter:
+      paths:
+        - backend/**
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LLM_MODE
+        value: live
+      - key: GEMINI_MODEL
+        value: gemini-3.1-flash-lite
+      - key: GEMINI_FALLBACK_MODEL
+        value: gemini-3.6-flash
+      - key: STORE
+        value: memory
+      - key: CORS_ORIGIN
+        value: "*" # set to the Firebase Hosting URL once the frontend is live
+      - key: LOG_LEVEL
+        value: info
+      - key: GEMINI_API_KEY
+        sync: false # entered once in the Render dashboard; never stored in the repo

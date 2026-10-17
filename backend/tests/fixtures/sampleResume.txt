@@ -1,0 +1,8 @@
+Priya Sharma - B.Tech Computer Science, 2026
+Built a React e-commerce dashboard with Redux handling 10k+ products
+Implemented REST API integration with Axios and JWT auth
+Made the site fully responsive using CSS Grid and Flexbox
+Wrote unit tests with Jest achieving 80% coverage
+Used Git and GitHub for version control in a 4-member team
+Optimized page load time by 40% using lazy loading and code splitting
+Organised the college coding club hackathon for 200 students

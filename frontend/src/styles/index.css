@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * UNBLUFF design tokens — semantic CSS custom properties.
+ * Base values mirror tailwind.config.js; verdict/skill values mirror
+ * src/styles/tokens.ts (CONTRACT.md §6), so there is exactly one place
+ * (tokens.ts) that owns the literal hex values used in TS, and this
+ * block exposes the same values to plain CSS.
+ */
+:root {
+  color-scheme: light;
+
+  /* Base */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-text: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-border: #e2e8f0;
+  --color-accent: #4f46e5;
+
+  /* Verdict — icon/accent colors, UNBLUFF Design Bible §6 (contract-locked).
+     Label text never uses these directly; see styles/tokens.ts textColor. */
+  --color-verdict-defended: #059669;
+  --color-verdict-shaky: #d97706;
+  --color-verdict-bluff: #dc2626;
+  --color-verdict-honest-gap: #4f46e5;
+  --color-verdict-error: #64748b;
+  --color-verdict-pending: #94a3b8;
+
+  /* Skill state — icon/accent colors, Design Bible §7 (contract-locked) */
+  --color-skill-ready: #059669;
+  --color-skill-needs-work: #d97706;
+  --color-skill-unverified: #94a3b8;
+  --color-skill-blind-spot: #0f172a;
+  --color-skill-deprioritized: #cbd5e1;
+
+  /* Motion — Design Bible §36 */
+  --motion-fast: 150ms;
+  --motion-normal: 250ms;
+  --motion-slow: 400ms;
+
+  /* Z-index layers */
+  --z-dropdown: 1000;
+  --z-drawer: 1100;
+  --z-modal: 1200;
+  --z-toast: 1300;
+  --z-tooltip: 1400;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+}
+
+/* Visible keyboard focus everywhere — never rely on color alone for state,
+   and never remove focus outlines for mouse-only aesthetics. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Respect the user's reduced-motion preference across the app. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
