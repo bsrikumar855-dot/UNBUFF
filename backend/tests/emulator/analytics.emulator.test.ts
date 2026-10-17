@@ -6,6 +6,7 @@ import { AnalyticsService } from "../../src/analytics/service.js";
 import { FirestoreRevisionStore, FirestoreStatsStore } from "../../src/analytics/stores.js";
 import type { StatsRecord } from "../../src/analytics/stats.js";
 import { CodeService } from "../../src/code/service.js";
+import { checkSubmissionIndex } from "../../src/code/indexes.js";
 import { FirestoreSubmissionStore, type SubmissionRecord } from "../../src/code/submissionStore.js";
 import { parseSuiteFile, SuiteRegistry } from "../../src/code/suites.js";
 import { DsaProgressService } from "../../src/dsa/progressService.js";
@@ -35,9 +36,10 @@ const suites = () =>
         statement: null,
         source: { name: "emulator test", license_status: "own_work", license_note: "tests" },
         samples: [{ input: "s\n", expected_output: "s\n" }],
-        tests: [{ input: "1\n", expected_output: "1\n" }],
+        tests: ["1", "2", "3", "4", "5"].map((n) => ({ input: `${n}\n`, expected_output: `${n}\n` })),
         limits: { cpu_time_seconds: 2, memory_mb: 128 },
         starter_code: {},
+        eligibility: { analytics_eligible: true, reason: "emulator test suite" },
       })),
     }),
   );
@@ -60,6 +62,7 @@ beforeAll(() => {
     submissions: subStore,
     logger: silentLogger,
     providerVerified: true,
+    allowMockToCount: true, // TEST ONLY
     onJudged: (r) => analytics.recordSubmission(r),
   });
   app = testApp({ autoAuth: false, code, analytics, catalogue, progressStore });
@@ -104,6 +107,12 @@ describe("stores on the Firestore emulator", () => {
     expect((await subStore.listRecentByOwner("s-list", 10)).map((r) => r.id)).toEqual(["sub_l2", "sub_l3", "sub_l1"]);
     expect((await subStore.listRecentByOwner("s-list", 2)).map((r) => r.id)).toEqual(["sub_l2", "sub_l3"]);
     expect((await subStore.listCountedByOwner("s-list", 10)).map((r) => r.id)).toEqual(["sub_l1"]);
+  });
+});
+
+describe("index check on the emulator", () => {
+  it("runs the exact query that needs the composite index (the emulator does not enforce indexes, so this is not proof of a deployment)", async () => {
+    expect(await checkSubmissionIndex(db, names.subs)).toMatchObject({ ok: true });
   });
 });
 

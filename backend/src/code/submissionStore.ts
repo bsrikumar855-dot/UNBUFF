@@ -11,6 +11,10 @@ export type SubmissionRecord = Omit<CodeSubmissionDetail, "analytics_status"> & 
   provider?: string; // adapter name that executed the tests, e.g. "judge0"
   provider_verified?: boolean; // operator declared the execution service a real deployment when this was judged
   suite_license?: string; // licence status of the test suite (development_fixture = demonstration data)
+  suite_eligible?: boolean; // the suite was declared analytics-eligible when this was judged
+  judged_tests?: number; // hidden tests for which the execution service actually returned a result
+  provider_mock?: boolean; // the provider was a mock or test provider
+  mock_counting_allowed?: boolean; // TEST ONLY policy: a mock provider was explicitly allowed to count
 };
 
 export interface SubmissionStore {

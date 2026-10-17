@@ -59,7 +59,11 @@
         "cpu_time_seconds": 2,
         "memory_mb": 128
       },
-      "starter_code": {}
+      "starter_code": {},
+      "eligibility": {
+        "analytics_eligible": false,
+        "reason": "Demonstration exercise: its tests are in the repository and it is not real practice content, so it never counts toward analytics."
+      }
     },
     {
       "question_id": "q_fixture_04",
@@ -111,7 +115,11 @@
         "cpu_time_seconds": 2,
         "memory_mb": 128
       },
-      "starter_code": {}
+      "starter_code": {},
+      "eligibility": {
+        "analytics_eligible": false,
+        "reason": "Demonstration exercise: its tests are in the repository and it is not real practice content, so it never counts toward analytics."
+      }
     },
     {
       "question_id": "q_fixture_01",
@@ -163,7 +171,11 @@
         "cpu_time_seconds": 2,
         "memory_mb": 128
       },
-      "starter_code": {}
+      "starter_code": {},
+      "eligibility": {
+        "analytics_eligible": false,
+        "reason": "Demonstration exercise: its tests are in the repository and it is not real practice content, so it never counts toward analytics."
+      }
     }
   ]
 }

@@ -335,7 +335,7 @@ export interface CompanyDetailResponse {
 export interface QuestionSummary {
   id: string;
   title: string;
-  url: string; // canonical external problem page; statements are never copied
+  url: string | null; // canonical external problem page (statements are never copied); null for first-party practice problems, whose statement lives in the coding workspace
   difficulty: DsaDifficulty;
   topics: string[];
   company_ids: string[];
@@ -461,7 +461,9 @@ export interface CodeSubmissionsResponse {
 export type AnalyticsStatus =
   | "counted"
   | "excluded_demonstration" // judged against a demonstration/fixture exercise
+  | "excluded_ineligible_suite" // the suite was not declared analytics-eligible
   | "excluded_unverified_provider" // the execution service was not declared to be a verified real deployment
+  | "excluded_mock_execution" // judged by a mock or test execution provider
   | "excluded_judge_error" // the judge failed; says nothing about the student's code
   | "excluded_unknown_provenance"; // stored before provenance was recorded; treated conservatively
 
@@ -558,7 +560,7 @@ export interface DsaAnalyticsResponse {
   repeated_failures: RepeatedFailure[];
   comparison: PeriodComparison;
   self_reported: { solved: number; attempted: number; needs_revision: number; bookmarked: number }; // from the student's own progress marks, not judged
-  exclusions: { available: boolean; sampled_submissions: number; demonstration: number; unverified_provider: number; judge_error: number; unknown_provenance: number };
+  exclusions: { available: boolean; sampled_submissions: number; demonstration: number; ineligible_suite: number; unverified_provider: number; mock_execution: number; judge_error: number; unknown_provenance: number };
   has_eligible_activity: boolean;
   revision_due: number;
 }

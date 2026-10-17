@@ -18,7 +18,7 @@ import type {
 } from "../types.js";
 import { resolveLanguages, type ResolvedLanguage } from "./languages.js";
 import { ExecutionError, type ExecuteResult, type ExecutionLimits, type ExecutionProvider } from "./provider.js";
-import { DEFAULT_LIMITS, type SuiteRegistry } from "./suites.js";
+import { DEFAULT_LIMITS, isAnalyticsEligible, type SuiteRegistry } from "./suites.js";
 import type { SubmissionRecord, SubmissionStore } from "./submissionStore.js";
 
 export const MAX_SOURCE_BYTES = 50_000;
@@ -46,6 +46,11 @@ export interface CodeServiceDeps {
   providerVerified?: boolean;
   /** Called after a judged submission is stored. Failures are logged and never fail the submission. */
   onJudged?: (record: SubmissionRecord) => Promise<void>;
+  /**
+   * TEST ONLY. Lets a mock provider's results count so the analytics pipeline can be exercised end to end. It is
+   * not reachable from configuration, so a real deployment can never count mock results. Records made under it say so.
+   */
+  allowMockToCount?: boolean;
 }
 
 const LIMIT_RUNS_IN_FLIGHT = 2;
@@ -187,8 +192,21 @@ export class CodeService {
 
       const demonstration = suite.is_demonstration || suite.source.license_status === "development_fixture";
       const providerVerified = this.deps.providerVerified === true;
+      const mock = this.deps.provider.mock === true;
+      const mockAllowed = mock && this.deps.allowMockToCount === true;
+      const suiteEligible = isAnalyticsEligible(suite);
       const analyticsStatus: AnalyticsStatus =
-        verdict === "judge_error" ? "excluded_judge_error" : demonstration ? "excluded_demonstration" : !providerVerified ? "excluded_unverified_provider" : "counted";
+        verdict === "judge_error"
+          ? "excluded_judge_error"
+          : demonstration
+            ? "excluded_demonstration"
+            : !suiteEligible
+              ? "excluded_ineligible_suite"
+              : mock && !mockAllowed
+                ? "excluded_mock_execution"
+                : !providerVerified
+                  ? "excluded_unverified_provider"
+                  : "counted";
 
       const record: SubmissionRecord = {
         id: `sub_${randomUUID()}`,
@@ -210,6 +228,10 @@ export class CodeService {
         provider: this.deps.provider.name,
         provider_verified: providerVerified,
         suite_license: suite.source.license_status,
+        suite_eligible: suiteEligible,
+        judged_tests: results.filter((r) => r !== undefined).length,
+        provider_mock: mock,
+        ...(mockAllowed ? { mock_counting_allowed: true } : {}),
       };
       await this.deps.submissions.save(record);
       try {
@@ -234,7 +256,7 @@ export class CodeService {
     const record = await this.deps.submissions.get(id);
     // Unknown and someone else's are indistinguishable.
     if (!record || record.owner_uid !== uid) throw new ApiError("SUBMISSION_NOT_FOUND", `Submission ${id} not found`);
-    const { owner_uid: _o, provider: _p, provider_verified: _v, suite_license: _l, ...detail } = record;
+    const { owner_uid: _o, provider: _p, provider_verified: _v, suite_license: _l, suite_eligible: _e, judged_tests: _j, provider_mock: _m, mock_counting_allowed: _a, ...detail } = record;
     return { ...detail, analytics_status: record.analytics_status ?? "excluded_unknown_provenance" };
   }
 
@@ -332,6 +354,6 @@ function unavailable(): ApiError {
 }
 
 function toPublic(r: SubmissionRecord): CodeSubmission {
-  const { owner_uid: _o, source: _s, provider: _p, provider_verified: _v, suite_license: _l, ...rest } = r;
+  const { owner_uid: _o, source: _s, provider: _p, provider_verified: _v, suite_license: _l, suite_eligible: _e, judged_tests: _j, provider_mock: _m, mock_counting_allowed: _a, ...rest } = r;
   return { ...rest, analytics_status: r.analytics_status ?? "excluded_unknown_provenance" };
 }

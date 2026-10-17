@@ -60,13 +60,13 @@ function createStores(config: Config): { sessions: SessionStore; progress: Progr
   return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db) };
 }
 
-/** An explicit approved file wins; otherwise the labelled dev fixture locally and an honest empty catalogue in production. */
+/**
+ * An explicit approved file wins. Otherwise: the labelled dev fixture locally, and in production the first-party practice
+ * pack (original exercises, no company data). Set DSA_CATALOGUE_PATH and CODE_SUITES_PATH together.
+ */
 function loadCatalogue(config: Config, root: string, logger: ReturnType<typeof createLogger>): Catalogue {
-  const path = config.DSA_CATALOGUE_PATH ?? (config.NODE_ENV === "production" ? null : join(root, "data", "dsa", "fixture.json"));
-  if (!path) {
-    logger.warn("DSA_CATALOGUE_PATH is not set: the DSA catalogue is empty");
-    return Catalogue.empty();
-  }
+  const path = config.DSA_CATALOGUE_PATH ?? join(root, "data", "dsa", config.NODE_ENV === "production" ? "practice-pack.json" : "fixture.json");
+  if (!config.DSA_CATALOGUE_PATH) logger.info({ path }, "DSA_CATALOGUE_PATH is not set: using the bundled default for this environment");
   const catalogue = Catalogue.fromPath(path); // validates; throws (fail fast) on a malformed file
   logger.info({ source: catalogue.source?.name, license_status: catalogue.source?.license_status }, "DSA catalogue loaded");
   return catalogue;
@@ -86,13 +86,10 @@ function createExecutionProvider(config: Config, logger: ReturnType<typeof creat
   });
 }
 
-/** Hidden test suites are server-only data. Unset: the labelled dev fixture locally, none in production. */
+/** Hidden test suites are server-only data. Unset: the labelled dev fixture locally, the practice pack's suites in production. */
 function loadSuites(config: Config, root: string, logger: ReturnType<typeof createLogger>): SuiteRegistry {
-  const path = config.CODE_SUITES_PATH ?? (config.NODE_ENV === "production" ? null : join(root, "data", "code", "fixture-suites.json"));
-  if (!path) {
-    logger.warn("CODE_SUITES_PATH is not set: no question can be judged");
-    return SuiteRegistry.empty();
-  }
+  const path = config.CODE_SUITES_PATH ?? join(root, "data", "code", config.NODE_ENV === "production" ? "practice-suites.json" : "fixture-suites.json");
+  if (!config.CODE_SUITES_PATH) logger.info({ path }, "CODE_SUITES_PATH is not set: using the bundled default for this environment");
   const suites = SuiteRegistry.fromPath(path); // validates; throws on a malformed file
   logger.info({ suites: suites.size() }, "code test suites loaded");
   return suites;

@@ -39,12 +39,10 @@ function suites(ids: string[], demonstration = false) {
         statement: null,
         source: { name: "test suite", license_status: demonstration ? "development_fixture" : "own_work", license_note: "written for tests" },
         samples: [{ input: "s\n", expected_output: "s\n" }],
-        tests: [
-          { input: "1\n", expected_output: "1\n" },
-          { input: "2\n", expected_output: "2\n" },
-        ],
+        tests: ["1", "2", "3", "4", "5"].map((n) => ({ input: `${n}\n`, expected_output: `${n}\n` })),
         limits: { cpu_time_seconds: 2, memory_mb: 128 },
         starter_code: {},
+        eligibility: { analytics_eligible: !demonstration, reason: demonstration ? "demonstration suite" : "test suite declared eligible" },
       })),
     }),
   );
@@ -75,6 +73,7 @@ function setup(opts: { verified?: boolean; suites?: SuiteRegistry; provider?: Fa
     submissions: submissionStore,
     logger: silentLogger,
     providerVerified: opts.verified ?? true,
+    allowMockToCount: true, // TEST ONLY: FakeProvider is a mock; this lets the pipeline be exercised
     onJudged: (r) => analytics.recordSubmission(r),
   });
   const app = testApp({ autoAuth: false, code, analytics, catalogue, progressStore, submissionStore });

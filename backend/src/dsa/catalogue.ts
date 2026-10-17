@@ -43,7 +43,8 @@ export const CatalogueFileSchema = z.strictObject({
       z.strictObject({
         id: z.string().regex(idRe),
         title: z.string().trim().min(1).max(300),
-        url: z.string().url().max(500).startsWith("https://"),
+        // null: a first-party practice problem with no external page; its statement lives in the coding workspace
+        url: z.string().url().max(500).startsWith("https://").nullable(),
         difficulty: z.enum(DIFFICULTIES),
         topics: z.array(z.string().trim().min(1).max(60)).max(20),
       }),
@@ -66,9 +67,9 @@ export function parseCatalogueFile(raw: unknown): CatalogueFile {
   const urls = new Set<string>();
   for (const q of file.questions) {
     if (questionIds.has(q.id)) problems.push(`duplicate question id "${q.id}"`);
-    if (urls.has(q.url)) problems.push(`duplicate question url "${q.url}"`);
+    if (q.url !== null && urls.has(q.url)) problems.push(`duplicate question url "${q.url}"`);
     questionIds.add(q.id);
-    urls.add(q.url);
+    if (q.url !== null) urls.add(q.url);
   }
   const pairs = new Set<string>();
   for (const a of file.associations) {

@@ -19,6 +19,7 @@ const suite = (id: string, over: Partial<Suite> = {}): Suite => ({
   tests: [{ input: "2\n", expected_output: "2\n" }],
   limits: { cpu_time_seconds: 2, memory_mb: 128 },
   starter_code: {},
+  eligibility: { analytics_eligible: false, reason: "test default" },
   ...over,
 });
 const file = (...suites: Suite[]) => ({ schema_version: 1 as const, suites });

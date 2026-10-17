@@ -4,6 +4,7 @@ import type { SubmissionRecord, SubmissionStore } from "../code/submissionStore.
 import type { Catalogue } from "../dsa/catalogue.js";
 import type { DsaProgressService } from "../dsa/progressService.js";
 import type { AnalyticsHistoryResponse, DsaAnalyticsResponse, RevisionActionRequest, RevisionItem, RevisionQueueResponse, RevisionSuggestion } from "../types.js";
+import { isCountable } from "./eligibility.js";
 import { DEFAULT_ANALYTICS_CONFIG, type AnalyticsConfig } from "./config.js";
 import { compare, difficultyBreakdown, firstAttemptSuccess, rate, recentActivity, repeatedFailures, topicBreakdown, totals, weeklyBuckets } from "./metrics.js";
 import { applyAction, byPriority, contextFrom, createSuggested, isDue, onSubmission, RevisionActionError, toItem, type RevisionContext, type RevisionRecord } from "./revision.js";
@@ -47,7 +48,7 @@ export class AnalyticsService {
    * a retry, or POST /api/me/dsa-analytics/refresh repairs the state.
    */
   recordSubmission(rec: SubmissionRecord): Promise<void> {
-    if (rec.analytics_status !== "counted" || rec.verdict === "judge_error") return Promise.resolve();
+    if (!isCountable(rec)) return Promise.resolve(); // the stored status is re-checked against the record's own evidence
     return this.serialize(rec.owner_uid, async () => {
       const uid = rec.owner_uid;
       const q = this.deps.catalogue().summary(rec.question_id);
@@ -114,7 +115,7 @@ export class AnalyticsService {
   /** Rebuilds the student's statistics from their stored counted submissions and fills in any missing revision items. */
   refresh(uid: string): Promise<DsaAnalyticsResponse> {
     return this.serialize(uid, async () => {
-      const counted = (await this.deps.submissions.listCountedByOwner(uid, MAX_STATS)).filter((r) => r.verdict !== "judge_error");
+      const counted = (await this.deps.submissions.listCountedByOwner(uid, MAX_STATS)).filter(isCountable);
       counted.sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id));
       const cat = this.deps.catalogue();
       const fresh = new Map<string, StatsRecord>();
@@ -219,16 +220,18 @@ export class AnalyticsService {
 
   /** Submissions that do not count, by reason, over the student's latest 200. Unavailable if the query is (e.g. missing index). */
   private async exclusions(uid: string): Promise<DsaAnalyticsResponse["exclusions"]> {
-    const out = { available: true, sampled_submissions: 0, demonstration: 0, unverified_provider: 0, judge_error: 0, unknown_provenance: 0 };
+    const out = { available: true, sampled_submissions: 0, demonstration: 0, ineligible_suite: 0, unverified_provider: 0, mock_execution: 0, judge_error: 0, unknown_provenance: 0 };
     try {
       const recent = await this.deps.submissions.listRecentByOwner(uid, EXCLUSION_SAMPLE);
       out.sampled_submissions = recent.length;
       for (const r of recent) {
         const s = r.analytics_status;
         if (s === "excluded_demonstration") out.demonstration += 1;
+        else if (s === "excluded_ineligible_suite") out.ineligible_suite += 1;
         else if (s === "excluded_unverified_provider") out.unverified_provider += 1;
+        else if (s === "excluded_mock_execution") out.mock_execution += 1;
         else if (s === "excluded_judge_error") out.judge_error += 1;
-        else if (s !== "counted") out.unknown_provenance += 1; // missing or unrecognized: never counted
+        else if (!isCountable(r)) out.unknown_provenance += 1; // missing, unrecognized, or marked counted without the evidence
       }
     } catch (err) {
       this.deps.logger.warn({ err: (err as Error).message }, "analytics: exclusion counts unavailable");

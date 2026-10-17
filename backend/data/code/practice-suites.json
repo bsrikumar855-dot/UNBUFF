@@ -1,0 +1,713 @@
+{
+  "schema_version": 1,
+  "suites": [
+    {
+      "question_id": "fp_001_balanced_brackets",
+      "revision": "fp-1",
+      "is_demonstration": false,
+      "statement": "A line contains a non-empty string made only of the characters ( ) [ ] { }. It is balanced when every opening bracket is closed by the same kind of bracket, in the right order, and nothing is left open. Print YES if the string is balanced, otherwise NO. Length at most 1000. Time limit 2 seconds, memory 128 MB.",
+      "source": {
+        "name": "UNBLUFF first-party practice pack",
+        "license_status": "own_work",
+        "license_note": "Written by the UNBLUFF project for this application. Not copied from any third-party problem set and not a company interview question."
+      },
+      "samples": [
+        {
+          "input": "([]{})\n",
+          "expected_output": "YES\n"
+        },
+        {
+          "input": "([)]\n",
+          "expected_output": "NO\n"
+        }
+      ],
+      "tests": [
+        {
+          "input": "()\n",
+          "expected_output": "YES\n"
+        },
+        {
+          "input": "(\n",
+          "expected_output": "NO\n"
+        },
+        {
+          "input": ")(\n",
+          "expected_output": "NO\n"
+        },
+        {
+          "input": "{[()()]}\n",
+          "expected_output": "YES\n"
+        },
+        {
+          "input": "((((\n",
+          "expected_output": "NO\n"
+        },
+        {
+          "input": "))))\n",
+          "expected_output": "NO\n"
+        },
+        {
+          "input": "([)]{}\n",
+          "expected_output": "NO\n"
+        },
+        {
+          "input": "([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])\n",
+          "expected_output": "YES\n"
+        },
+        {
+          "input": "([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{([{}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])}])]\n",
+          "expected_output": "NO\n"
+        },
+        {
+          "input": ")[}[{(})}[]})((])}]))[([}}]()[{{]]({(){[\n",
+          "expected_output": "NO\n"
+        },
+        {
+          "input": "[]{}()\n",
+          "expected_output": "YES\n"
+        },
+        {
+          "input": "{{{{}}}}[(\n",
+          "expected_output": "NO\n"
+        }
+      ],
+      "limits": {
+        "cpu_time_seconds": 2,
+        "memory_mb": 128
+      },
+      "starter_code": {},
+      "eligibility": {
+        "analytics_eligible": true,
+        "reason": "First-party exercise with 12 hidden tests (normal, boundary and edge cases); counts only after a genuine accepted submission judged by a verified service."
+      }
+    },
+    {
+      "question_id": "fp_002_pair_count",
+      "revision": "fp-1",
+      "is_demonstration": false,
+      "statement": "The first line has two integers n and target. The second line has n integers. Count the pairs of positions i < j whose values add up to target and print that count. n is at most 2000 and each value is between -100000 and 100000. Time limit 2 seconds, memory 128 MB.",
+      "source": {
+        "name": "UNBLUFF first-party practice pack",
+        "license_status": "own_work",
+        "license_note": "Written by the UNBLUFF project for this application. Not copied from any third-party problem set and not a company interview question."
+      },
+      "samples": [
+        {
+          "input": "5 6\n1 5 3 3 3\n",
+          "expected_output": "4\n"
+        },
+        {
+          "input": "2 10\n2 4\n",
+          "expected_output": "0\n"
+        }
+      ],
+      "tests": [
+        {
+          "input": "1 14\n7\n",
+          "expected_output": "0\n"
+        },
+        {
+          "input": "4 0\n0 0 0 0\n",
+          "expected_output": "6\n"
+        },
+        {
+          "input": "5 0\n-3 3 -3 3 0\n",
+          "expected_output": "4\n"
+        },
+        {
+          "input": "5 10\n5 5 5 5 5\n",
+          "expected_output": "10\n"
+        },
+        {
+          "input": "6 7\n1 2 3 4 5 6\n",
+          "expected_output": "3\n"
+        },
+        {
+          "input": "3 0\n100000 -100000 100000\n",
+          "expected_output": "2\n"
+        },
+        {
+          "input": "2000 0\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n",
+          "expected_output": "1999000\n"
+        },
+        {
+          "input": "60 2\n-2 1 -4 -4 -5 2 -1 2 -3 -3 -1 -5 5 -4 -4 2 2 -1 2 3 -4 -3 3 3 2 0 -5 1 -5 4 -5 -2 5 4 -3 -5 2 -3 0 -4 -3 3 1 -3 -5 5 -2 -2 0 -5 5 4 -5 -2 -4 2 -1 0 3 3\n",
+          "expected_output": "102\n"
+        },
+        {
+          "input": "300 17\n714 411 -882 669 -922 -518 -846 -751 -67 270 -855 841 -19 391 -950 -457 860 -914 -7 -657 632 -88 654 -55 527 495 608 -186 446 -723 -617 588 -739 -362 511 -482 451 313 375 -915 94 -499 111 -538 754 590 -640 -40 -706 -129 -854 135 -860 -809 -336 -307 33 914 -747 866 799 -893 -657 -602 -835 -617 655 818 -836 255 430 -873 -862 -543 979 -402 -104 -881 320 -209 -967 189 200 -504 -28 -970 -730 713 720 -409 -297 -649 -88 -951 30 803 142 -657 -521 33 -874 -506 -404 -641 -270 124 -564 -438 387 80 -910 496 -64 -433 848 -155 -575 693 -238 -810 -110 844 -89 -963 -343 780 -880 963 -809 -129 -555 -467 28 -629 -817 -831 813 -858 704 -422 -15 -274 865 -59 -861 184 -683 505 -421 598 467 721 -873 640 -638 -399 683 132 320 448 591 -25 -455 597 -662 385 -469 -644 -391 -189 -471 -227 -766 469 864 399 -937 879 367 -296 298 320 -262 301 298 607 -929 624 422 -906 -631 235 -97 -679 -696 -595 312 187 11 120 -373 -917 196 181 -546 876 342 549 -589 -856 -714 581 -779 592 965 338 -452 26 -414 -409 -913 -186 36 -294 -31 231 776 -953 -20 -412 -975 -930 654 -429 517 744 752 -329 586 -525 -836 -871 -106 -825 -224 -699 563 643 -695 -164 986 -102 -326 593 123 649 913 -319 547 -481 -842 554 8 -779 758 -459 -166 -692 9 -265 911 671 587 -359 545 438 -835 -508 -17 434 281 634 878 846 -43 -112 -539 -742 138 -694 -266 -278 444 208 -576 996 288 916 -976 -373\n",
+          "expected_output": "20\n"
+        },
+        {
+          "input": "2 11\n4 6\n",
+          "expected_output": "0\n"
+        }
+      ],
+      "limits": {
+        "cpu_time_seconds": 2,
+        "memory_mb": 128
+      },
+      "starter_code": {},
+      "eligibility": {
+        "analytics_eligible": true,
+        "reason": "First-party exercise with 10 hidden tests (normal, boundary and edge cases); counts only after a genuine accepted submission judged by a verified service."
+      }
+    },
+    {
+      "question_id": "fp_003_longest_run",
+      "revision": "fp-1",
+      "is_demonstration": false,
+      "statement": "A line contains a non-empty string of lowercase letters (length at most 20000). A run is a block of equal consecutive letters. Print the length of the longest run. Time limit 2 seconds, memory 128 MB.",
+      "source": {
+        "name": "UNBLUFF first-party practice pack",
+        "license_status": "own_work",
+        "license_note": "Written by the UNBLUFF project for this application. Not copied from any third-party problem set and not a company interview question."
+      },
+      "samples": [
+        {
+          "input": "aabbbcc\n",
+          "expected_output": "3\n"
+        },
+        {
+          "input": "abcd\n",
+          "expected_output": "1\n"
+        }
+      ],
+      "tests": [
+        {
+          "input": "z\n",
+          "expected_output": "1\n"
+        },
+        {
+          "input": "aaaaaa\n",
+          "expected_output": "6\n"
+        },
+        {
+          "input": "ababab\n",
+          "expected_output": "1\n"
+        },
+        {
+          "input": "abbbb\n",
+          "expected_output": "4\n"
+        },
+        {
+          "input": "aaaab\n",
+          "expected_output": "4\n"
+        },
+        {
+          "input": "baaab\n",
+          "expected_output": "3\n"
+        },
+        {
+          "input": "abccccdddde\n",
+          "expected_output": "4\n"
+        },
+        {
+          "input": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n",
+          "expected_output": "15000\n"
+        },
+        {
+          "input": "ababaababbaabaababbabaabbababaaaaaaaaaababaaabaabbabaaaabbbbaaabbbaabaababbabaabbabbabbbbaaabbbbbbaabaababbabbbabaaabbbabaababaabaaaaaaabbaabbbbbababaaaaaaaaababaaaaabbbbbbbbaababaabbaaaaaaaababbabbbb\n",
+          "expected_output": "10\n"
+        },
+        {
+          "input": "abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab\n",
+          "expected_output": "1\n"
+        }
+      ],
+      "limits": {
+        "cpu_time_seconds": 2,
+        "memory_mb": 128
+      },
+      "starter_code": {},
+      "eligibility": {
+        "analytics_eligible": true,
+        "reason": "First-party exercise with 10 hidden tests (normal, boundary and edge cases); counts only after a genuine accepted submission judged by a verified service."
+      }
+    },
+    {
+      "question_id": "fp_004_first_not_less",
+      "revision": "fp-1",
+      "is_demonstration": false,
+      "statement": "The first line has n and q. The second line has n integers in non-decreasing order. Each of the next q lines has one integer x. For every x print, on its own line, the smallest 0-based index i with a[i] >= x, or n if no element is that large. n and q are at most 20000. Time limit 2 seconds, memory 128 MB.",
+      "source": {
+        "name": "UNBLUFF first-party practice pack",
+        "license_status": "own_work",
+        "license_note": "Written by the UNBLUFF project for this application. Not copied from any third-party problem set and not a company interview question."
+      },
+      "samples": [
+        {
+          "input": "4 4\n1 3 3 8\n3\n4\n0\n9\n",
+          "expected_output": "1\n3\n0\n4\n"
+        },
+        {
+          "input": "1 2\n5\n5\n6\n",
+          "expected_output": "0\n1\n"
+        }
+      ],
+      "tests": [
+        {
+          "input": "4 3\n2 2 2 2\n2\n1\n3\n",
+          "expected_output": "0\n0\n4\n"
+        },
+        {
+          "input": "4 4\n-5 -1 0 4\n-6\n-5\n0\n5\n",
+          "expected_output": "0\n0\n2\n4\n"
+        },
+        {
+          "input": "1 3\n7\n7\n8\n6\n",
+          "expected_output": "0\n1\n0\n"
+        },
+        {
+          "input": "12 5\n-5 -4 0 1 1 2 4 4 5 6 6 8\n-5\n9\n10\n0\n3\n",
+          "expected_output": "0\n12\n12\n2\n6\n"
+        },
+        {
+          "input": "5 3\n1 2 3 4 5\n1\n5\n6\n",
+          "expected_output": "0\n4\n5\n"
+        },
+        {
+          "input": "300 100\n-999 -997 -996 -988 -985 -976 -974 -971 -962 -961 -961 -939 -930 -923 -910 -895 -868 -864 -860 -859 -853 -830 -829 -819 -809 -807 -803 -783 -777 -775 -770 -752 -747 -746 -727 -727 -713 -700 -698 -689 -688 -665 -656 -655 -655 -653 -652 -647 -643 -636 -633 -630 -604 -595 -591 -588 -587 -586 -576 -573 -573 -572 -568 -565 -559 -558 -539 -521 -520 -500 -499 -478 -469 -460 -458 -454 -449 -446 -445 -444 -429 -426 -419 -417 -387 -383 -379 -374 -344 -342 -335 -327 -323 -318 -316 -311 -309 -304 -289 -289 -281 -270 -266 -249 -244 -235 -224 -223 -222 -218 -215 -212 -210 -194 -190 -189 -174 -168 -168 -164 -161 -159 -156 -156 -152 -149 -130 -128 -127 -118 -113 -107 -104 -100 -95 -85 -71 -69 -52 -42 -41 -41 -30 -19 -13 -10 -10 0 21 24 40 41 44 49 55 58 61 67 68 75 90 98 102 109 115 118 120 123 124 138 154 164 165 202 202 205 218 242 242 254 258 259 263 265 268 276 284 299 310 321 324 325 326 331 335 335 339 345 351 352 357 365 365 366 369 382 383 384 386 413 418 424 435 438 439 439 444 448 455 470 473 477 493 494 510 513 514 515 516 536 541 558 561 569 583 584 587 592 592 593 605 609 619 620 625 628 635 647 665 672 674 677 681 691 718 718 728 740 746 753 756 773 785 789 799 805 806 809 818 819 820 826 831 835 837 849 850 853 854 856 877 891 899 902 914 920 924 929 932 936 936 942 951 954 959 965 969 982 982 985\n228\n502\n314\n-1034\n-32\n967\n-1095\n1091\n-229\n-114\n-13\n-989\n1008\n967\n482\n853\n-857\n-700\n-990\n971\n384\n-588\n-614\n283\n-759\n-672\n410\n-770\n-182\n807\n-1042\n-401\n-811\n790\n888\n-877\n-828\n-1100\n-349\n784\n-1045\n-837\n-343\n-166\n788\n57\n-856\n174\n-100\n590\n-272\n-15\n753\n-2\n284\n-646\n1076\n63\n-589\n-483\n119\n-257\n465\n-879\n52\n1017\n475\n55\n847\n-865\n-144\n744\n482\n-714\n-70\n-644\n-310\n953\n-148\n-887\n7\n-329\n662\n-342\n-178\n-797\n571\n773\n302\n-927\n-914\n-903\n591\n22\n-414\n841\n-352\n28\n458\n-767\n",
+          "expected_output": "177\n224\n189\n0\n142\n296\n0\n300\n106\n130\n144\n3\n300\n296\n222\n277\n20\n37\n3\n297\n207\n55\n52\n186\n31\n41\n209\n30\n116\n267\n0\n84\n24\n264\n281\n16\n23\n0\n88\n262\n0\n21\n89\n119\n263\n155\n20\n173\n133\n237\n101\n144\n259\n147\n186\n48\n300\n157\n55\n71\n166\n103\n219\n16\n154\n300\n221\n154\n275\n17\n126\n258\n222\n36\n137\n48\n96\n293\n126\n16\n148\n91\n248\n89\n116\n27\n234\n261\n188\n13\n14\n15\n237\n149\n84\n275\n88\n150\n219\n31\n"
+        },
+        {
+          "input": "300 4\n-99900 -99700 -99600 -98800 -98500 -97600 -97400 -97100 -96200 -96100 -96100 -93900 -93000 -92300 -91000 -89500 -86800 -86400 -86000 -85900 -85300 -83000 -82900 -81900 -80900 -80700 -80300 -78300 -77700 -77500 -77000 -75200 -74700 -74600 -72700 -72700 -71300 -70000 -69800 -68900 -68800 -66500 -65600 -65500 -65500 -65300 -65200 -64700 -64300 -63600 -63300 -63000 -60400 -59500 -59100 -58800 -58700 -58600 -57600 -57300 -57300 -57200 -56800 -56500 -55900 -55800 -53900 -52100 -52000 -50000 -49900 -47800 -46900 -46000 -45800 -45400 -44900 -44600 -44500 -44400 -42900 -42600 -41900 -41700 -38700 -38300 -37900 -37400 -34400 -34200 -33500 -32700 -32300 -31800 -31600 -31100 -30900 -30400 -28900 -28900 -28100 -27000 -26600 -24900 -24400 -23500 -22400 -22300 -22200 -21800 -21500 -21200 -21000 -19400 -19000 -18900 -17400 -16800 -16800 -16400 -16100 -15900 -15600 -15600 -15200 -14900 -13000 -12800 -12700 -11800 -11300 -10700 -10400 -10000 -9500 -8500 -7100 -6900 -5200 -4200 -4100 -4100 -3000 -1900 -1300 -1000 -1000 0 2100 2400 4000 4100 4400 4900 5500 5800 6100 6700 6800 7500 9000 9800 10200 10900 11500 11800 12000 12300 12400 13800 15400 16400 16500 20200 20200 20500 21800 24200 24200 25400 25800 25900 26300 26500 26800 27600 28400 29900 31000 32100 32400 32500 32600 33100 33500 33500 33900 34500 35100 35200 35700 36500 36500 36600 36900 38200 38300 38400 38600 41300 41800 42400 43500 43800 43900 43900 44400 44800 45500 47000 47300 47700 49300 49400 51000 51300 51400 51500 51600 53600 54100 55800 56100 56900 58300 58400 58700 59200 59200 59300 60500 60900 61900 62000 62500 62800 63500 64700 66500 67200 67400 67700 68100 69100 71800 71800 72800 74000 74600 75300 75600 77300 78500 78900 79900 80500 80600 80900 81800 81900 82000 82600 83100 83500 83700 84900 85000 85300 85400 85600 87700 89100 89900 90200 91400 92000 92400 92900 93200 93600 93600 94200 95100 95400 95900 96500 96900 98200 98200 98500\n0\n50000\n-1000000\n1000000\n",
+          "expected_output": "147\n224\n0\n300\n"
+        },
+        {
+          "input": "12 50\n-5 -4 0 1 1 2 4 4 5 6 6 8\n8\n5\n9\n4\n12\n-2\n4\n2\n12\n-6\n-1\n-5\n9\n2\n-3\n2\n3\n-3\n4\n-8\n10\n11\n3\n-6\n12\n-5\n-4\n1\n5\n6\n5\n5\n4\n12\n0\n10\n-2\n2\n-7\n9\n2\n1\n3\n-5\n2\n2\n10\n9\n-5\n12\n",
+          "expected_output": "11\n8\n12\n6\n12\n2\n6\n5\n12\n0\n2\n0\n12\n5\n2\n5\n6\n2\n6\n0\n12\n12\n6\n0\n12\n0\n1\n3\n8\n9\n8\n8\n6\n12\n2\n12\n2\n5\n0\n12\n5\n3\n6\n0\n5\n5\n12\n12\n0\n12\n"
+        }
+      ],
+      "limits": {
+        "cpu_time_seconds": 2,
+        "memory_mb": 128
+      },
+      "starter_code": {},
+      "eligibility": {
+        "analytics_eligible": true,
+        "reason": "First-party exercise with 8 hidden tests (normal, boundary and edge cases); counts only after a genuine accepted submission judged by a verified service."
+      }
+    },
+    {
+      "question_id": "fp_005_coin_ways",
+      "revision": "fp-1",
+      "is_demonstration": false,
+      "statement": "The first line has n and amount. The second line has n distinct positive coin values. Coins may be used any number of times. Print how many different combinations of coins add up to exactly amount (the order of coins does not matter), modulo 1000000007. amount is 0 to 5000, n at most 50 and each coin is at most 5000. For amount 0 the answer is 1. Time limit 2 seconds, memory 128 MB.",
+      "source": {
+        "name": "UNBLUFF first-party practice pack",
+        "license_status": "own_work",
+        "license_note": "Written by the UNBLUFF project for this application. Not copied from any third-party problem set and not a company interview question."
+      },
+      "samples": [
+        {
+          "input": "3 5\n1 2 5\n",
+          "expected_output": "4\n"
+        },
+        {
+          "input": "1 7\n2\n",
+          "expected_output": "0\n"
+        }
+      ],
+      "tests": [
+        {
+          "input": "2 0\n3 7\n",
+          "expected_output": "1\n"
+        },
+        {
+          "input": "1 9\n3\n",
+          "expected_output": "1\n"
+        },
+        {
+          "input": "1 10\n3\n",
+          "expected_output": "0\n"
+        },
+        {
+          "input": "2 4\n5 6\n",
+          "expected_output": "0\n"
+        },
+        {
+          "input": "4 10\n2 3 5 6\n",
+          "expected_output": "5\n"
+        },
+        {
+          "input": "3 100\n1 5 10\n",
+          "expected_output": "121\n"
+        },
+        {
+          "input": "5 5000\n1 2 5 10 25\n",
+          "expected_output": "596843681\n"
+        },
+        {
+          "input": "4 3000\n7 11 13 17\n",
+          "expected_output": "270834\n"
+        },
+        {
+          "input": "1 1\n1\n",
+          "expected_output": "1\n"
+        },
+        {
+          "input": "6 4999\n1 3 4 49 77 1000\n",
+          "expected_output": "956740027\n"
+        }
+      ],
+      "limits": {
+        "cpu_time_seconds": 2,
+        "memory_mb": 128
+      },
+      "starter_code": {},
+      "eligibility": {
+        "analytics_eligible": true,
+        "reason": "First-party exercise with 10 hidden tests (normal, boundary and edge cases); counts only after a genuine accepted submission judged by a verified service."
+      }
+    },
+    {
+      "question_id": "fp_006_shortest_hops",
+      "revision": "fp-1",
+      "is_demonstration": false,
+      "statement": "A network has n towns numbered 1 to n and m two-way roads. The first line has n, m, s and t. Each of the next m lines has two towns joined by a road. Print the fewest roads needed to travel from s to t, or -1 if t cannot be reached. Roads may repeat or join a town to itself. n is at most 1000 and m at most 5000. Time limit 2 seconds, memory 128 MB.",
+      "source": {
+        "name": "UNBLUFF first-party practice pack",
+        "license_status": "own_work",
+        "license_note": "Written by the UNBLUFF project for this application. Not copied from any third-party problem set and not a company interview question."
+      },
+      "samples": [
+        {
+          "input": "5 5 1 3\n1 2\n2 3\n1 4\n4 5\n5 3\n",
+          "expected_output": "2\n"
+        },
+        {
+          "input": "3 1 1 3\n1 2\n",
+          "expected_output": "-1\n"
+        }
+      ],
+      "tests": [
+        {
+          "input": "1 0 1 1\n",
+          "expected_output": "0\n"
+        },
+        {
+          "input": "4 2 1 4\n1 2\n3 4\n",
+          "expected_output": "-1\n"
+        },
+        {
+          "input": "6 5 1 6\n1 2\n2 3\n3 4\n4 5\n5 6\n",
+          "expected_output": "5\n"
+        },
+        {
+          "input": "5 4 1 5\n1 1\n1 2\n1 2\n2 5\n",
+          "expected_output": "2\n"
+        },
+        {
+          "input": "6 7 2 6\n1 2\n2 3\n3 1\n3 4\n4 5\n5 6\n6 4\n",
+          "expected_output": "3\n"
+        },
+        {
+          "input": "7 7 7 1\n1 2\n1 3\n2 4\n3 4\n4 5\n5 6\n6 7\n",
+          "expected_output": "5\n"
+        },
+        {
+          "input": "50 70 3 40\n24 13\n38 5\n14 37\n28 42\n40 20\n38 37\n30 35\n19 49\n26 27\n17 2\n17 31\n29 36\n8 1\n9 23\n12 12\n22 2\n7 43\n40 41\n35 16\n22 18\n7 11\n36 5\n4 32\n34 3\n41 5\n35 11\n24 7\n23 39\n16 30\n9 23\n13 21\n45 30\n9 9\n34 39\n48 32\n33 1\n42 25\n7 49\n45 28\n36 34\n35 19\n33 29\n12 50\n3 2\n42 11\n45 30\n34 35\n34 32\n6 33\n44 4\n36 12\n25 23\n3 23\n30 26\n20 27\n15 44\n3 48\n45 47\n37 27\n45 24\n20 26\n14 1\n28 7\n7 39\n30 27\n37 39\n3 31\n11 29\n26 32\n44 15\n",
+          "expected_output": "5\n"
+        },
+        {
+          "input": "200 150 1 200\n165 43\n162 76\n167 48\n170 12\n96 10\n104 74\n65 77\n89 54\n155 90\n26 68\n86 178\n58 173\n82 96\n22 87\n124 175\n9 77\n57 165\n21 126\n35 101\n140 138\n77 2\n99 22\n119 26\n180 83\n37 180\n7 78\n112 134\n78 60\n130 103\n104 61\n85 73\n87 59\n157 33\n112 152\n66 164\n82 101\n147 183\n78 66\n164 68\n69 185\n94 65\n147 132\n12 119\n123 199\n2 106\n152 136\n119 124\n129 196\n46 124\n15 124\n140 19\n142 28\n45 71\n157 173\n48 188\n151 146\n47 29\n127 118\n31 48\n65 162\n23 80\n36 46\n91 95\n107 170\n80 30\n12 150\n165 12\n17 36\n184 198\n58 150\n149 37\n75 44\n191 71\n131 66\n41 2\n131 110\n197 16\n29 170\n193 21\n48 153\n198 57\n89 82\n79 56\n161 32\n59 114\n105 44\n175 132\n145 48\n3 108\n47 147\n143 24\n97 199\n8 122\n5 125\n144 200\n29 10\n112 30\n134 108\n46 29\n177 117\n39 184\n23 143\n158 55\n116 15\n136 170\n64 71\n66 128\n96 171\n15 19\n42 170\n193 197\n184 95\n115 86\n140 161\n58 175\n23 179\n176 187\n144 177\n61 54\n195 97\n21 4\n76 89\n167 88\n11 162\n56 146\n24 3\n116 44\n98 52\n78 81\n1 112\n137 104\n10 99\n196 120\n1 114\n174 41\n46 132\n68 71\n79 195\n30 48\n80 96\n50 156\n34 166\n19 36\n8 17\n49 184\n115 174\n132 191\n2 146\n104 193\n130 166\n",
+          "expected_output": "-1\n"
+        },
+        {
+          "input": "30 25 10 10\n18 30\n28 8\n10 23\n26 18\n11 18\n14 14\n29 18\n25 6\n20 21\n1 3\n9 13\n28 15\n18 27\n3 28\n28 6\n11 28\n6 25\n26 12\n27 21\n25 21\n19 25\n30 8\n22 18\n15 6\n3 26\n",
+          "expected_output": "0\n"
+        }
+      ],
+      "limits": {
+        "cpu_time_seconds": 2,
+        "memory_mb": 128
+      },
+      "starter_code": {},
+      "eligibility": {
+        "analytics_eligible": true,
+        "reason": "First-party exercise with 9 hidden tests (normal, boundary and edge cases); counts only after a genuine accepted submission judged by a verified service."
+      }
+    },
+    {
+      "question_id": "fp_007_covered_time",
+      "revision": "fp-1",
+      "is_demonstration": false,
+      "statement": "The first line has n. Each of the next n lines has two integers l and r with l < r describing the half-open interval [l, r). Print the total length of the union of all intervals (time covered by at least one interval). Intervals may overlap, repeat, nest or touch. n is at most 20000 and values are between -1000000000 and 1000000000. Time limit 2 seconds, memory 128 MB.",
+      "source": {
+        "name": "UNBLUFF first-party practice pack",
+        "license_status": "own_work",
+        "license_note": "Written by the UNBLUFF project for this application. Not copied from any third-party problem set and not a company interview question."
+      },
+      "samples": [
+        {
+          "input": "3\n1 4\n3 6\n8 9\n",
+          "expected_output": "6\n"
+        },
+        {
+          "input": "2\n0 2\n2 5\n",
+          "expected_output": "5\n"
+        }
+      ],
+      "tests": [
+        {
+          "input": "1\n5 6\n",
+          "expected_output": "1\n"
+        },
+        {
+          "input": "3\n1 10\n2 3\n4 5\n",
+          "expected_output": "9\n"
+        },
+        {
+          "input": "3\n1 3\n3 5\n5 7\n",
+          "expected_output": "6\n"
+        },
+        {
+          "input": "3\n1 2\n4 5\n7 8\n",
+          "expected_output": "3\n"
+        },
+        {
+          "input": "3\n2 4\n2 4\n2 4\n",
+          "expected_output": "2\n"
+        },
+        {
+          "input": "3\n-5 -1\n-3 2\n10 12\n",
+          "expected_output": "9\n"
+        },
+        {
+          "input": "4\n9 12\n1 4\n3 7\n6 8\n",
+          "expected_output": "10\n"
+        },
+        {
+          "input": "1\n-1000000000 1000000000\n",
+          "expected_output": "2000000000\n"
+        },
+        {
+          "input": "500\n510 523\n908 934\n575 583\n86 97\n169 175\n580 607\n254 279\n433 435\n987 989\n483 501\n123 137\n254 283\n12 31\n707 736\n19 37\n778 799\n432 435\n934 935\n207 217\n178 183\n103 105\n221 231\n62 79\n766 796\n885 911\n108 110\n561 564\n507 516\n794 813\n33 52\n592 618\n838 847\n963 983\n59 87\n72 84\n803 804\n419 440\n917 922\n878 906\n502 512\n669 680\n360 363\n592 594\n849 862\n104 119\n826 828\n59 60\n646 653\n207 234\n419 429\n753 767\n967 968\n583 602\n200 208\n962 987\n853 875\n794 822\n789 814\n777 782\n325 351\n10 29\n282 304\n907 934\n707 737\n473 481\n480 486\n289 304\n255 275\n769 785\n429 437\n526 537\n111 139\n921 938\n274 293\n129 159\n560 580\n287 302\n425 451\n573 589\n600 602\n271 295\n36 60\n167 174\n830 860\n850 857\n794 811\n736 743\n647 668\n913 941\n25 28\n114 115\n754 766\n411 432\n109 125\n451 467\n984 1012\n316 325\n208 227\n332 344\n432 449\n404 423\n309 317\n712 722\n908 931\n836 846\n575 580\n652 673\n688 691\n560 561\n11 26\n885 909\n596 600\n527 529\n446 460\n180 197\n382 397\n713 739\n820 829\n524 526\n420 448\n958 980\n789 790\n115 123\n721 733\n618 631\n642 650\n175 195\n252 258\n23 28\n529 540\n560 568\n575 587\n760 764\n999 1010\n197 202\n787 817\n753 772\n860 862\n330 356\n787 798\n169 196\n338 344\n571 595\n845 865\n129 135\n561 582\n773 797\n487 498\n232 256\n347 374\n711 737\n691 714\n895 905\n307 337\n575 594\n402 422\n503 522\n264 275\n279 290\n345 348\n371 385\n978 1007\n577 591\n171 201\n519 532\n192 196\n996 1015\n894 924\n263 282\n978 1003\n583 597\n657 670\n611 641\n411 428\n456 480\n803 806\n479 506\n542 544\n178 190\n259 274\n716 734\n691 720\n937 949\n232 251\n939 941\n51 73\n538 545\n224 233\n189 202\n602 616\n213 243\n346 354\n388 391\n343 347\n240 259\n960 975\n618 623\n829 836\n370 387\n624 637\n208 231\n28 34\n78 98\n350 363\n634 651\n485 498\n615 622\n179 184\n232 238\n800 814\n876 880\n63 68\n725 726\n420 432\n88 111\n64 73\n557 572\n744 746\n296 307\n864 880\n48 52\n537 554\n678 683\n586 600\n353 357\n659 682\n656 677\n932 939\n240 248\n104 126\n833 837\n623 628\n678 699\n359 367\n736 763\n169 193\n234 236\n64 89\n373 398\n930 954\n291 301\n995 1024\n599 600\n512 538\n69 72\n351 359\n302 308\n455 481\n464 476\n362 367\n396 416\n248 277\n701 712\n200 225\n623 644\n651 676\n793 822\n212 218\n181 203\n325 349\n820 846\n459 484\n146 170\n787 797\n13 24\n569 578\n725 753\n664 671\n659 665\n904 906\n305 323\n265 271\n808 832\n40 67\n328 337\n471 480\n806 808\n552 582\n968 976\n927 942\n626 652\n126 140\n629 656\n554 565\n21 48\n968 989\n249 271\n371 390\n488 494\n538 562\n421 425\n629 632\n43 54\n585 587\n323 330\n261 271\n806 834\n506 530\n464 483\n637 656\n405 433\n10 32\n237 260\n642 667\n188 197\n94 120\n294 309\n55 69\n248 263\n340 346\n722 745\n251 275\n259 265\n511 530\n40 44\n208 232\n130 156\n474 500\n6 25\n831 846\n466 488\n424 434\n234 251\n584 591\n843 855\n426 432\n627 636\n440 465\n895 922\n270 288\n622 629\n141 146\n220 234\n636 655\n244 267\n768 780\n83 109\n570 591\n980 992\n628 647\n952 956\n282 304\n453 474\n447 461\n828 856\n241 258\n924 945\n888 904\n400 418\n596 604\n594 623\n363 370\n5 25\n905 928\n725 752\n178 194\n404 431\n174 180\n569 574\n970 991\n374 400\n209 230\n117 123\n477 485\n100 109\n287 312\n651 662\n602 627\n397 420\n129 145\n115 143\n803 811\n730 760\n196 219\n298 309\n786 803\n51 77\n288 300\n824 830\n518 523\n453 474\n465 468\n964 981\n551 579\n633 644\n269 279\n251 259\n650 669\n162 191\n271 281\n913 922\n747 750\n581 605\n921 932\n120 126\n197 215\n294 297\n718 737\n33 49\n352 363\n284 297\n681 702\n683 696\n445 447\n639 651\n149 168\n644 655\n787 797\n891 894\n878 895\n534 547\n278 291\n161 190\n460 483\n315 333\n227 255\n128 142\n50 64\n418 419\n490 502\n801 803\n409 413\n672 682\n916 927\n109 135\n256 261\n48 53\n102 104\n297 323\n934 952\n216 231\n475 488\n146 166\n388 410\n914 926\n668 670\n991 1016\n459 489\n130 142\n222 231\n566 592\n483 504\n97 111\n592 605\n646 661\n211 241\n97 108\n475 498\n520 544\n35 62\n83 108\n438 466\n256 280\n532 540\n108 113\n872 879\n797 812\n312 338\n571 581\n245 272\n857 880\n190 207\n274 296\n680 703\n636 648\n661 678\n290 307\n837 851\n344 347\n692 713\n644 661\n110 117\n540 564\n826 847\n809 828\n138 151\n281 301\n598 619\n12 27\n627 636\n85 101\n261 280\n352 370\n482 500\n710 712\n831 855\n733 763\n261 276\n737 749\n437 452\n607 610\n927 942\n971 980\n991 1008\n533 562\n925 934\n659 687\n161 169\n542 570\n566 589\n",
+          "expected_output": "1017\n"
+        }
+      ],
+      "limits": {
+        "cpu_time_seconds": 2,
+        "memory_mb": 128
+      },
+      "starter_code": {},
+      "eligibility": {
+        "analytics_eligible": true,
+        "reason": "First-party exercise with 9 hidden tests (normal, boundary and edge cases); counts only after a genuine accepted submission judged by a verified service."
+      }
+    },
+    {
+      "question_id": "fp_008_window_distinct",
+      "revision": "fp-1",
+      "is_demonstration": false,
+      "statement": "The first line has n and k (1 <= k <= n). The second line has n integers. For every window of k consecutive numbers, from left to right, print how many different values it contains. Print all n - k + 1 answers on one line separated by single spaces. n is at most 20000. Time limit 2 seconds, memory 128 MB.",
+      "source": {
+        "name": "UNBLUFF first-party practice pack",
+        "license_status": "own_work",
+        "license_note": "Written by the UNBLUFF project for this application. Not copied from any third-party problem set and not a company interview question."
+      },
+      "samples": [
+        {
+          "input": "6 3\n1 2 1 3 3 3\n",
+          "expected_output": "2 3 2 1\n"
+        },
+        {
+          "input": "3 1\n4 4 4\n",
+          "expected_output": "1 1 1\n"
+        }
+      ],
+      "tests": [
+        {
+          "input": "1 1\n9\n",
+          "expected_output": "1\n"
+        },
+        {
+          "input": "5 5\n1 2 3 4 5\n",
+          "expected_output": "5\n"
+        },
+        {
+          "input": "5 5\n7 7 7 7 7\n",
+          "expected_output": "1\n"
+        },
+        {
+          "input": "6 2\n1 1 2 2 3 3\n",
+          "expected_output": "1 2 1 2 1\n"
+        },
+        {
+          "input": "8 4\n-1 -1 0 0 1 1 -1 0\n",
+          "expected_output": "2 3 2 3 3\n"
+        },
+        {
+          "input": "10 1\n2 2 0 2 3 3 2 3 2 0\n",
+          "expected_output": "1 1 1 1 1 1 1 1 1 1\n"
+        },
+        {
+          "input": "200 17\n5 0 11 12 6 1 5 7 8 2 12 3 12 2 11 3 3 5 10 11 1 4 9 4 0 2 9 4 11 12 1 11 9 6 0 5 11 12 12 8 6 11 8 0 7 10 3 8 11 9 12 3 10 12 9 1 5 1 2 1 12 0 0 11 9 4 11 3 3 12 8 4 0 8 12 1 8 10 4 9 9 6 5 4 8 10 3 1 12 7 10 9 5 7 1 10 10 0 6 0 5 6 7 11 8 9 10 10 9 3 8 9 3 5 3 7 3 2 4 12 3 8 6 4 4 9 0 5 12 3 2 6 5 5 0 11 9 2 10 12 7 12 3 7 5 5 4 7 0 9 1 9 10 9 12 12 7 6 1 7 7 9 2 7 2 9 8 4 4 6 11 0 0 8 2 3 4 8 9 1 12 5 1 11 0 11 0 3 4 10 5 11 2 2 8 5 3 9 4 10\n",
+          "expected_output": "10 10 10 10 10 10 11 11 11 10 10 10 10 10 10 10 10 10 9 9 9 9 9 10 10 10 9 9 9 10 11 10 10 10 10 10 9 9 9 10 11 10 11 11 10 10 10 10 9 10 10 10 10 9 10 10 10 9 9 8 8 9 9 9 9 10 11 10 10 9 10 10 10 10 10 10 10 10 10 10 10 11 11 11 10 9 9 9 10 9 9 9 9 10 10 9 9 9 9 9 8 9 9 10 9 9 10 10 9 9 10 10 10 10 10 10 9 9 9 10 10 10 10 10 11 10 10 10 10 10 11 11 10 10 11 11 10 10 9 9 9 10 10 9 9 9 9 8 8 7 8 9 9 8 9 10 9 9 9 9 9 9 9 10 10 11 11 11 11 11 10 10 10 11 11 10 11 11 11 10 10 10 10 9\n"
+        },
+        {
+          "input": "300 120\n25 33 7 -4 50 34 -20 22 18 -48 -20 -26 -4 9 50 4 -22 40 -15 9 -50 -18 34 -44 50 12 33 -4 27 -25 -28 -19 38 38 -50 -38 16 39 50 39 4 29 -38 -37 38 28 40 -44 24 43 -50 -43 48 5 -44 25 -3 38 50 -32 2 -27 18 -32 14 43 24 23 -22 48 10 7 -20 -35 -31 -28 -47 49 -45 -14 -3 31 6 -2 34 34 0 -2 -4 -48 -6 -11 45 -44 -10 -16 32 33 36 15 -22 -41 -37 9 31 -6 4 -37 -4 -3 -48 29 -3 43 -39 -23 -18 -15 -18 31 -26 -35 -6 -45 -39 -5 -20 -41 -43 -49 48 47 -30 -40 -6 19 -25 -46 -27 20 -21 35 13 -35 11 -22 -22 16 -19 -39 -3 -30 -4 -5 -20 -15 27 -10 9 -28 50 1 -30 -2 23 17 -43 7 -27 -6 -18 43 -18 -45 45 20 14 -10 -30 2 31 44 16 -42 -33 -33 -15 17 -26 -24 23 46 -49 40 -32 18 20 -24 -10 40 25 -33 40 -45 47 -16 -18 -36 -30 -7 1 -5 46 -3 -14 35 31 16 44 7 5 23 -4 50 -2 -16 -43 26 -43 -29 1 -23 -34 36 -47 2 -19 -19 -14 15 36 -42 -13 25 -44 -28 32 32 -32 -18 -11 35 -17 28 26 -4 14 11 5 12 49 17 -21 -24 -23 -28 37 46 -45 38 46 33 -49 14 -3 -9 5 -2 -46 -20 2 17 -41 0 36 27 41 46 10 -49 29 36 17 12 -12 -11 -29 -47 1 -30\n",
+          "expected_output": "64 64 64 64 64 64 65 65 64 64 65 65 66 67 68 68 69 69 70 70 71 72 73 74 74 75 74 74 74 73 73 73 73 73 73 73 73 74 74 74 73 73 74 73 73 73 73 72 72 72 72 71 71 71 70 70 69 69 68 68 68 68 69 68 68 69 69 68 68 68 69 68 69 69 70 70 71 70 69 69 68 69 69 68 68 68 67 66 67 67 68 68 67 67 66 67 67 66 65 64 63 64 64 64 64 64 64 63 63 63 64 63 62 63 64 65 65 65 65 65 66 66 66 67 67 68 68 69 68 68 68 68 68 69 69 69 68 67 66 66 67 67 67 67 66 66 66 66 66 66 66 66 67 67 67 66 67 66 66 66 67 67 67 68 69 69 70 71 71 71 70 71 70 70 70 70 70 70 70 70 70\n"
+        }
+      ],
+      "limits": {
+        "cpu_time_seconds": 2,
+        "memory_mb": 128
+      },
+      "starter_code": {},
+      "eligibility": {
+        "analytics_eligible": true,
+        "reason": "First-party exercise with 8 hidden tests (normal, boundary and edge cases); counts only after a genuine accepted submission judged by a verified service."
+      }
+    },
+    {
+      "question_id": "fp_009_island_count",
+      "revision": "fp-1",
+      "is_demonstration": false,
+      "statement": "The first line has r and c. Each of the next r lines has c characters, # for land and . for water. Two land cells belong to the same island when they share a side (up, down, left or right; diagonals do not count). Print the number of islands. r and c are at most 100. Time limit 2 seconds, memory 128 MB.",
+      "source": {
+        "name": "UNBLUFF first-party practice pack",
+        "license_status": "own_work",
+        "license_note": "Written by the UNBLUFF project for this application. Not copied from any third-party problem set and not a company interview question."
+      },
+      "samples": [
+        {
+          "input": "3 4\n#..#\n##..\n...#\n",
+          "expected_output": "3\n"
+        },
+        {
+          "input": "2 2\n..\n..\n",
+          "expected_output": "0\n"
+        }
+      ],
+      "tests": [
+        {
+          "input": "1 1\n#\n",
+          "expected_output": "1\n"
+        },
+        {
+          "input": "1 1\n.\n",
+          "expected_output": "0\n"
+        },
+        {
+          "input": "2 3\n###\n###\n",
+          "expected_output": "1\n"
+        },
+        {
+          "input": "3 3\n#.#\n.#.\n#.#\n",
+          "expected_output": "5\n"
+        },
+        {
+          "input": "2 2\n#.\n.#\n",
+          "expected_output": "2\n"
+        },
+        {
+          "input": "5 5\n#####\n....#\n#####\n#....\n#####\n",
+          "expected_output": "1\n"
+        },
+        {
+          "input": "1 7\n#.#.#.#\n",
+          "expected_output": "4\n"
+        },
+        {
+          "input": "20 20\n..######..##.#.#.#..\n.#.#.....#.##.####..\n#.#.##..##.....#....\n#......##.##.#....#.\n.#.###.#.#.....###..\n...#..#.##.##....##.\n#.##.#.##..#.##.##.#\n....###.#..##.###...\n......###.#.....#...\n.##.#..........#.###\n####.....#...##.###.\n..##.###...#.##.#.#.\n.....#.######..#....\n..#.##.#.##...#.#...\n####..##..#.####.#.#\n#.##.##.#.#...#.....\n.#...#..####..#.#.##\n#...###.#....#..#.#.\n#.#..#####.#..##...#\n#.#..#..##.#.#.##..#\n",
+          "expected_output": "44\n"
+        },
+        {
+          "input": "60 80\n##..#.#####.#....#..#.....#...##..#..##....#..##.##.#.##..#...#..#...........##.\n..#....##..#..#.....#####.##...........#.#........#.#....###.#.#.###......#...#.\n....#........#..#....#....#.....#..#.#...##....##.#.##............#.#.#..##...##\n....##..##..#...#........#.#..#..#.#...#...#.#..#.#..##...##..##...##.#..#..#.#.\n###.....##...#.##...#..#..###..#...#.....##......................##...#.#...#...\n.##..###..#...#............#.........##.......#.....##.##..#.#..#.....#..#..#...\n...#.#.....#.#..#.#...#.#......#...##..#....##.#..#.....#.#...#....#.....#.#.###\n##.......#.##..#........##......#..##.#.#.....###...#..#####....#.#..#.#.#.#....\n#.....#..#..#..#.##.....#...#....#..##.#.#.##..#......#.......#...##....#..#.#..\n.#..#.#..................##..##.#..#.....#..#.###...#..#..##..#.#....#...#....#.\n.........#.....##.....#.#....#......#...#..#.#..##.#.#..#..#.#...#...#.##...#...\n#.......##.#.#...#.#.##.#.....#...#..##....#.##....#.#..####.....##.#...#....#.#\n...#.##...##...........#...##...##...#...#.#........#.....#..#.....###....###..#\n..#...#......#..##...............#...........##..###..#....###..#.......#..#....\n..#...#..##...#.##.##.##..#.....#....#.#.......###....#......#....#.#.##.....#..\n.#..#...#.#..##.....#........##..#.##.##..##.##.###.#.#...........#....##.#.####\n........###.####.........#.##....#...#.##.........#.....#.##.#...#.##.....#..#.#\n.......#..#....###.....#.#...#...#.#..##...###.#.....#..........#.#..#.#.....#..\n##.#....##.#.......................#...........#..#..##..#......#.#.##..#.#..#.#\n#..#.#.#.#.#.###..#.#...##.##.##.......#..##..#....#.#.##..........##...##......\n##.#.##.....###.............#...#...##..#..#..#.....#.#....#..#.....##..##.#..##\n..#..#......#.#.#.......###.......#.#.####.......#.........#.......#........#...\n...........##.##....#....#..##.#.....#..##..........#..#....#..#..#....##.......\n....#.####....#.....#..##.#..#####.#..#####.##.##..#.......#......#.......##....\n.....#..#.#..........#...#...##.####...###...#..##...#..........#.....#....#.#..\n......#.....##....#.......####...#..##..##.##..#.#.#...###..#......#..###.....##\n#.#...#...#....#.....#........#...#.....#..#...###.....##.#..........##.##.#....\n........#.#......##....##........#.##....##......##.#....#..........#...........\n#.........##.......#..#....###.##.....#.......#..#.#..#.#..#.........#.##.#.....\n...........######.....#.#...#..#.#...#.####.......#....#####.##.#...#.#..#...#..\n..#...##....###...###.##.................#..#..##........#.#...#...#.##..###...#\n#..#...#....#....#.#.#..#...#...#..#...###..#..##..#.#....#.....#...#.#.#.....#.\n...#.#.....#...#####...###.#..####..#.#.#............#.....#.....#.#.........#.#\n##.....#...###.......##......##...#..##.##..#....#.#.#..#...........#......###..\n..##...#....#...##..#.#..#...#...#.####..........#...#.#.#...#...##.#..........#\n......#.#######..#.........###.#........#...........###...#..#..............#.#.\n.#.....#.#.##.#..#...#.#...##.##...#####.......#.##..##..##..#..#.....#....#..#.\n.#.#...#..##....#..#...#.###..#.#...#....#..#......#..##...##.#..#.........#..#.\n..#..#...#............#....#..#.......##..........#......#.....##..#..#...#..###\n....#...#.#..##...##....#.#..........#....#.##...................####.#..##....#\n#....#..#...#.##...#.....#.#......#..#...###.#........#.....#...#.....#.....#..#\n.#.......#.....###.#......##.##...###........#.##..###.#...#..#........##..#.###\n#.##.....##.#................#.##.........#.#.#.......###....#....#.#.#...#.#.#.\n#....#..#...#.#..####...#.#....###.#.#.....#...#...#..#...#....##.#.###.....##..\n.....##.#...#....#.#.#..#.#..#..#....#...###..#....##.##.#.....#....#.....###...\n.##..##.........#......##.........#.#...#...#.####.#.#.####...#...##...#...####.\n..#......#...##..##.#.....###..##.#.....#..#.....#.......###..#......##.#.#.####\n#...#..#.#.#.....#.##.#..##..#.........#...#..#...#...##.##...#####....#.#..#.#.\n.###.#.#.#...#......##.#..#.#.......#...#..#..#..#...#..##.........###.#..#.#.#.\n....##..#.#....#...#.#......#..##...#.#.#..####..###.....#..#..##.#.#.......#...\n...#.##.........##........#..#...###.......#...#......#...#..##..##.......#.#..#\n....#......###..####.......#.#.......#.....#...#................#.#.....##......\n...#.#..#....##.....#.##.....##......#.##.###.#...##...#...##.......#..##..#..##\n..#.#..#.#......#.....#..####....#.....#.#..#....#........#..###..........#.#...\n.#.#.....#....#...#..#..###........#.#.###.#...#.#..#..###...#.....#...#..#.#..#\n..#...##......#....#.###..#.##..#.#.#..#...#..#.#....##.....#.#..#.....#...##..#\n..#.....##.###......#.##....###..##...#..#..#....#...##..#.#..###.####.#....#...\n.......#....#......#..#.#....#...#..##.......#......###..#..#..#....#.#..#....#.\n......#..#........#..#.#.#....#.#.#.##......##.##.#..#......#..#........#....#..\n.####.#..#.#.......#.##.##.......##.#.###.#.....#.#....#......#..#.#.......##...\n",
+          "expected_output": "625\n"
+        },
+        {
+          "input": "5 100\n#..#.#..#.##.#.#.#.#...#.###.#..####.#####....###...#..###..#..##...#####.#.##.#.#....####.#.#####..\n..###.##.#..#####....##..####...#######.#######.####....#.#############..##.#####....#.##..##.##..#.\n#.###..###.##..#..##..#.....#.#...###.##.#.##.##..###########..###.###..#.#.###..#.#.....######.#.#.\n#.#.##..##.####.#####.###..####.#..##.##...###.#.####..####.##.##.#.....####.##.#.###.#.##.###....#.\n##.#########..##...####.#######..#.###.#..#####....#...##.#..#...#.#..#.#..#.#.###.##.###.###.#..###\n",
+          "expected_output": "31\n"
+        }
+      ],
+      "limits": {
+        "cpu_time_seconds": 2,
+        "memory_mb": 128
+      },
+      "starter_code": {},
+      "eligibility": {
+        "analytics_eligible": true,
+        "reason": "First-party exercise with 10 hidden tests (normal, boundary and edge cases); counts only after a genuine accepted submission judged by a verified service."
+      }
+    },
+    {
+      "question_id": "fp_010_edit_cost",
+      "revision": "fp-1",
+      "is_demonstration": false,
+      "statement": "Two lines each contain a non-empty string of lowercase letters (length at most 500). In one step you may insert a letter, delete a letter or replace a letter. Print the fewest steps needed to turn the first string into the second. Time limit 2 seconds, memory 128 MB.",
+      "source": {
+        "name": "UNBLUFF first-party practice pack",
+        "license_status": "own_work",
+        "license_note": "Written by the UNBLUFF project for this application. Not copied from any third-party problem set and not a company interview question."
+      },
+      "samples": [
+        {
+          "input": "kitten\nsitting\n",
+          "expected_output": "3\n"
+        },
+        {
+          "input": "abc\nabc\n",
+          "expected_output": "0\n"
+        }
+      ],
+      "tests": [
+        {
+          "input": "a\nb\n",
+          "expected_output": "1\n"
+        },
+        {
+          "input": "a\na\n",
+          "expected_output": "0\n"
+        },
+        {
+          "input": "abc\nxyz\n",
+          "expected_output": "3\n"
+        },
+        {
+          "input": "abc\nabcd\n",
+          "expected_output": "1\n"
+        },
+        {
+          "input": "abcd\nabc\n",
+          "expected_output": "1\n"
+        },
+        {
+          "input": "intention\nexecution\n",
+          "expected_output": "5\n"
+        },
+        {
+          "input": "aaaa\naa\n",
+          "expected_output": "2\n"
+        },
+        {
+          "input": "ab\nba\n",
+          "expected_output": "2\n"
+        },
+        {
+          "input": "bcbabcccababaababbcabcbcbbabbbccacbbcbbb\nabccaaacaabbccccabbabacbaaabbbaaaaa\n",
+          "expected_output": "22\n"
+        },
+        {
+          "input": "bbababaabbaabbabaaabbabaabaabaaabbbbaababbababbabaaabaabaaaabbaaabbabaabaabbbababbbaabbabaabbbaaaaaabaaaaaabababbaabbbabbabaaaabaabbbabaaaababaaaaaabbabbbbababaaaaabbbabbbbbbbabaaabbbaabbbbbaabbabbbaa\nbbaaaabaaaaabbbaaabbbabbabaabaabaabababbbabbaaaababbabbaaabbaaaaabaabaababbaabbbbaaaabaaaaabbbbbabababbaabbababaaaaabbbbaababbabaababbbababbbaaaabababbbababbaabbbbbbabaababaababbba\n",
+          "expected_output": "57\n"
+        },
+        {
+          "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n",
+          "expected_output": "500\n"
+        }
+      ],
+      "limits": {
+        "cpu_time_seconds": 2,
+        "memory_mb": 128
+      },
+      "starter_code": {},
+      "eligibility": {
+        "analytics_eligible": true,
+        "reason": "First-party exercise with 11 hidden tests (normal, boundary and edge cases); counts only after a genuine accepted submission judged by a verified service."
+      }
+    }
+  ]
+}

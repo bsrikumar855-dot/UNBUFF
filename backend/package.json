@@ -19,7 +19,10 @@
     "test:emulator": "npx --yes firebase-tools@15.34.0 emulators:exec --only auth,firestore --project demo-unbluff \"vitest run -c vitest.emulator.config.ts\"",
     "dsa:import": "tsx scripts/dsa_import.ts",
     "dsa:validate": "tsx scripts/dsa_validate.ts",
-    "code:import-suite": "tsx scripts/code_import_suite.ts"
+    "code:import-suite": "tsx scripts/code_import_suite.ts",
+    "practice:build": "tsx scripts/build_practice_pack.ts",
+    "smoke:judge0": "tsx scripts/judge0_smoke.ts",
+    "indexes:check": "tsx scripts/firestore_index_check.ts"
   },
   "dependencies": {
     "@google-cloud/firestore": "^9.2.0",

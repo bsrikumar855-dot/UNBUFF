@@ -36,6 +36,8 @@ export interface ExecutionProvider {
   readonly name: string;
   /** False when no service is configured: every call fails honestly instead of faking a result. */
   readonly configured: boolean;
+  /** True for mock or test providers. Their results can never count toward analytics in a real deployment. */
+  readonly mock?: boolean;
   listLanguages(): Promise<ProviderLanguage[]>;
   execute(input: ExecuteInput): Promise<ExecuteResult>;
 }

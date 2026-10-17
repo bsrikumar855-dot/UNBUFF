@@ -49,7 +49,7 @@ const empty: DsaAnalyticsResponse = {
     previous: { from: "a", to: "b", attempts: 0, accepted: 0, accuracy: rate(0, 0) },
   },
   self_reported: { solved: 2, attempted: 1, needs_revision: 0, bookmarked: 3 },
-  exclusions: { available: true, sampled_submissions: 4, demonstration: 3, unverified_provider: 1, judge_error: 0, unknown_provenance: 0 },
+  exclusions: { available: true, sampled_submissions: 4, demonstration: 3, ineligible_suite: 0, unverified_provider: 1, mock_execution: 0, judge_error: 0, unknown_provenance: 0 },
   has_eligible_activity: false,
   revision_due: 0,
 };
@@ -74,7 +74,7 @@ const full: DsaAnalyticsResponse = {
   ],
   recent: [{ submission_id: "sub_1", question_id: "q_a", title: "Alpha Graph Walk", verdict: "wrong_answer", at: "2026-06-15T10:00:00.000Z" }],
   repeated_failures: [{ question_id: "q_b", title: "Beta Shortest Path", consecutive_failures: 3, attempts: 4, last_verdict: "wrong_answer", last_attempt_at: "2026-06-15T09:00:00.000Z" }],
-  exclusions: { available: true, sampled_submissions: 12, demonstration: 0, unverified_provider: 0, judge_error: 0, unknown_provenance: 0 },
+  exclusions: { available: true, sampled_submissions: 12, demonstration: 0, ineligible_suite: 0, unverified_provider: 0, mock_execution: 0, judge_error: 0, unknown_provenance: 0 },
   has_eligible_activity: true,
   revision_due: 2,
 };
@@ -216,7 +216,7 @@ describe("analytics dashboard", () => {
   });
 
   it("says so when excluded-submission counts are unavailable", async () => {
-    mocked.getDsaAnalytics.mockResolvedValue({ ...full, exclusions: { available: false, sampled_submissions: 0, demonstration: 0, unverified_provider: 0, judge_error: 0, unknown_provenance: 0 } });
+    mocked.getDsaAnalytics.mockResolvedValue({ ...full, exclusions: { available: false, sampled_submissions: 0, demonstration: 0, ineligible_suite: 0, unverified_provider: 0, mock_execution: 0, judge_error: 0, unknown_provenance: 0 } });
     renderAt("/dsa/analytics");
     expect(await screen.findByText(/Counts of excluded submissions are temporarily unavailable/)).toBeInTheDocument();
   });

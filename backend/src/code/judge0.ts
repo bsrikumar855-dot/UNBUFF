@@ -52,6 +52,7 @@ function outcomeOf(statusId: number): Outcome {
 export class Judge0Provider implements ExecutionProvider {
   readonly name = "judge0";
   readonly configured = true;
+  readonly mock = false;
   private readonly base: string;
   private readonly headers: Record<string, string>;
   private readonly fetchImpl: typeof fetch;

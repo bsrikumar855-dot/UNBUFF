@@ -38,6 +38,8 @@ export interface FakeOptions {
   languages?: ProviderLanguage[];
   /** What a correct program prints for a given stdin (marker OK). */
   solve?: (stdin: string) => string;
+  /** Default true. A test double that stands in for a real, non-mock service sets this to false (it is still not real). */
+  mock?: boolean;
 }
 
 /**
@@ -48,6 +50,7 @@ export interface FakeOptions {
 export class FakeProvider implements ExecutionProvider {
   readonly name = "fake";
   readonly configured = true;
+  readonly mock: boolean; // a mock never counts toward analytics unless a test explicitly allows it
   calls: ExecuteInput[] = [];
   listCalls = 0;
   private readonly languages: ProviderLanguage[];
@@ -55,6 +58,7 @@ export class FakeProvider implements ExecutionProvider {
 
   constructor(opts: FakeOptions = {}) {
     this.languages = opts.languages ?? REAL_LANGUAGE_LIST;
+    this.mock = opts.mock ?? true;
     this.solve = opts.solve ?? ((s) => s);
   }
 

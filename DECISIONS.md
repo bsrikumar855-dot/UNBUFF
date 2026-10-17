@@ -327,3 +327,10 @@ everything once gcloud is available.
 - **Per student and question rollup** (`unbluff_dsa_stats`) is the aggregation layer, updated at submit time and idempotent per submission id; `POST /api/me/dsa-analytics/refresh` rebuilds it from stored submissions. Revision items (`unbluff_dsa_revision`) are one per student and question.
 - **Weakness detection is rules with explicit thresholds** (`src/analytics/config.ts`), never a model; technical failures are reported separately from algorithmic ones.
 - **Index:** `firestore.indexes.json` adds (owner_uid, created_at desc) for `unbluff_code_submissions`; an operator must deploy it. Without it only the excluded-submission counts degrade (reported as unavailable).
+
+## Phase 5.1 — operational readiness
+
+- **The operator flag alone no longer proves anything.** A submission counts only if its suite is declared analytics-eligible (never a demonstration), the provider is not a mock, every hidden test produced a provider result, and the verdict agrees with the counts; the check is repeated on every record and on rebuilds. `EXECUTION_PROVIDER_VERIFIED` is still operator-only and defaults to false.
+- **First-party practice pack** (ten original exercises, `own_work`, no companies, `url: null`) is generated deterministically by `npm run practice:build` and is the production default content. The demonstration fixtures stay separate and can never count.
+- **`QuestionSummary.url` is nullable** for first-party problems.
+- **No real end-to-end verification was possible** (no Judge0, no Firebase project): see docs/phase-5.1-operational-readiness.md for the exact commands and the pending checklist.

@@ -249,15 +249,21 @@ const CodeWorkspacePage: React.FC = () => {
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <DifficultyBadge difficulty={question.question.difficulty} />
             <TopicTags topics={question.question.topics} />
-            <a
-              href={question.question.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-primary underline"
-            >
-              Original problem <ExternalLink size={14} aria-hidden="true" />
-              <span className="sr-only">(opens in a new tab)</span>
-            </a>
+            {question.question.url !== null ? (
+              <a
+                href={question.question.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-primary underline"
+              >
+                Original problem <ExternalLink size={14} aria-hidden="true" />
+                <span className="sr-only">(opens in a new tab)</span>
+              </a>
+            ) : (
+              <span className="text-sm text-ink-secondary">
+                First-party practice problem
+              </span>
+            )}
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">

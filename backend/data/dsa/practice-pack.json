@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "source": {
+    "name": "UNBLUFF first-party practice pack",
+    "license_status": "own_work",
+    "license_note": "Written by the UNBLUFF project for this application. Not copied from any third-party problem set and not a company interview question.",
+    "url": null,
+    "imported_at": "2026-01-01T00:00:00.000Z",
+    "source_updated_at": null
+  },
+  "companies": [],
+  "questions": [
+    {
+      "id": "fp_001_balanced_brackets",
+      "title": "Balanced Brackets",
+      "url": null,
+      "difficulty": "easy",
+      "topics": [
+        "Stack",
+        "Strings"
+      ]
+    },
+    {
+      "id": "fp_002_pair_count",
+      "title": "Pair Count",
+      "url": null,
+      "difficulty": "easy",
+      "topics": [
+        "Arrays",
+        "Hash Table"
+      ]
+    },
+    {
+      "id": "fp_003_longest_run",
+      "title": "Longest Run",
+      "url": null,
+      "difficulty": "easy",
+      "topics": [
+        "Strings",
+        "Two Pointers"
+      ]
+    },
+    {
+      "id": "fp_004_first_not_less",
+      "title": "First Not Less",
+      "url": null,
+      "difficulty": "easy",
+      "topics": [
+        "Arrays",
+        "Binary Search"
+      ]
+    },
+    {
+      "id": "fp_005_coin_ways",
+      "title": "Coin Ways",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Arrays",
+        "Dynamic Programming"
+      ]
+    },
+    {
+      "id": "fp_006_shortest_hops",
+      "title": "Shortest Hops",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Breadth-First Search",
+        "Graphs"
+      ]
+    },
+    {
+      "id": "fp_007_covered_time",
+      "title": "Covered Time",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Intervals",
+        "Sorting"
+      ]
+    },
+    {
+      "id": "fp_008_window_distinct",
+      "title": "Window Distinct",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Hash Table",
+        "Sliding Window"
+      ]
+    },
+    {
+      "id": "fp_009_island_count",
+      "title": "Island Count",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Graphs",
+        "Matrix"
+      ]
+    },
+    {
+      "id": "fp_010_edit_cost",
+      "title": "Edit Cost",
+      "url": null,
+      "difficulty": "hard",
+      "topics": [
+        "Dynamic Programming",
+        "Strings"
+      ]
+    }
+  ],
+  "associations": []
+}

@@ -53,7 +53,8 @@ const DsaQuestionPage: React.FC = () => {
     if (await progress.update(questionId, { status })) flash("Status saved");
   };
   const toggleBookmark = async () => {
-    if (await progress.update(questionId, { bookmarked: !(mine?.bookmarked ?? false) })) flash(mine?.bookmarked ? "Bookmark removed" : "Bookmarked");
+    if (await progress.update(questionId, { bookmarked: !(mine?.bookmarked ?? false) }))
+      flash(mine?.bookmarked ? "Bookmark removed" : "Bookmarked");
   };
   const saveNotes = async () => {
     if (await progress.update(questionId, { notes })) {
@@ -62,7 +63,8 @@ const DsaQuestionPage: React.FC = () => {
     }
   };
 
-  const backTo = (location.state as { from?: string } | null)?.from ?? routes.dsaQuestions;
+  const backTo =
+    (location.state as { from?: string } | null)?.from ?? routes.dsaQuestions;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -76,7 +78,9 @@ const DsaQuestionPage: React.FC = () => {
         </Link>
       </nav>
 
-      {error !== null && <ErrorState error={error} onRetry={() => setAttempt((a) => a + 1)} />}
+      {error !== null && (
+        <ErrorState error={error} onRetry={() => setAttempt((a) => a + 1)} />
+      )}
       {error === null && data === null && <LoadingState message="Loading question…" />}
 
       {data && (
@@ -102,16 +106,23 @@ const DsaQuestionPage: React.FC = () => {
           </p>
 
           <p className="mt-4">
-            <a
-              href={data.question.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-md border border-line-strong bg-white px-4 py-2.5 text-sm font-medium text-ink-primary hover:bg-surface-100"
-            >
-              Open original problem
-              <ExternalLink size={16} aria-hidden="true" />
-              <span className="sr-only">(opens in a new tab)</span>
-            </a>
+            {data.question.url !== null ? (
+              <a
+                href={data.question.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-md border border-line-strong bg-white px-4 py-2.5 text-sm font-medium text-ink-primary hover:bg-surface-100"
+              >
+                Open original problem
+                <ExternalLink size={16} aria-hidden="true" />
+                <span className="sr-only">(opens in a new tab)</span>
+              </a>
+            ) : (
+              <span className="text-sm text-ink-secondary">
+                First-party practice problem written for UNBLUFF (not a company interview
+                question). Its statement is in the coding workspace.
+              </span>
+            )}
           </p>
           <p className="mt-3">
             <Link
@@ -123,15 +134,25 @@ const DsaQuestionPage: React.FC = () => {
           </p>
           <SourceBanner source={data.source} className="mt-6" />
 
-          <section aria-labelledby="progress-heading" className="mt-8 rounded-lg border border-line bg-white p-5">
-            <h2 id="progress-heading" className="mb-3 text-lg font-semibold text-ink-primary">
+          <section
+            aria-labelledby="progress-heading"
+            className="mt-8 rounded-lg border border-line bg-white p-5"
+          >
+            <h2
+              id="progress-heading"
+              className="mb-3 text-lg font-semibold text-ink-primary"
+            >
               Your progress
             </h2>
 
             {progress.authLoading && <LoadingState message="Checking your sign-in…" />}
             {!progress.authLoading && !progress.signedIn && (
               <p className="text-sm text-ink-secondary">
-                <Link to={routes.login} state={{ from: `${location.pathname}${location.search}` }} className="text-primary underline">
+                <Link
+                  to={routes.login}
+                  state={{ from: `${location.pathname}${location.search}` }}
+                  className="text-primary underline"
+                >
                   Sign in
                 </Link>{" "}
                 to save your status, bookmark and notes for this question.
@@ -140,11 +161,22 @@ const DsaQuestionPage: React.FC = () => {
 
             {progress.signedIn && (
               <div className="flex flex-col gap-5">
-                {progress.error !== null && <ErrorState error={progress.error} onRetry={() => void progress.reload()} />}
+                {progress.error !== null && (
+                  <ErrorState
+                    error={progress.error}
+                    onRetry={() => void progress.reload()}
+                  />
+                )}
 
                 <fieldset>
-                  <legend className="mb-2 text-sm font-medium text-ink-primary">Status</legend>
-                  <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Status">
+                  <legend className="mb-2 text-sm font-medium text-ink-primary">
+                    Status
+                  </legend>
+                  <div
+                    className="flex flex-wrap gap-2"
+                    role="radiogroup"
+                    aria-label="Status"
+                  >
                     {STATUS_ORDER.map((s) => {
                       const selected = (mine?.status ?? "not_started") === s;
                       return (
@@ -156,7 +188,9 @@ const DsaQuestionPage: React.FC = () => {
                           disabled={progress.saving}
                           onClick={() => void changeStatus(s)}
                           className={`rounded-md border px-3 py-1.5 text-sm font-medium ${
-                            selected ? "border-primary bg-primary-soft text-primary-dark" : "border-line-strong bg-white text-ink-primary hover:bg-surface-100"
+                            selected
+                              ? "border-primary bg-primary-soft text-primary-dark"
+                              : "border-line-strong bg-white text-ink-primary hover:bg-surface-100"
                           }`}
                         >
                           {STATUS_LABEL[s]}
@@ -174,13 +208,20 @@ const DsaQuestionPage: React.FC = () => {
                     onClick={() => void toggleBookmark()}
                     className="inline-flex items-center gap-2 rounded-md border border-line-strong bg-white px-3 py-1.5 text-sm font-medium text-ink-primary hover:bg-surface-100"
                   >
-                    <Bookmark size={16} className={mine?.bookmarked ? "fill-current text-primary" : ""} aria-hidden="true" />
+                    <Bookmark
+                      size={16}
+                      className={mine?.bookmarked ? "fill-current text-primary" : ""}
+                      aria-hidden="true"
+                    />
                     {mine?.bookmarked ? "Bookmarked" : "Bookmark"}
                   </button>
                 </div>
 
                 <div>
-                  <label htmlFor="dsa-notes" className="mb-1 block text-sm font-medium text-ink-primary">
+                  <label
+                    htmlFor="dsa-notes"
+                    className="mb-1 block text-sm font-medium text-ink-primary"
+                  >
                     Notes (private to you)
                   </label>
                   <textarea
@@ -198,12 +239,20 @@ const DsaQuestionPage: React.FC = () => {
                     <span className="text-xs text-ink-muted">
                       {notes.length}/{MAX_NOTES}
                     </span>
-                    <Button size="sm" onClick={() => void saveNotes()} disabled={progress.saving || !notesDirty}>
+                    <Button
+                      size="sm"
+                      onClick={() => void saveNotes()}
+                      disabled={progress.saving || !notesDirty}
+                    >
                       {progress.saving ? "Saving…" : "Save notes"}
                     </Button>
                   </div>
                 </div>
-                <p role="status" aria-live="polite" className="min-h-[1.25rem] text-sm text-ink-secondary">
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className="min-h-[1.25rem] text-sm text-ink-secondary"
+                >
                   {saved}
                 </p>
               </div>
