@@ -229,7 +229,8 @@ export class CodeService {
         provider_verified: providerVerified,
         suite_license: suite.source.license_status,
         suite_eligible: suiteEligible,
-        judged_tests: results.filter((r) => r !== undefined).length,
+        // A compile error is found by the first test alone and holds for every test, so it counts as judged for all of them.
+        judged_tests: results[0]?.outcome === "compile_error" ? total : results.filter((r) => r !== undefined).length,
         provider_mock: mock,
         ...(mockAllowed ? { mock_counting_allowed: true } : {}),
       };
