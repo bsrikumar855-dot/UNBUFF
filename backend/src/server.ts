@@ -43,10 +43,13 @@ function main(): void {
   const roles = RoleRegistry.fromDirectory(join(root, "data", "roles")); // asserts weights sum to 1
   const demoReportJson = JSON.stringify(JSON.parse(readFileSync(join(root, "data", "demo_report.json"), "utf8")));
   const store: SessionStore = config.STORE === "firestore" ? new FirestoreStore() : new MemoryStore();
+  if (config.NODE_ENV === "production" && config.STORE === "memory") {
+    logger.warn("STORE=memory in production: sessions are lost on restart/redeploy and are not shared between instances");
+  }
   const llm = createProvider(config, logger);
   const service = new AssessmentService({ store, llm, roles, logger });
 
-  const app = createApp({ service, roles, llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN });
+  const app = createApp({ service, roles, llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
   const server = app.listen(config.PORT, "0.0.0.0", (err?: Error) => {
     if (err) {
       // Express 5 reports bind errors (e.g. EADDRINUSE) here instead of throwing.

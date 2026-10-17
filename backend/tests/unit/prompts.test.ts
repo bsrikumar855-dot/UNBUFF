@@ -84,7 +84,30 @@ describe("config", () => {
 
   it("mock mode needs nothing and applies defaults", () => {
     const c = loadConfig({ LLM_MODE: "mock" });
-    expect(c).toMatchObject({ LLM_MODE: "mock", PORT: 8080, CORS_ORIGIN: "*", STORE: "memory", GRADE_THINKING: "LOW" });
+    expect(c).toMatchObject({ LLM_MODE: "mock", PORT: 8080, CORS_ORIGIN: "http://localhost:5173,http://127.0.0.1:5173", TRUST_PROXY: 1, STORE: "memory", GRADE_THINKING: "LOW" });
+  });
+
+  it("production requires explicit non-wildcard CORS origins", () => {
+    const prod = { LLM_MODE: "mock", NODE_ENV: "production" };
+    expect(() => loadConfig(prod)).toThrow(/CORS_ORIGIN is required/);
+    expect(() => loadConfig({ ...prod, CORS_ORIGIN: "*" })).toThrow(/must not be "\*"/);
+    expect(() => loadConfig({ ...prod, CORS_ORIGIN: "https://app.example.com, *" })).toThrow(/must not be "\*"/);
+    expect(() => loadConfig({ ...prod, CORS_ORIGIN: "https://app.example.com/" })).toThrow(/bare origins/);
+    expect(() => loadConfig({ ...prod, CORS_ORIGIN: "app.example.com" })).toThrow(/bare origins/);
+    expect(loadConfig({ ...prod, CORS_ORIGIN: " https://a.example.com , https://b.example.com " }).CORS_ORIGIN).toBe(
+      "https://a.example.com , https://b.example.com",
+    );
+  });
+
+  it("outside production CORS defaults to localhost and an explicit wildcard is still allowed", () => {
+    expect(loadConfig({ LLM_MODE: "mock", CORS_ORIGIN: "" }).CORS_ORIGIN).toContain("http://localhost:5173");
+    expect(loadConfig({ LLM_MODE: "mock", CORS_ORIGIN: "*" }).CORS_ORIGIN).toBe("*");
+  });
+
+  it("validates TRUST_PROXY", () => {
+    expect(loadConfig({ LLM_MODE: "mock", TRUST_PROXY: "0" }).TRUST_PROXY).toBe(0);
+    expect(() => loadConfig({ LLM_MODE: "mock", TRUST_PROXY: "-1" })).toThrow(/TRUST_PROXY/);
+    expect(() => loadConfig({ LLM_MODE: "mock", TRUST_PROXY: "9" })).toThrow(/TRUST_PROXY/);
   });
 
   it("never echoes secret values in errors", () => {

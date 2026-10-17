@@ -7,7 +7,7 @@ services:
     plan: free
     region: singapore
     rootDir: backend
-    buildCommand: npm install && npm run build
+    buildCommand: npm ci && npm run build # backend/package-lock.json is in rootDir; ci is reproducible
     startCommand: npm start
     healthCheckPath: /api/health
     autoDeploy: true
@@ -26,7 +26,9 @@ services:
       - key: STORE
         value: memory
       - key: CORS_ORIGIN
-        value: "*" # set to the Firebase Hosting URL once the frontend is live
+        sync: false # REQUIRED in production (the server refuses to start without it, and rejects "*").
+        # Enter the exact deployed frontend origin(s) in the Render dashboard, comma-separated,
+        # e.g. https://<your-frontend-origin> (scheme + host, no path, no trailing slash).
       - key: LOG_LEVEL
         value: info
       - key: GEMINI_API_KEY

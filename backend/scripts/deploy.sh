@@ -5,14 +5,15 @@
 # Usage (from anywhere):
 #   SETUP=1 bash backend/scripts/deploy.sh        # first time: APIs, Firestore, secret, IAM, deploy
 #   bash backend/scripts/deploy.sh                # later deploys
-#   CORS_ORIGIN=https://<app>.web.app bash backend/scripts/deploy.sh
+#   CORS_ORIGIN=https://<frontend-origin> bash backend/scripts/deploy.sh   # required
 set -euo pipefail
 
 REGION="${REGION:-asia-south1}"
 SERVICE="${SERVICE:-unbluff-api}"
 GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.1-flash-lite}"   # free tier: ~20 req/day on 3.6-flash
 GEMINI_FALLBACK_MODEL="${GEMINI_FALLBACK_MODEL:-gemini-3.6-flash}"
-CORS_ORIGIN="${CORS_ORIGIN:-*}"   # placeholder until the Firebase Hosting URL exists
+CORS_ORIGIN="${CORS_ORIGIN:-}"   # REQUIRED: exact frontend origin(s), comma-separated; "*" is rejected in production
+: "${CORS_ORIGIN:?Set CORS_ORIGIN to the deployed frontend origin, e.g. CORS_ORIGIN=https://<frontend-origin>}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 PROJECT="${PROJECT:-$(gcloud config get-value project 2>/dev/null)}"
 : "${PROJECT:?No project. Run: gcloud config set project <id>}"

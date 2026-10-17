@@ -23,6 +23,8 @@ export interface AppDeps {
   logger: Logger;
   demoReportJson: string;
   corsOrigin?: string;
+  /** Reverse-proxy hops to trust for req.ip (default 1; 0 disables). */
+  trustProxy?: number;
   rateLimits?: RateLimitOptions;
 }
 
@@ -30,7 +32,7 @@ export interface AppDeps {
 export function createApp(deps: AppDeps): Express {
   const app = express();
   app.disable("x-powered-by");
-  app.set("trust proxy", 1); // Cloud Run sits behind one proxy; needed for per-IP rate limits.
+  app.set("trust proxy", deps.trustProxy ?? 1); // Hops in front of the app (Cloud Run/Render: 1); needed for per-IP rate limits.
 
   const origin = deps.corsOrigin ?? "*";
   app.use(helmet());

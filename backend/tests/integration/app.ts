@@ -28,7 +28,7 @@ export function countingProvider(inner: LLMProvider = new MockProvider()) {
   return { llm: new Proxy(inner, handler), counts, total };
 }
 
-export function testApp(opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions } = {}) {
+export function testApp(opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string } = {}) {
   const llm = opts.llm ?? new MockProvider();
   const service = new AssessmentService({ store: new MemoryStore(), llm, roles, logger: silentLogger });
   return createApp({
@@ -37,6 +37,7 @@ export function testApp(opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions
     llm,
     logger: silentLogger,
     demoReportJson,
+    corsOrigin: opts.corsOrigin,
     rateLimits: opts.rateLimits ?? { globalPerMinute: 10_000, llmPerMinute: 10_000 },
   });
 }
