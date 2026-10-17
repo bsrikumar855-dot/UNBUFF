@@ -5,6 +5,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createApp } from "./app.js";
 import { FirebaseTokenVerifier } from "./auth/verifier.js";
+import { MentorService } from "./mentor/service.js";
+import { FirestoreMentorStore, MemoryMentorStore, type MentorStore } from "./mentor/store.js";
 import { AnalyticsService } from "./analytics/service.js";
 import { FirestoreRevisionStore, FirestoreStatsStore, MemoryRevisionStore, MemoryStatsStore, type RevisionStore, type StatsStore } from "./analytics/stores.js";
 import { Judge0Provider } from "./code/judge0.js";
@@ -43,12 +45,15 @@ function createProvider(config: Config, logger: ReturnType<typeof createLogger>)
     vertexai: config.GOOGLE_GENAI_USE_VERTEXAI,
     project: config.GOOGLE_CLOUD_PROJECT,
     location: config.GOOGLE_CLOUD_LOCATION,
+    mentorModel: config.MENTOR_MODEL,
+    mentorTemperature: config.MENTOR_TEMPERATURE,
+    mentorTimeoutMs: config.MENTOR_TIMEOUT_MS,
     logger,
   });
 }
 
-function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore } {
-  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore() };
+function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore } {
+  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore(), mentor: new MemoryMentorStore() };
   const account = config.FIREBASE_SERVICE_ACCOUNT_JSON ? parseServiceAccount(config.FIREBASE_SERVICE_ACCOUNT_JSON) : null;
   const projectId = config.GOOGLE_CLOUD_PROJECT ?? account?.project_id ?? config.FIREBASE_PROJECT_ID;
   // Without a service-account secret, Application Default Credentials apply (Cloud Run identity, gcloud login, emulator).
@@ -57,7 +62,7 @@ function createStores(config: Config): { sessions: SessionStore; progress: Progr
     ignoreUndefinedProperties: true,
     ...(account ? { credentials: { client_email: account.client_email, private_key: account.private_key } } : {}),
   });
-  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db) };
+  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db), mentor: new FirestoreMentorStore(undefined, db) };
 }
 
 /**
@@ -105,6 +110,7 @@ function main(): void {
   const stores = createStores(config);
   const catalogue = loadCatalogue(config, root, logger);
   const dsaProgress = new DsaProgressService(stores.progress, () => catalogue);
+  const llm = createProvider(config, logger);
   const analytics = new AnalyticsService({
     stats: stores.stats,
     revisions: stores.revisions,
@@ -116,6 +122,19 @@ function main(): void {
   if (config.EXECUTION_PROVIDER === "judge0" && !config.EXECUTION_PROVIDER_VERIFIED) {
     logger.warn("EXECUTION_PROVIDER_VERIFIED is not true: judged submissions will not count toward analytics until the operator confirms the service is a real deployment");
   }
+  const mentor = new MentorService({
+    store: stores.mentor,
+    llm,
+    stats: stores.stats,
+    revisions: stores.revisions,
+    analytics,
+    progress: dsaProgress,
+    catalogue: () => catalogue,
+    sessions: stores.sessions,
+    roles,
+    logger,
+    retention: { conversationDays: config.MENTOR_CONVERSATION_RETENTION_DAYS, summaryDays: config.MENTOR_SUMMARY_RETENTION_DAYS, learningDays: config.MENTOR_LEARNING_RETENTION_DAYS },
+  });
   const code = new CodeService({
     provider: createExecutionProvider(config, logger),
     suites: loadSuites(config, root, logger),
@@ -132,7 +151,6 @@ function main(): void {
   if (config.NODE_ENV === "production" && config.STORE === "memory") {
     logger.warn("ALLOW_EPHEMERAL_STORE is set: sessions are lost on restart/redeploy and are not shared between instances");
   }
-  const llm = createProvider(config, logger);
   const service = new AssessmentService({ store: stores.sessions, llm, roles, logger });
 
   const app = createApp({
@@ -143,6 +161,7 @@ function main(): void {
     dsaProgress,
     code,
     analytics,
+    mentor,
     llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
   const server = app.listen(config.PORT, "0.0.0.0", (err?: Error) => {
     if (err) {

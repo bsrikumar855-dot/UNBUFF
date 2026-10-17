@@ -8,6 +8,7 @@ export interface RateLimitOptions {
   /** Per signed-in user (not per IP). Defaults apply when omitted. */
   codeRunPerMinute?: number;
   codeSubmitPerMinute?: number;
+  mentorChatPerMinute?: number;
 }
 
 export const DEFAULT_RATE_LIMITS: RateLimitOptions = { globalPerMinute: 300, llmPerMinute: 40 };
@@ -41,6 +42,11 @@ function userLimiter(limit: number): RequestHandler {
 
 export function createCodeLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
   return { run: userLimiter(opts.codeRunPerMinute ?? 20), submit: userLimiter(opts.codeSubmitPerMinute ?? 8) };
+}
+
+/** Per-user limit for AI mentor messages (each one is a model call). Mount after requireAuth. */
+export function createMentorLimiter(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
+  return userLimiter(opts.mentorChatPerMinute ?? 12);
 }
 
 /** Global limiter for all routes, plus a tighter one for routes that call the LLM (cost control). */

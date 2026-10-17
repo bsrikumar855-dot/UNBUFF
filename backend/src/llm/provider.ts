@@ -1,5 +1,6 @@
 import type { Claim, Level, LlmMode, QA, Role, RoleSkill } from "../types.js";
 import type { RawGrade } from "../core/rules.js";
+import type { MentorChatOutput, MentorSummaryOutput } from "./schemas.js";
 
 /** Language layer only: the provider never returns a score, verdict or pass/fail decision. */
 
@@ -34,6 +35,12 @@ export interface LLMProvider {
     rootCause: string | null;
   }): Promise<{ explanation: string; exercise: string }>;
   rewrite(input: { claim: Claim; evidenceSummary: string }): Promise<string>;
+  /**
+   * AI mentor. `system` is trusted policy text written by this application; `prompt` carries the student's message and
+   * retrieved context inside clearly delimited, untrusted blocks. The provider returns language and proposals only.
+   */
+  mentorChat(input: { system: string; prompt: string }): Promise<MentorChatOutput>;
+  mentorSummarize(input: { system: string; prompt: string }): Promise<MentorSummaryOutput>;
 }
 
 export type LlmErrorCode = "LLM_INVALID_OUTPUT" | "LLM_TIMEOUT";

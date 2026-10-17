@@ -3,6 +3,7 @@ import type { RawGrade } from "../core/rules.js";
 import { MAX_CLAIMS, matchSkillByKeywords } from "../core/claims.js";
 import { CRITERIA } from "../core/evidence.js";
 import { levelCriteria, type ExtractedClaim, type LLMProvider } from "./provider.js";
+import type { MentorChatOutput, MentorMemoryProposal, MentorSummaryOutput } from "./schemas.js";
 
 const LEVEL_QUESTIONS: Record<Level, (claim: string) => string> = {
   1: (c) => `Regarding "${c}": what exactly did you build, and which part did you personally do?`,
@@ -87,6 +88,37 @@ export class MockProvider implements LLMProvider {
 
   async rewrite({ claim }: Parameters<LLMProvider["rewrite"]>[0]) {
     return `Worked with ${claim.text.replace(/^(built|implemented|made|wrote|optimized|used)\s+/i, "").replace(/\.$/, "")} (learning the internals)`;
+  }
+
+  /**
+   * Deterministic stand-in for the AI mentor (LLM_MODE=mock, tests). It does not understand anything: it answers with a
+   * fixed, clearly labelled reply and recognises a few plain statements ("my target role is ...") so the memory pipeline
+   * can be exercised without a model. Memory proposals always quote the student's own words.
+   */
+  async mentorChat({ prompt }: Parameters<LLMProvider["mentorChat"]>[0]): Promise<MentorChatOutput> {
+    const message = /<student_message>\n([\s\S]*?)\n<\/student_message>/.exec(prompt)?.[1] ?? "";
+    const proposals: MentorMemoryProposal[] = [];
+    const base = { field: null, topic: null, signal: null, track_kind: null, track_question_id: null, track_topic: null, track_target: null } as const;
+    const role = /my target role is ([^.\n]+)/i.exec(message);
+    if (role) proposals.push({ ...base, type: "profile", field: "target_roles", content: role[1]!.trim(), evidence_quote: role[0] });
+    const lang = /i (?:prefer|like to use) (python|javascript|java|c\+\+)/i.exec(message);
+    if (lang) proposals.push({ ...base, type: "profile", field: "preferred_languages", content: lang[1]!.trim(), evidence_quote: lang[0] });
+    const hard = /i (?:find|struggle with) ([a-z ]{2,40}?) (?:hard|difficult)/i.exec(message);
+    if (hard) proposals.push({ ...base, type: "learning", topic: hard[1]!.trim(), signal: "difficult", content: `Finds ${hard[1]!.trim()} difficult`, evidence_quote: hard[0] });
+    const understood = /i (?:now )?understand ([a-z ]{2,40})/i.exec(message);
+    if (understood) proposals.push({ ...base, type: "learning", topic: understood[1]!.trim(), signal: "understood", content: `Understands ${understood[1]!.trim()}`, evidence_quote: understood[0] });
+    const goal = /i (?:will|want to|plan to) ([^.\n]{4,120})/i.exec(message);
+    if (goal) proposals.push({ ...base, type: "goal", content: goal[1]!.trim(), evidence_quote: goal[0] });
+    return {
+      reply: "(mock mentor, no live model) I received your message. A live mentor would respond here with guidance tailored to your saved profile and verified practice history.",
+      memory_updates: proposals,
+    };
+  }
+
+  async mentorSummarize({ prompt }: Parameters<LLMProvider["mentorSummarize"]>[0]): Promise<MentorSummaryOutput> {
+    const first = /<student_message>\n([\s\S]*?)\n<\/student_message>/.exec(prompt)?.[1] ?? /<conversation>\n([\s\S]*?)\n<\/conversation>/.exec(prompt)?.[1] ?? "";
+    const topic = first.replace(/^user: /, "").split(/\s+/).slice(0, 6).join(" ") || "General mentoring";
+    return { topic, summary: `(mock summary) The student discussed: ${topic}.`, decisions: [], unresolved: [], next_steps: [] };
   }
 }
 

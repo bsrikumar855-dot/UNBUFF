@@ -48,6 +48,8 @@ backend code decides pass/fail, verdicts, proficiency, readiness, coverage and p
 | 404 | `ROLE_NOT_FOUND` | Unknown `role_id` |
 | 404 | `COMPANY_NOT_FOUND` | Unknown company id |
 | 404 | `QUESTION_NOT_FOUND` | Unknown question id |
+| 404 | `CONVERSATION_NOT_FOUND` | Unknown mentor conversation, or one the caller does not own |
+| 404 | `MEMORY_NOT_FOUND` | Unknown mentor memory, or one the caller does not own |
 | 404 | `REVISION_NOT_FOUND` | Unknown revision item, or one the caller does not own |
 | 404 | `SUBMISSION_NOT_FOUND` | Unknown submission id, or one the caller does not own |
 | 409 | `GRADING_UNAVAILABLE` | The question has no validated hidden test suite, so it cannot be judged |
@@ -104,6 +106,8 @@ export type ErrorCode =
   | "QUESTION_NOT_FOUND"
   | "SUBMISSION_NOT_FOUND"
   | "REVISION_NOT_FOUND"
+  | "CONVERSATION_NOT_FOUND"
+  | "MEMORY_NOT_FOUND"
   | "EXECUTION_UNAVAILABLE"
   | "GRADING_UNAVAILABLE"
   | "ROLE_NOT_FOUND"
@@ -714,6 +718,131 @@ export interface RevisionAddRequest {
   question_id: string;
 }
 
+// ---------- AI mentor (Phase 6) ----------
+export type MentorMode = "dsa_coach" | "code_explainer" | "interview_practice" | "placement_mentor";
+export type MemoryType = "profile" | "learning" | "summary" | "goal";
+/** Where a memory came from. Only "student_provided" and "verified_record" are facts; the rest are labelled as not facts. */
+export type MemoryProvenance = "student_provided" | "verified_record" | "model_summary" | "inferred";
+export type GoalStatus = "active" | "completed" | "dismissed";
+export type LearningSignal = "understood" | "difficult" | "studied" | "helpful";
+export type ExplanationStyle = "concise" | "detailed" | "step_by_step";
+export type SkillLevel = "beginner" | "intermediate" | "advanced";
+
+export type GoalTrack =
+  | { kind: "question_solved"; question_id: string } // done when a counted, accepted judged submission arrives after the goal was set
+  | { kind: "revision_completed"; question_id: string } // done when that revision item is completed after the goal was set
+  | { kind: "topic_practice"; topic: string; target: number }; // done after `target` counted judged submissions in the topic since the goal was set
+
+export interface MentorMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  at: string;
+}
+
+export interface MentorConversationSummary {
+  id: string;
+  title: string;
+  mode: MentorMode;
+  message_count: number;
+  hint_level: number; // hints given so far in this conversation (0 to 3)
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MentorConversation extends MentorConversationSummary {
+  messages: MentorMessage[]; // at most the latest 60
+}
+
+export interface MentorConversationsResponse extends PageInfo {
+  conversations: MentorConversationSummary[];
+}
+
+export interface MentorMemory {
+  id: string;
+  type: MemoryType;
+  key: string | null; // profile field name for profile memories
+  topic: string | null;
+  content: string;
+  provenance: MemoryProvenance;
+  confidence: "high" | "medium" | "low" | null;
+  signal: LearningSignal | null; // for learning memories
+  status: GoalStatus | null; // for goals
+  track: GoalTrack | null; // for goals the application can verify
+  completed_by: "student" | "verified_activity" | null;
+  source_conversation_id: string | null;
+  created_at: string;
+  updated_at: string;
+  expires_at: string | null;
+  review_at: string | null;
+}
+
+export interface MentorRetention {
+  conversation_days: number;
+  summary_days: number;
+  learning_days: number;
+  profile_and_goals: "until you delete them";
+}
+
+export interface MentorMemoriesResponse extends PageInfo {
+  memories: MentorMemory[];
+  counts: Record<MemoryType, number>;
+  retention: MentorRetention;
+}
+
+export interface MentorProfile {
+  target_roles: string[];
+  target_companies: string[];
+  preferred_languages: CodeLanguageId[];
+  daily_study_minutes: number | null;
+  placement_timeline: string | null;
+  explanation_style: ExplanationStyle | null;
+  current_goals: string | null;
+  skill_self_assessment: Record<string, SkillLevel>; // the student's own opinion, never a measured result
+}
+
+export interface MentorProfileResponse {
+  profile: MentorProfile;
+  updated_at: string | null;
+}
+
+export interface MentorChatRequest {
+  conversation_id?: string; // omit to start a new conversation
+  mode: MentorMode;
+  message: string; // at most 2000 characters
+  client_message_id: string; // makes a retry safe: the same id returns the stored answer
+  assist?: "hint" | "solution"; // graduated help: a full solution is only given after enough hints
+  question_id?: string; // the DSA question being discussed (must exist in the catalogue)
+}
+
+export interface MentorReference {
+  question_id: string;
+  title: string | null;
+  relation: "verified_solved" | "verified_attempt" | "revision_due" | "self_reported";
+  label: string; // plain-language description of why it is shown and how reliable it is
+}
+
+export interface MentorSavedMemory {
+  id: string;
+  type: MemoryType;
+  content: string;
+  provenance: MemoryProvenance;
+}
+
+export interface MentorChatResponse {
+  conversation: MentorConversationSummary;
+  reply: MentorMessage;
+  memory_saved: MentorSavedMemory[]; // what this turn added to long-term memory
+  persistence: {
+    conversation: "saved" | "failed"; // whether this exchange was stored in your history
+    memory: "saved" | "none" | "failed"; // "none" means nothing was worth remembering
+  };
+  references: MentorReference[]; // from the application's own records, never from the model
+  analytics_note: string | null; // set when verified practice data is missing or unconfirmed
+  degraded: boolean; // true when the answer worked but something could not be saved
+  mock: boolean; // true when the answer came from the built-in mock mentor, not a live model
+}
+
 export interface ApiErrorBody {
   error: { code: ErrorCode; message: string };
 }
@@ -800,6 +929,30 @@ Everything here is derived from the student's own stored, **judged** submissions
 - Percentages carry their numerator, denominator and sample size; below the minimum sample `value` is null and `available` is false.
 - One revision item exists per student and question. A new eligible failed submission updates it instead of adding another; an accepted submission moves it to spaced review.
 - `404 REVISION_NOT_FOUND` covers unknown items and other students' items alike. The `CodeSubmission` type gained `analytics_status`.
+
+### AI mentor *(Phase 6)*
+
+A chat mentor with persistent, student-controlled memory. All routes require a token; the owner is always the verified uid. Conversations and memories are stored in the server-side database, not carried by the model. Each chat turn retrieves a small, bounded set of relevant memories (profile, active goals, matching learning notes and summaries) and a deterministic summary of the student's **verified** practice (counted judged submissions, topic analytics, revision queue, interview results) and sends them to the model as clearly delimited, untrusted data. The model never computes analytics and cannot overwrite them.
+
+| Method | Path | Notes | 200 response |
+|---|---|---|---|
+| POST | `/api/mentor/chat` | `MentorChatRequest` | `MentorChatResponse` |
+| GET | `/api/mentor/conversations` | `page`, `page_size` | `MentorConversationsResponse` |
+| GET | `/api/mentor/conversations/:conversationId` | | `MentorConversation` |
+| POST | `/api/mentor/conversations/:conversationId/summary` | creates or refreshes the session summary | `MentorMemory` |
+| DELETE | `/api/mentor/conversations/:conversationId` | `keep_summary=true` keeps its summary memory | `204` |
+| GET | `/api/mentor/memories` | `type`, `page`, `page_size` | `MentorMemoriesResponse` |
+| POST | `/api/mentor/memories` | `{ type: "goal" \| "learning", content, topic?, track?, signal? }` (student-provided) | `MentorMemory` |
+| PATCH | `/api/mentor/memories/:memoryId` | `{ content?, topic?, status? }` | `MentorMemory` |
+| DELETE | `/api/mentor/memories/:memoryId` | | `204` |
+| DELETE | `/api/mentor/memories` | `conversations=true` also deletes all conversations | `204` |
+| GET | `/api/mentor/profile` | | `MentorProfileResponse` |
+| PUT | `/api/mentor/profile` | `MentorProfile` fields (student-provided corrections) | `MentorProfileResponse` |
+
+- A model-proposed memory is saved only if the student's own message contains the supporting quote verbatim; the backend, not the model, sets provenance. Goals the application can verify (`track`) are completed by application events (counted judged submissions, completed revision), never by the model.
+- If an answer succeeds but storage fails, the response says so (`degraded`, `persistence`). If the model call fails, nothing is stored and no memory is created.
+- Hint ladder: `assist: "hint"` raises `hint_level` (max 3); `assist: "solution"` is only answered by the model once `hint_level >= 2`.
+- Deleting memories or conversations never touches submissions, progress, analytics statistics, revision items or interview results. `404 CONVERSATION_NOT_FOUND` / `404 MEMORY_NOT_FOUND` cover unknown and other students' ids alike. Chat is rate limited per user (`429 RATE_LIMITED`), one reply in flight per user.
 
 ### `POST /api/claims/extract`
 - *(added)* Optional `mode`: `"prepare"` (teach as you go) or `"defense"` (default, interview simulation). Stored on the session and echoed as `ClaimsResponse.mode` / `Report.mode`.

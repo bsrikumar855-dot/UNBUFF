@@ -3,6 +3,7 @@ import cors from "cors";
 import express, { type Express } from "express";
 import helmet from "helmet";
 import type { TokenVerifier } from "./auth/verifier.js";
+import type { MentorService } from "./mentor/service.js";
 import type { AnalyticsService } from "./analytics/service.js";
 import type { CodeService } from "./code/service.js";
 import type { Catalogue } from "./dsa/catalogue.js";
@@ -11,7 +12,7 @@ import type { Logger } from "./logger.js";
 import type { LLMProvider } from "./llm/provider.js";
 import { requireAuth } from "./middleware/auth.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
-import { createCodeLimiters, createRateLimiters, DEFAULT_RATE_LIMITS, type RateLimitOptions } from "./middleware/rateLimit.js";
+import { createCodeLimiters, createMentorLimiter, createRateLimiters, DEFAULT_RATE_LIMITS, type RateLimitOptions } from "./middleware/rateLimit.js";
 import { claimsRouter } from "./routes/claims.js";
 import { demoRouter } from "./routes/demo.js";
 import { fixTaskRouter } from "./routes/fixTask.js";
@@ -20,6 +21,7 @@ import { interrogateRouter } from "./routes/interrogate.js";
 import { reportRouter } from "./routes/report.js";
 import { rolesRouter } from "./routes/roles.js";
 import { analyticsRouter } from "./routes/analytics.js";
+import { mentorRouter } from "./routes/mentor.js";
 import { codePrivateRouter, codePublicRouter } from "./routes/code.js";
 import { dsaCatalogueRouter, dsaProgressRouter } from "./routes/dsa.js";
 import { sessionsRouter } from "./routes/sessions.js";
@@ -38,6 +40,8 @@ export interface AppDeps {
   code: CodeService;
   /** DSA analytics and the revision queue (derived from counted judged submissions). */
   analytics: AnalyticsService;
+  /** The AI mentor: conversations and persistent, student-controlled memory. */
+  mentor: MentorService;
   llm: LLMProvider;
   logger: Logger;
   demoReportJson: string;
@@ -79,10 +83,11 @@ export function createApp(deps: AppDeps): Express {
   api.use(dsaCatalogueRouter(() => deps.catalogue)); // public, read-only catalogue
   api.use(codePublicRouter(deps.code)); // languages and the visible part of exercises
   // Everything below is private student data: a verified Firebase ID token is required.
-  api.use(["/claims", "/interrogate", "/fix-task", "/report", "/sessions", "/me", "/code/run", "/code/submit", "/code/submissions"], requireAuth(deps.verifier));
+  api.use(["/claims", "/interrogate", "/fix-task", "/report", "/sessions", "/me", "/code/run", "/code/submit", "/code/submissions", "/mentor"], requireAuth(deps.verifier));
   api.use(sessionsRouter(deps.service));
   api.use(dsaProgressRouter(deps.dsaProgress));
   api.use(analyticsRouter(deps.analytics));
+  api.use(mentorRouter(deps.mentor, createMentorLimiter(deps.rateLimits ?? DEFAULT_RATE_LIMITS)));
   api.use(codePrivateRouter(deps.code, createCodeLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS)));
   api.use(claimsRouter(deps.service, limiters.llm));
   api.use(interrogateRouter(deps.service, limiters.llm));

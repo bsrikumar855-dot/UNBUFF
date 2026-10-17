@@ -14,6 +14,8 @@ export const routes = {
   dsaProgress: "/dsa/progress",
   dsaAnalytics: "/dsa/analytics",
   dsaRevision: "/dsa/revision",
+  mentor: (questionId?: string) => (questionId ? `/mentor?question=${encodeURIComponent(questionId)}` : "/mentor"),
+  mentorMemory: "/mentor/memory",
   dsaCode: (questionId: string) => `/dsa/questions/${encodeURIComponent(questionId)}/code`,
   dsaCompany: (companyId: string) => `/dsa/companies/${encodeURIComponent(companyId)}`,
   dsaQuestion: (questionId: string) => `/dsa/questions/${encodeURIComponent(questionId)}`,

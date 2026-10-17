@@ -334,3 +334,12 @@ everything once gcloud is available.
 - **First-party practice pack** (ten original exercises, `own_work`, no companies, `url: null`) is generated deterministically by `npm run practice:build` and is the production default content. The demonstration fixtures stay separate and can never count.
 - **`QuestionSummary.url` is nullable** for first-party problems.
 - **No real end-to-end verification was possible** (no Judge0, no Firebase project): see docs/phase-5.1-operational-readiness.md for the exact commands and the pending checklist.
+
+## Phase 6 — AI mentor with persistent memory
+
+- **Model is a language layer; memory provenance is set by the backend.** A model-proposed memory is stored only if its `evidence_quote` is a verbatim substring of the student's own latest message, so injected pasted content cannot write memory. Profile fields use a whitelist.
+- **Verified practice is read live from analytics, never stored as memory**, and the model has no write path to analytics. Mock, demonstration, unverified-provider and unknown-provenance records are never presented as achievements; the response says why when nothing is verified.
+- **Goals tied to a question/topic are completed only by application events** (stats rollup, revision history); a student may mark a goal done, recorded as `completed_by: student`.
+- **Hints are gated server-side** (`assist: "solution"` needs `hint_level >= 2`). Chat is idempotent per `client_message_id` and degrades honestly when storage fails.
+- **Retention is lazy-purged on reads** (conversations 90 d, summaries 365 d, learning 180 d; profile and goals until deleted); an optional Firestore TTL on `expires_at` is documented but not created.
+- **No streaming** (the provider layer is request/response). **Not verified against a live model or live Firestore**: see docs/phase-6-ai-mentor.md.

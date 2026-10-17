@@ -73,6 +73,14 @@ const EnvSchema = z
     /** none: running code is reported as unavailable. judge0: use the Judge0 service at JUDGE0_URL. */
     EXECUTION_PROVIDER: z.enum(["none", "judge0"]).default("none"),
     JUDGE0_URL: z.string().optional(),
+    /** AI mentor model settings (the same Gemini provider and key as the interview features). */
+    MENTOR_MODEL: z.string().trim().min(1).optional(),
+    MENTOR_TEMPERATURE: z.coerce.number().min(0).max(1).default(0.5),
+    MENTOR_TIMEOUT_MS: z.coerce.number().int().min(5_000).max(60_000).default(30_000),
+    /** Retention: conversations are deleted this many days after their last message. */
+    MENTOR_CONVERSATION_RETENTION_DAYS: z.coerce.number().int().min(7).max(365).default(90),
+    MENTOR_SUMMARY_RETENTION_DAYS: z.coerce.number().int().min(30).max(730).default(365),
+    MENTOR_LEARNING_RETENTION_DAYS: z.coerce.number().int().min(30).max(730).default(180),
     /**
      * Operator's declaration that EXECUTION_PROVIDER points at a real, verified deployment. Until it is "true",
      * judged submissions are excluded from analytics: the code cannot tell a real service from a stand-in.

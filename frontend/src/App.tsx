@@ -33,6 +33,8 @@ const DsaProgressPage = lazy(() => import("@/pages/DsaProgressPage"));
 const CodeWorkspacePage = lazy(() => import("@/pages/CodeWorkspacePage"));
 const DsaAnalyticsPage = lazy(() => import("@/pages/DsaAnalyticsPage"));
 const DsaRevisionPage = lazy(() => import("@/pages/DsaRevisionPage"));
+const MentorPage = lazy(() => import("@/pages/MentorPage"));
+const MentorMemoryPage = lazy(() => import("@/pages/MentorMemoryPage"));
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   cn(
@@ -85,6 +87,9 @@ const AppNav: React.FC = () => {
       </Link>
       {auth.status === "signedIn" ? (
         <>
+          <NavLink to={routes.mentor()} className={navClass}>
+            AI Mentor
+          </NavLink>
           <NavLink to={routes.sessions} className={navClass}>
             My sessions
           </NavLink>
@@ -136,6 +141,8 @@ export const AppRoutes: React.FC = () => (
         <Route path="/dsa/progress" element={<DsaProgressPage />} />
         <Route path="/dsa/analytics" element={<DsaAnalyticsPage />} />
         <Route path="/dsa/revision" element={<DsaRevisionPage />} />
+        <Route path="/mentor" element={<MentorPage />} />
+        <Route path="/mentor/memory" element={<MentorMemoryPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

@@ -6,6 +6,8 @@ import type { TokenVerifier } from "../../src/auth/verifier.js";
 import { MockProvider } from "../../src/llm/mock.js";
 import type { LLMProvider } from "../../src/llm/provider.js";
 import type { RateLimitOptions } from "../../src/middleware/rateLimit.js";
+import { MentorService } from "../../src/mentor/service.js";
+import { MemoryMentorStore, type MentorStore } from "../../src/mentor/store.js";
 import { AnalyticsService } from "../../src/analytics/service.js";
 import { MemoryRevisionStore, MemoryStatsStore, type RevisionStore, type StatsStore } from "../../src/analytics/stores.js";
 import { CodeService } from "../../src/code/service.js";
@@ -66,23 +68,40 @@ export const DEFAULT_TEST_UID = "student-a";
  * 401 behaviour. The wrapper only touches headers; the app under test is unchanged.
  */
 export function testApp(
-  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService } = {},
+  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService } = {},
 ): Express {
   const llm = opts.llm ?? new MockProvider();
   const catalogue = opts.catalogue ?? fixtureCatalogue();
   const dsaProgress = new DsaProgressService(opts.progressStore ?? new MemoryProgressStore(), () => catalogue);
   const submissions = opts.submissionStore ?? new MemorySubmissionStore();
+  const statsStore = opts.statsStore ?? new MemoryStatsStore();
+  const revisionStore = opts.revisionStore ?? new MemoryRevisionStore();
+  const sessionStore = opts.store ?? new MemoryStore();
   const analytics =
     opts.analytics ??
     new AnalyticsService({
-      stats: opts.statsStore ?? new MemoryStatsStore(),
-      revisions: opts.revisionStore ?? new MemoryRevisionStore(),
+      stats: statsStore,
+      revisions: revisionStore,
       submissions,
       progress: dsaProgress,
       catalogue: () => catalogue,
       logger: silentLogger,
     });
-  const service = new AssessmentService({ store: opts.store ?? new MemoryStore(), llm, roles, logger: silentLogger });
+  const mentor =
+    opts.mentor ??
+    new MentorService({
+      store: opts.mentorStore ?? new MemoryMentorStore(),
+      llm,
+      stats: statsStore,
+      revisions: revisionStore,
+      analytics,
+      progress: dsaProgress,
+      catalogue: () => catalogue,
+      sessions: sessionStore,
+      roles,
+      logger: silentLogger,
+    });
+  const service = new AssessmentService({ store: sessionStore, llm, roles, logger: silentLogger });
   const app = createApp({
     service,
     roles,
@@ -99,6 +118,7 @@ export function testApp(
       onJudged: (r) => analytics.recordSubmission(r),
     }),
     analytics,
+    mentor,
     llm,
     logger: silentLogger,
     demoReportJson,

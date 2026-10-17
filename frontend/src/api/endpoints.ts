@@ -31,6 +31,17 @@ import type {
   RevisionQueueResponse,
   RevisionItem,
   RevisionActionRequest,
+  MentorChatRequest,
+  MentorChatResponse,
+  MentorConversation,
+  MentorConversationsResponse,
+  MentorMemoriesResponse,
+  MentorMemory,
+  MentorProfile,
+  MentorProfileResponse,
+  MemoryType,
+  GoalTrack,
+  LearningSignal,
 } from "@/types/contract";
 
 /**
@@ -143,6 +154,53 @@ export const api = {
   /** GET /api/questions/:questionId */
   async getQuestion(questionId: string): Promise<QuestionDetailResponse> {
     return apiClient<QuestionDetailResponse>(`/questions/${encodeURIComponent(questionId)}`, { method: "GET" });
+  },
+
+  /** POST /api/mentor/chat: one mentoring turn. Resending the same client_message_id is safe. */
+  async mentorChat(payload: MentorChatRequest): Promise<MentorChatResponse> {
+    return apiClient<MentorChatResponse>("/mentor/chat", { method: "POST", body: JSON.stringify(payload), timeoutMs: 60_000 });
+  },
+
+  async listMentorConversations(page = 1): Promise<MentorConversationsResponse> {
+    return apiClient<MentorConversationsResponse>(`/mentor/conversations?page=${page}&page_size=20`, { method: "GET" });
+  },
+
+  async getMentorConversation(id: string): Promise<MentorConversation> {
+    return apiClient<MentorConversation>(`/mentor/conversations/${encodeURIComponent(id)}`, { method: "GET" });
+  },
+
+  /** DELETE /api/mentor/conversations/:id (also removes its summary memory unless keepSummary). */
+  async deleteMentorConversation(id: string, keepSummary = false): Promise<void> {
+    return apiClient<void>(`/mentor/conversations/${encodeURIComponent(id)}${keepSummary ? "?keep_summary=true" : ""}`, { method: "DELETE" });
+  },
+
+  async listMentorMemories(params: { type?: MemoryType; page?: number; page_size?: number } = {}): Promise<MentorMemoriesResponse> {
+    return apiClient<MentorMemoriesResponse>(`/mentor/memories${queryString(params)}`, { method: "GET" });
+  },
+
+  async createMentorMemory(body: { type: "goal" | "learning"; content: string; topic?: string; signal?: LearningSignal; track?: GoalTrack }): Promise<MentorMemory> {
+    return apiClient<MentorMemory>("/mentor/memories", { method: "POST", body: JSON.stringify(body) });
+  },
+
+  async patchMentorMemory(id: string, body: { content?: string; topic?: string | null; status?: "active" | "completed" | "dismissed" }): Promise<MentorMemory> {
+    return apiClient<MentorMemory>(`/mentor/memories/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(body) });
+  },
+
+  async deleteMentorMemory(id: string): Promise<void> {
+    return apiClient<void>(`/mentor/memories/${encodeURIComponent(id)}`, { method: "DELETE" });
+  },
+
+  /** DELETE /api/mentor/memories: clears every mentor memory, and the conversations too when asked. */
+  async clearMentorMemories(includeConversations = false): Promise<void> {
+    return apiClient<void>(`/mentor/memories${includeConversations ? "?conversations=true" : ""}`, { method: "DELETE" });
+  },
+
+  async getMentorProfile(): Promise<MentorProfileResponse> {
+    return apiClient<MentorProfileResponse>("/mentor/profile", { method: "GET" });
+  },
+
+  async putMentorProfile(profile: MentorProfile): Promise<MentorProfileResponse> {
+    return apiClient<MentorProfileResponse>("/mentor/profile", { method: "PUT", body: JSON.stringify(profile) });
   },
 
   /** GET /api/me/dsa-analytics: metrics from the student's own counted, judged submissions. */

@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { Logger } from "../logger.js";
 import type { RawGrade } from "../core/rules.js";
 import { LlmError, type LLMProvider } from "./provider.js";
-import { ExtractOutput, FixTaskOutput, GradeOutput, QuestionOutput, RewriteOutput } from "./schemas.js";
+import { ExtractOutput, FixTaskOutput, GradeOutput, MentorChatOutput, MentorSummaryOutput, QuestionOutput, RewriteOutput } from "./schemas.js";
 import { clarifyPrompt } from "./prompts/clarify.js";
 import { extractPrompt } from "./prompts/extract.js";
 import { fixTaskPrompt } from "./prompts/fixTask.js";
@@ -22,6 +22,12 @@ const TRANSIENT_BACKOFF_MS = 800;
 interface CallOptions {
   temperature: number;
   thinking: ThinkingLevel;
+}
+
+interface CallExtra {
+  system?: string;
+  model?: string;
+  timeoutMs?: number;
 }
 
 /** A retryable API failure (429 / 5xx): uses the single retry without the invalid-JSON note. */
@@ -48,6 +54,10 @@ export interface GeminiOptions {
   timeoutMs?: number;
   /** Thinking level for GRADE/EXTRACT/FIXTASK/REWRITE (default LOW). */
   gradeThinking?: ThinkingLevel;
+  /** Model for the AI mentor (defaults to `model`). */
+  mentorModel?: string;
+  mentorTemperature?: number;
+  mentorTimeoutMs?: number;
   /** Injected client (tests). Defaults to a real GoogleGenAI. */
   client?: Pick<GoogleGenAI, "models">;
 }
@@ -68,12 +78,14 @@ export class GeminiProvider implements LLMProvider {
   private readonly ai: Pick<GoogleGenAI, "models">;
   private readonly logger: Logger;
   private readonly timeoutMs: number;
+  private readonly mentor: { model: string; temperature: number; timeoutMs: number };
 
   constructor(opts: GeminiOptions) {
     this.model = opts.model;
     this.fallbackModel = opts.fallbackModel;
     this.logger = opts.logger;
     this.timeoutMs = opts.timeoutMs ?? LLM_TIMEOUT_MS;
+    this.mentor = { model: opts.mentorModel ?? opts.model, temperature: opts.mentorTemperature ?? 0.5, timeoutMs: opts.mentorTimeoutMs ?? 30_000 };
     this.ai = opts.client ?? (opts.vertexai
       ? new GoogleGenAI({ vertexai: true, apiKey: opts.apiKey, project: opts.project, location: opts.location })
       : new GoogleGenAI({ apiKey: opts.apiKey }));
@@ -112,21 +124,30 @@ export class GeminiProvider implements LLMProvider {
     return (await this.call("rewrite", rewritePrompt(claim, evidenceSummary), RewriteOutput, this.precise)).rewrite;
   }
 
-  private async call<T>(name: string, prompt: string, schema: z.ZodType<T>, opts: CallOptions): Promise<T> {
+  async mentorChat({ system, prompt }: Parameters<LLMProvider["mentorChat"]>[0]) {
+    return this.call("mentor", prompt, MentorChatOutput, { temperature: this.mentor.temperature, thinking: ThinkingLevel.LOW }, { system, model: this.mentor.model, timeoutMs: this.mentor.timeoutMs });
+  }
+
+  async mentorSummarize({ system, prompt }: Parameters<LLMProvider["mentorSummarize"]>[0]) {
+    return this.call("mentor-summary", prompt, MentorSummaryOutput, { temperature: 0.2, thinking: ThinkingLevel.LOW }, { system, model: this.mentor.model, timeoutMs: this.mentor.timeoutMs });
+  }
+
+  private async call<T>(name: string, prompt: string, schema: z.ZodType<T>, opts: CallOptions, extra: CallExtra = {}): Promise<T> {
     const responseJsonSchema = jsonSchema(schema);
     let invalidBefore = false;
-    let model = this.fallbackModel && Date.now() < this.primaryCooldownUntil ? this.fallbackModel : this.model;
+    const primary = extra.model ?? this.model;
+    let model = this.fallbackModel && Date.now() < this.primaryCooldownUntil ? this.fallbackModel : primary;
     for (let attempt = 1; attempt <= 2; attempt++) {
       const started = performance.now();
       let text: string;
       try {
-        text = await this.generate(name, model, invalidBefore ? prompt + RETRY_NOTE : prompt, responseJsonSchema, opts, started);
+        text = await this.generate(name, model, invalidBefore ? prompt + RETRY_NOTE : prompt, responseJsonSchema, opts, started, extra);
       } catch (err) {
         if (err instanceof TransientError && attempt === 1) {
-          if (err.retryAfterMs !== null && model === this.model) {
+          if (err.retryAfterMs !== null && model === primary) {
             this.primaryCooldownUntil = Date.now() + Math.min(err.retryAfterMs, MAX_COOLDOWN_MS);
           }
-          model = this.fallbackModel ?? this.model;
+          model = this.fallbackModel ?? primary;
           await new Promise((r) => setTimeout(r, TRANSIENT_BACKOFF_MS));
           continue;
         }
@@ -146,21 +167,22 @@ export class GeminiProvider implements LLMProvider {
     throw new LlmError("LLM_INVALID_OUTPUT", `${name}: invalid output after retry`);
   }
 
-  private async generate(name: string, model: string, prompt: string, responseJsonSchema: unknown, opts: CallOptions, started: number): Promise<string> {
+  private async generate(name: string, model: string, prompt: string, responseJsonSchema: unknown, opts: CallOptions, started: number, extra: CallExtra = {}): Promise<string> {
+    const timeoutMs = extra.timeoutMs ?? this.timeoutMs;
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const res = await this.ai.models.generateContent({
         model,
         contents: prompt,
         config: {
-          systemInstruction: SYSTEM_RULES,
+          systemInstruction: extra.system ?? SYSTEM_RULES,
           temperature: opts.temperature,
           thinkingConfig: { thinkingLevel: opts.thinking },
           responseMimeType: "application/json",
           responseJsonSchema,
           abortSignal: controller.signal,
-          httpOptions: { timeout: this.timeoutMs },
+          httpOptions: { timeout: timeoutMs },
         },
       });
       return res.text ?? "";
@@ -168,7 +190,7 @@ export class GeminiProvider implements LLMProvider {
       const ms = Math.round(performance.now() - started);
       if (controller.signal.aborted || isTimeout(err)) {
         this.logger.warn({ prompt: name, ms }, "llm call timed out");
-        throw new LlmError("LLM_TIMEOUT", `${name}: timed out after ${this.timeoutMs} ms`);
+        throw new LlmError("LLM_TIMEOUT", `${name}: timed out after ${timeoutMs} ms`);
       }
       this.logger.warn({ prompt: name, model, ms, error: errorMessage(err) }, "llm call failed");
       if (isTransient(err)) throw new TransientError(name, retryAfterMs(err));

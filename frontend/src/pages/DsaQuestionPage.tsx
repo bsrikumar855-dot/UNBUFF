@@ -132,6 +132,14 @@ const DsaQuestionPage: React.FC = () => {
               Open code workspace
             </Link>
           </p>
+          <p className="mt-3">
+            <Link
+              to={routes.mentor(data.question.id)}
+              className="text-sm text-primary underline"
+            >
+              Ask the AI mentor about this question
+            </Link>
+          </p>
           <SourceBanner source={data.source} className="mt-6" />
 
           <section
