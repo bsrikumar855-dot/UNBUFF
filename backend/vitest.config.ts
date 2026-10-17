@@ -3,6 +3,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts"],
+    exclude: ["tests/emulator/**", "node_modules/**"], // need the emulators: npm run test:emulator
     environment: "node",
     env: { LLM_MODE: "mock", LOG_LEVEL: "silent" },
     coverage: {

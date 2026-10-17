@@ -15,7 +15,8 @@
     "test:coverage": "vitest run --coverage",
     "smoke": "bash scripts/smoke.sh",
     "grade-check": "tsx scripts/grade_check.ts",
-    "demo-report": "tsx scripts/build_demo_report.ts"
+    "demo-report": "tsx scripts/build_demo_report.ts",
+    "test:emulator": "npx --yes firebase-tools@15.34.0 emulators:exec --only auth,firestore --project demo-unbluff \"vitest run -c vitest.emulator.config.ts\""
   },
   "dependencies": {
     "@google-cloud/firestore": "^9.2.0",
