@@ -1,31 +1,17 @@
 import { randomUUID } from "node:crypto";
 import request from "supertest";
 import { beforeAll, describe, expect, it } from "vitest";
-import { createApp } from "../../src/app.js";
 import { FirebaseTokenVerifier } from "../../src/auth/verifier.js";
-import { MockProvider } from "../../src/llm/mock.js";
-import { AssessmentService } from "../../src/services/assessment.js";
-import { MemoryStore } from "../../src/store/memoryStore.js";
-import { demoReportJson } from "../integration/app.js";
-import { roles, silentLogger } from "../helpers.js";
+import { testApp } from "../integration/app.js";
 import { createEmulatorUser, PROJECT_ID, requireEmulators } from "./emulator.js";
 
 /** The real firebase-admin verifier, checking genuine ID tokens issued by the Auth emulator. */
-let app: ReturnType<typeof createApp>;
+let app: ReturnType<typeof testApp>;
 let authHost: string;
 
 beforeAll(() => {
   ({ authHost } = requireEmulators());
-  const llm = new MockProvider();
-  app = createApp({
-    service: new AssessmentService({ store: new MemoryStore(), llm, roles, logger: silentLogger }),
-    roles,
-    verifier: new FirebaseTokenVerifier(PROJECT_ID),
-    llm,
-    logger: silentLogger,
-    demoReportJson,
-    rateLimits: { globalPerMinute: 10_000, llmPerMinute: 10_000 },
-  });
+  app = testApp({ autoAuth: false, verifier: new FirebaseTokenVerifier(PROJECT_ID) });
 });
 
 const create = (token: string) =>

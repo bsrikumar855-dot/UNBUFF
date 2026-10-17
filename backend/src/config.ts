@@ -53,6 +53,8 @@ const EnvSchema = z
     GOOGLE_CLOUD_LOCATION: z.string().optional(),
     PORT: z.coerce.number().int().positive().default(8080),
     NODE_ENV: z.string().optional(),
+    /** Path to an approved DSA catalogue JSON (see npm run dsa:import). Unset: the dev fixture locally, an empty catalogue in production. */
+    DSA_CATALOGUE_PATH: z.string().optional(),
     /** Comma-separated allowed origins. Required (and never "*") when NODE_ENV=production. */
     CORS_ORIGIN: z.string().optional(),
     /** Number of reverse-proxy hops in front of the app (drives req.ip for rate limits). 0 disables. */

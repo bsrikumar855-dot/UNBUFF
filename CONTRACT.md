@@ -46,6 +46,8 @@ backend code decides pass/fail, verdicts, proficiency, readiness, coverage and p
 | 401 | `UNAUTHENTICATED` | Missing, malformed, invalid or expired bearer token |
 | 404 | `NOT_FOUND` | Unknown route |
 | 404 | `ROLE_NOT_FOUND` | Unknown `role_id` |
+| 404 | `COMPANY_NOT_FOUND` | Unknown company id |
+| 404 | `QUESTION_NOT_FOUND` | Unknown question id |
 | 404 | `SESSION_NOT_FOUND` | Unknown `session_id`, or a session the caller does not own |
 | 404 | `CLAIM_NOT_FOUND` | Unknown `claim_id` in that session |
 | 429 | `RATE_LIMITED` | Too many requests; retry later |
@@ -94,6 +96,8 @@ export type ErrorCode =
   | "BAD_REQUEST"
   | "UNAUTHENTICATED"
   | "NOT_FOUND"
+  | "COMPANY_NOT_FOUND"
+  | "QUESTION_NOT_FOUND"
   | "ROLE_NOT_FOUND"
   | "SESSION_NOT_FOUND"
   | "CLAIM_NOT_FOUND"
@@ -361,6 +365,88 @@ export interface SessionsResponse {
   sessions: SessionSummary[]; // the caller's own sessions, newest first
 }
 
+// ---------- Company-wise DSA Arena ----------
+export type DsaDifficulty = "easy" | "medium" | "hard";
+export type DsaStatus = "not_started" | "attempted" | "solved" | "needs_revision";
+export type DsaLicenseStatus = "licensed" | "permission_granted" | "public_domain" | "own_work" | "development_fixture";
+
+/** Provenance of the loaded catalogue. `null` in a response means no catalogue is loaded. */
+export interface DsaSource {
+  name: string;
+  license_status: DsaLicenseStatus;
+  license_note: string;
+  url: string | null;
+  imported_at: string;
+  source_updated_at: string | null; // freshness as stated by the source, if it said so
+  is_sample_data: boolean; // true for development fixtures: NOT real company interview data
+}
+
+export interface CompanySummary {
+  id: string;
+  name: string;
+  question_count: number; // derived from the loaded catalogue only
+  catalogue_available: boolean; // false when no questions are loaded for this company
+}
+
+export interface PageInfo {
+  page: number; // 1-based
+  page_size: number;
+  total: number;
+  total_pages: number;
+}
+
+export interface CompaniesResponse extends PageInfo {
+  companies: CompanySummary[];
+  source: DsaSource | null;
+}
+
+export interface CompanyDetailResponse {
+  company: CompanySummary;
+  topics: string[];
+  difficulties: Record<DsaDifficulty, number>;
+  source: DsaSource | null;
+}
+
+export interface QuestionSummary {
+  id: string;
+  title: string;
+  url: string; // canonical external problem page; statements are never copied
+  difficulty: DsaDifficulty;
+  topics: string[];
+  company_ids: string[];
+}
+
+export interface QuestionsResponse extends PageInfo {
+  questions: QuestionSummary[];
+  facets: { topics: string[]; difficulties: DsaDifficulty[] }; // options within the requested company scope
+  source: DsaSource | null;
+}
+
+export interface QuestionDetailResponse {
+  question: QuestionSummary;
+  companies: { id: string; name: string }[];
+  source: DsaSource | null;
+}
+
+export interface DsaProgress {
+  question_id: string;
+  status: DsaStatus;
+  bookmarked: boolean;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DsaProgressListResponse {
+  progress: DsaProgress[]; // the caller's own records, newest update first
+}
+
+export interface DsaProgressUpdate {
+  status?: DsaStatus;
+  bookmarked?: boolean;
+  notes?: string; // at most 5000 characters
+}
+
 export interface ApiErrorBody {
   error: { code: ErrorCode; message: string };
 }
@@ -379,6 +465,36 @@ export interface ApiErrorBody {
 | POST | `/api/fix-task` | `FixTaskRequest` | `FixTaskResponse` |
 | GET | `/api/report/:sessionId` | — | `Report` |
 | GET | `/api/demo/report` | — | `Report` (the §7 mock, verbatim) |
+| GET | `/api/sessions` | — | `SessionsResponse` (caller's own sessions, newest first) |
+| DELETE | `/api/sessions/:sessionId` | — | `204 No Content` (owned sessions only; removes resume text, answers and report data) |
+
+Public (no token): `/api/health`, `/api/roles`, `/api/roles/:roleId`, `/api/demo/report`, and the read-only DSA catalogue (`/api/companies*`, `/api/questions*`). Everything else needs a bearer token.
+
+### Company-wise DSA Arena *(Phase 3)*
+
+Catalogue (public, read-only; filtering and pagination are server-side):
+
+| Method | Path | Query | 200 response |
+|---|---|---|---|
+| GET | `/api/companies` | `search`, `page`, `page_size` | `CompaniesResponse` |
+| GET | `/api/companies/:companyId` | — | `CompanyDetailResponse` |
+| GET | `/api/companies/:companyId/questions` | same as `/api/questions` except `company` | `QuestionsResponse` |
+| GET | `/api/questions` | `search`, `company`, `difficulty`, `topic`, `sort` (`title`\\|`difficulty`), `order` (`asc`\\|`desc`), `page`, `page_size` | `QuestionsResponse` |
+| GET | `/api/questions/:questionId` | — | `QuestionDetailResponse` |
+
+Filters combine with AND (topic and difficulty match exactly, case-insensitively; `search` is a case-insensitive substring of the title). `page` defaults to 1, `page_size` to 20 (max 100). Unknown query keys are rejected with `400`. An unknown `company` filter returns `404 COMPANY_NOT_FOUND`.
+
+Every response carries `source` (provenance and licence status of the loaded catalogue) or `null` when none is loaded. `is_sample_data: true` means a development fixture, not real company data. Counts are derived from loaded data only; no frequencies, acceptance rates or "asked by" claims exist in the model.
+
+Personal progress (**requires a token**; the owner is always the verified uid, never a request field):
+
+| Method | Path | Body | Response |
+|---|---|---|---|
+| GET | `/api/me/dsa-progress` | — | `DsaProgressListResponse` |
+| PUT | `/api/me/dsa-progress/:questionId` | `DsaProgressUpdate` (at least one field) | `DsaProgress` (creates or updates; one record per student and question) |
+| DELETE | `/api/me/dsa-progress/:questionId` | — | `204 No Content` |
+
+Progress records are independent of the catalogue: a catalogue refresh never changes or deletes them, and a record whose question has since left the catalogue is still returned by the list.
 
 ### `POST /api/claims/extract`
 - *(added)* Optional `mode`: `"prepare"` (teach as you go) or `"defense"` (default, interview simulation). Stored on the session and echoed as `ClaimsResponse.mode` / `Report.mode`.

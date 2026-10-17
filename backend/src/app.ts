@@ -3,6 +3,8 @@ import cors from "cors";
 import express, { type Express } from "express";
 import helmet from "helmet";
 import type { TokenVerifier } from "./auth/verifier.js";
+import type { Catalogue } from "./dsa/catalogue.js";
+import type { DsaProgressService } from "./dsa/progressService.js";
 import type { Logger } from "./logger.js";
 import type { LLMProvider } from "./llm/provider.js";
 import { requireAuth } from "./middleware/auth.js";
@@ -15,6 +17,7 @@ import { healthRouter } from "./routes/health.js";
 import { interrogateRouter } from "./routes/interrogate.js";
 import { reportRouter } from "./routes/report.js";
 import { rolesRouter } from "./routes/roles.js";
+import { dsaCatalogueRouter, dsaProgressRouter } from "./routes/dsa.js";
 import { sessionsRouter } from "./routes/sessions.js";
 import type { AssessmentService } from "./services/assessment.js";
 import type { RoleRegistry } from "./services/roles.js";
@@ -23,6 +26,10 @@ export interface AppDeps {
   service: AssessmentService;
   roles: RoleRegistry;
   verifier: TokenVerifier;
+  /** Public DSA catalogue (read-only reference data). */
+  catalogue: Catalogue;
+  /** Authenticated students' personal DSA progress. */
+  dsaProgress: DsaProgressService;
   llm: LLMProvider;
   logger: Logger;
   demoReportJson: string;
@@ -61,9 +68,11 @@ export function createApp(deps: AppDeps): Express {
   api.use(healthRouter(deps.llm));
   api.use(rolesRouter(deps.roles));
   api.use(demoRouter(deps.demoReportJson)); // synthetic data only; public by design
+  api.use(dsaCatalogueRouter(() => deps.catalogue)); // public, read-only catalogue
   // Everything below is private student data: a verified Firebase ID token is required.
-  api.use(["/claims", "/interrogate", "/fix-task", "/report", "/sessions"], requireAuth(deps.verifier));
+  api.use(["/claims", "/interrogate", "/fix-task", "/report", "/sessions", "/me"], requireAuth(deps.verifier));
   api.use(sessionsRouter(deps.service));
+  api.use(dsaProgressRouter(deps.dsaProgress));
   api.use(claimsRouter(deps.service, limiters.llm));
   api.use(interrogateRouter(deps.service, limiters.llm));
   api.use(fixTaskRouter(deps.service, limiters.llm));

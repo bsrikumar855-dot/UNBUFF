@@ -5,6 +5,9 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createApp } from "./app.js";
 import { FirebaseTokenVerifier } from "./auth/verifier.js";
+import { Catalogue } from "./dsa/catalogue.js";
+import { DsaProgressService } from "./dsa/progressService.js";
+import { FirestoreProgressStore, MemoryProgressStore, type ProgressStore } from "./dsa/progressStore.js";
 import { loadConfig, parseServiceAccount, type Config } from "./config.js";
 import { createLogger } from "./logger.js";
 import { GeminiProvider } from "./llm/gemini.js";
@@ -37,8 +40,8 @@ function createProvider(config: Config, logger: ReturnType<typeof createLogger>)
   });
 }
 
-function createStore(config: Config): SessionStore {
-  if (config.STORE !== "firestore") return new MemoryStore();
+function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore } {
+  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore() };
   const account = config.FIREBASE_SERVICE_ACCOUNT_JSON ? parseServiceAccount(config.FIREBASE_SERVICE_ACCOUNT_JSON) : null;
   const projectId = config.GOOGLE_CLOUD_PROJECT ?? account?.project_id ?? config.FIREBASE_PROJECT_ID;
   // Without a service-account secret, Application Default Credentials apply (Cloud Run identity, gcloud login, emulator).
@@ -47,7 +50,19 @@ function createStore(config: Config): SessionStore {
     ignoreUndefinedProperties: true,
     ...(account ? { credentials: { client_email: account.client_email, private_key: account.private_key } } : {}),
   });
-  return new FirestoreStore(undefined, db);
+  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db) };
+}
+
+/** An explicit approved file wins; otherwise the labelled dev fixture locally and an honest empty catalogue in production. */
+function loadCatalogue(config: Config, root: string, logger: ReturnType<typeof createLogger>): Catalogue {
+  const path = config.DSA_CATALOGUE_PATH ?? (config.NODE_ENV === "production" ? null : join(root, "data", "dsa", "fixture.json"));
+  if (!path) {
+    logger.warn("DSA_CATALOGUE_PATH is not set: the DSA catalogue is empty");
+    return Catalogue.empty();
+  }
+  const catalogue = Catalogue.fromPath(path); // validates; throws (fail fast) on a malformed file
+  logger.info({ source: catalogue.source?.name, license_status: catalogue.source?.license_status }, "DSA catalogue loaded");
+  return catalogue;
 }
 
 function main(): void {
@@ -57,15 +72,22 @@ function main(): void {
 
   const roles = RoleRegistry.fromDirectory(join(root, "data", "roles")); // asserts weights sum to 1
   const demoReportJson = JSON.stringify(JSON.parse(readFileSync(join(root, "data", "demo_report.json"), "utf8")));
-  const store = createStore(config);
+  const stores = createStores(config);
+  const catalogue = loadCatalogue(config, root, logger);
   const verifier = new FirebaseTokenVerifier(config.FIREBASE_PROJECT_ID);
   if (config.NODE_ENV === "production" && config.STORE === "memory") {
     logger.warn("ALLOW_EPHEMERAL_STORE is set: sessions are lost on restart/redeploy and are not shared between instances");
   }
   const llm = createProvider(config, logger);
-  const service = new AssessmentService({ store, llm, roles, logger });
+  const service = new AssessmentService({ store: stores.sessions, llm, roles, logger });
 
-  const app = createApp({ service, roles, verifier, llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
+  const app = createApp({
+    service,
+    roles,
+    verifier,
+    catalogue,
+    dsaProgress: new DsaProgressService(stores.progress, () => catalogue),
+    llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
   const server = app.listen(config.PORT, "0.0.0.0", (err?: Error) => {
     if (err) {
       // Express 5 reports bind errors (e.g. EADDRINUSE) here instead of throwing.

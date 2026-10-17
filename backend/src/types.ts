@@ -17,6 +17,8 @@ export type ErrorCode =
   | "BAD_REQUEST"
   | "UNAUTHENTICATED"
   | "NOT_FOUND"
+  | "COMPANY_NOT_FOUND"
+  | "QUESTION_NOT_FOUND"
   | "ROLE_NOT_FOUND"
   | "SESSION_NOT_FOUND"
   | "CLAIM_NOT_FOUND"
@@ -282,6 +284,88 @@ export interface SessionSummary {
 
 export interface SessionsResponse {
   sessions: SessionSummary[]; // the caller's own sessions, newest first
+}
+
+// ---------- Company-wise DSA Arena ----------
+export type DsaDifficulty = "easy" | "medium" | "hard";
+export type DsaStatus = "not_started" | "attempted" | "solved" | "needs_revision";
+export type DsaLicenseStatus = "licensed" | "permission_granted" | "public_domain" | "own_work" | "development_fixture";
+
+/** Provenance of the loaded catalogue. `null` in a response means no catalogue is loaded. */
+export interface DsaSource {
+  name: string;
+  license_status: DsaLicenseStatus;
+  license_note: string;
+  url: string | null;
+  imported_at: string;
+  source_updated_at: string | null; // freshness as stated by the source, if it said so
+  is_sample_data: boolean; // true for development fixtures: NOT real company interview data
+}
+
+export interface CompanySummary {
+  id: string;
+  name: string;
+  question_count: number; // derived from the loaded catalogue only
+  catalogue_available: boolean; // false when no questions are loaded for this company
+}
+
+export interface PageInfo {
+  page: number; // 1-based
+  page_size: number;
+  total: number;
+  total_pages: number;
+}
+
+export interface CompaniesResponse extends PageInfo {
+  companies: CompanySummary[];
+  source: DsaSource | null;
+}
+
+export interface CompanyDetailResponse {
+  company: CompanySummary;
+  topics: string[];
+  difficulties: Record<DsaDifficulty, number>;
+  source: DsaSource | null;
+}
+
+export interface QuestionSummary {
+  id: string;
+  title: string;
+  url: string; // canonical external problem page; statements are never copied
+  difficulty: DsaDifficulty;
+  topics: string[];
+  company_ids: string[];
+}
+
+export interface QuestionsResponse extends PageInfo {
+  questions: QuestionSummary[];
+  facets: { topics: string[]; difficulties: DsaDifficulty[] }; // options within the requested company scope
+  source: DsaSource | null;
+}
+
+export interface QuestionDetailResponse {
+  question: QuestionSummary;
+  companies: { id: string; name: string }[];
+  source: DsaSource | null;
+}
+
+export interface DsaProgress {
+  question_id: string;
+  status: DsaStatus;
+  bookmarked: boolean;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DsaProgressListResponse {
+  progress: DsaProgress[]; // the caller's own records, newest update first
+}
+
+export interface DsaProgressUpdate {
+  status?: DsaStatus;
+  bookmarked?: boolean;
+  notes?: string; // at most 5000 characters
 }
 
 export interface ApiErrorBody {

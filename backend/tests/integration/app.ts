@@ -6,6 +6,9 @@ import type { TokenVerifier } from "../../src/auth/verifier.js";
 import { MockProvider } from "../../src/llm/mock.js";
 import type { LLMProvider } from "../../src/llm/provider.js";
 import type { RateLimitOptions } from "../../src/middleware/rateLimit.js";
+import { Catalogue, parseCatalogueFile } from "../../src/dsa/catalogue.js";
+import { DsaProgressService } from "../../src/dsa/progressService.js";
+import { MemoryProgressStore, type ProgressStore } from "../../src/dsa/progressStore.js";
 import { AssessmentService } from "../../src/services/assessment.js";
 import type { SessionStore } from "../../src/store/SessionStore.js";
 import { MemoryStore } from "../../src/store/memoryStore.js";
@@ -31,6 +34,9 @@ export function countingProvider(inner: LLMProvider = new MockProvider()) {
   return { llm: new Proxy(inner, handler), counts, total };
 }
 
+export const fixtureCatalogue = () =>
+  new Catalogue(parseCatalogueFile(JSON.parse(readFileSync(join(import.meta.dirname, "..", "..", "data", "dsa", "fixture.json"), "utf8"))));
+
 /** Test verifier: "test:<uid>" is a valid token; anything else (including "expired") is rejected. */
 export const fakeVerifier: TokenVerifier = {
   async verify(token) {
@@ -49,14 +55,17 @@ export const DEFAULT_TEST_UID = "student-a";
  * 401 behaviour. The wrapper only touches headers; the app under test is unchanged.
  */
 export function testApp(
-  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean } = {},
+  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier } = {},
 ): Express {
   const llm = opts.llm ?? new MockProvider();
+  const catalogue = opts.catalogue ?? fixtureCatalogue();
   const service = new AssessmentService({ store: opts.store ?? new MemoryStore(), llm, roles, logger: silentLogger });
   const app = createApp({
     service,
     roles,
-    verifier: fakeVerifier,
+    verifier: opts.verifier ?? fakeVerifier,
+    catalogue,
+    dsaProgress: new DsaProgressService(opts.progressStore ?? new MemoryProgressStore(), () => catalogue),
     llm,
     logger: silentLogger,
     demoReportJson,

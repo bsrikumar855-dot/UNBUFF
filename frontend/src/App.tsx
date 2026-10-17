@@ -11,6 +11,7 @@ import { useInterrogationState, useSessionState } from "@/state/useSession";
 import { LandingPage } from "@/pages/LandingPage";
 import { SetupPage } from "@/pages/SetupPage";
 import { LedgerPage } from "@/pages/LedgerPage";
+import { DsaArenaPage } from "@/pages/DsaArenaPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { DemoReportButton } from "@/components/common/DemoReportButton";
@@ -25,6 +26,9 @@ const WorkspacePage = lazy(() => import("@/pages/WorkspacePage"));
 const ReportPage = lazy(() => import("@/pages/ReportPage"));
 const RoadmapPage = lazy(() => import("@/pages/RoadmapPage"));
 const SessionsPage = lazy(() => import("@/pages/SessionsPage"));
+const DsaQuestionsPage = lazy(() => import("@/pages/DsaQuestionsPage"));
+const DsaQuestionPage = lazy(() => import("@/pages/DsaQuestionPage"));
+const DsaProgressPage = lazy(() => import("@/pages/DsaProgressPage"));
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   cn(
@@ -65,6 +69,9 @@ const AppNav: React.FC = () => {
       )}
       <NavLink to={routes.roadmap(sid)} className={navClass}>
         Roadmap
+      </NavLink>
+      <NavLink to={routes.dsa} className={navClass}>
+        DSA Arena
       </NavLink>
       <DemoReportButton variant="ghost" size="sm" />
       <Link to={routes.setup} className={buttonClasses("primary", "sm")}>
@@ -107,12 +114,18 @@ export const AppRoutes: React.FC = () => (
       {/* Public: synthetic demo data only. Must be declared before the protected /report/:sessionId. */}
       <Route path="/report/demo" element={<ReportPage demo />} />
       <Route path="/roadmap" element={<RoadmapPage />} />
+      {/* The DSA catalogue is public; progress controls inside it ask for sign-in. */}
+      <Route path="/dsa" element={<DsaArenaPage />} />
+      <Route path="/dsa/questions" element={<DsaQuestionsPage />} />
+      <Route path="/dsa/companies/:companyId" element={<DsaQuestionsPage />} />
+      <Route path="/dsa/questions/:questionId" element={<DsaQuestionPage />} />
       <Route element={<RequireAuth />}>
         <Route path="/setup" element={<SetupPage />} />
         <Route path="/ledger" element={<LedgerPage />} />
         <Route path="/workspace/:sessionId" element={<WorkspacePage />} />
         <Route path="/report/:sessionId" element={<ReportPage />} />
         <Route path="/sessions" element={<SessionsPage />} />
+        <Route path="/dsa/progress" element={<DsaProgressPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

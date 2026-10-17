@@ -1,0 +1,389 @@
+{
+  "schema_version": 1,
+  "source": {
+    "name": "UNBLUFF development fixture",
+    "license_status": "development_fixture",
+    "license_note": "Synthetic sample data written for UI development and tests. Not real company interview data; the company-to-question links are invented.",
+    "url": null,
+    "imported_at": "2026-01-01T00:00:00.000Z",
+    "source_updated_at": null
+  },
+  "companies": [
+    {
+      "id": "fixture-company-a",
+      "name": "Fixture Company A"
+    },
+    {
+      "id": "fixture-company-b",
+      "name": "Fixture Company B"
+    },
+    {
+      "id": "fixture-company-c",
+      "name": "Fixture Company C (no questions loaded)"
+    }
+  ],
+  "questions": [
+    {
+      "id": "q_fixture_01",
+      "title": "Sample Problem 01: Window Maximum",
+      "url": "https://example.com/dsa-fixture/problems/01",
+      "difficulty": "medium",
+      "topics": [
+        "Binary Search",
+        "Hash Table"
+      ]
+    },
+    {
+      "id": "q_fixture_02",
+      "title": "Sample Problem 02: Path Count",
+      "url": "https://example.com/dsa-fixture/problems/02",
+      "difficulty": "hard",
+      "topics": [
+        "Graphs",
+        "Strings"
+      ]
+    },
+    {
+      "id": "q_fixture_03",
+      "title": "Sample Problem 03: Interval Merge",
+      "url": "https://example.com/dsa-fixture/problems/03",
+      "difficulty": "easy",
+      "topics": [
+        "Binary Search",
+        "Hash Table"
+      ]
+    },
+    {
+      "id": "q_fixture_04",
+      "title": "Sample Problem 04: Prefix Query",
+      "url": "https://example.com/dsa-fixture/problems/04",
+      "difficulty": "medium",
+      "topics": [
+        "Binary Search",
+        "Dynamic Programming"
+      ]
+    },
+    {
+      "id": "q_fixture_05",
+      "title": "Sample Problem 05: Cycle Check",
+      "url": "https://example.com/dsa-fixture/problems/05",
+      "difficulty": "hard",
+      "topics": [
+        "Graphs"
+      ]
+    },
+    {
+      "id": "q_fixture_06",
+      "title": "Sample Problem 06: Pair Sum",
+      "url": "https://example.com/dsa-fixture/problems/06",
+      "difficulty": "easy",
+      "topics": [
+        "Arrays",
+        "Hash Table"
+      ]
+    },
+    {
+      "id": "q_fixture_07",
+      "title": "Sample Problem 07: Window Maximum",
+      "url": "https://example.com/dsa-fixture/problems/07",
+      "difficulty": "medium",
+      "topics": [
+        "Binary Search",
+        "Hash Table"
+      ]
+    },
+    {
+      "id": "q_fixture_08",
+      "title": "Sample Problem 08: Path Count",
+      "url": "https://example.com/dsa-fixture/problems/08",
+      "difficulty": "hard",
+      "topics": [
+        "Graphs",
+        "Strings"
+      ]
+    },
+    {
+      "id": "q_fixture_09",
+      "title": "Sample Problem 09: Interval Merge",
+      "url": "https://example.com/dsa-fixture/problems/09",
+      "difficulty": "easy",
+      "topics": [
+        "Binary Search",
+        "Hash Table"
+      ]
+    },
+    {
+      "id": "q_fixture_10",
+      "title": "Sample Problem 10: Prefix Query",
+      "url": "https://example.com/dsa-fixture/problems/10",
+      "difficulty": "medium",
+      "topics": [
+        "Binary Search",
+        "Dynamic Programming"
+      ]
+    },
+    {
+      "id": "q_fixture_11",
+      "title": "Sample Problem 11: Cycle Check",
+      "url": "https://example.com/dsa-fixture/problems/11",
+      "difficulty": "hard",
+      "topics": [
+        "Graphs"
+      ]
+    },
+    {
+      "id": "q_fixture_12",
+      "title": "Sample Problem 12: Pair Sum",
+      "url": "https://example.com/dsa-fixture/problems/12",
+      "difficulty": "easy",
+      "topics": [
+        "Arrays",
+        "Hash Table"
+      ]
+    },
+    {
+      "id": "q_fixture_13",
+      "title": "Sample Problem 13: Window Maximum",
+      "url": "https://example.com/dsa-fixture/problems/13",
+      "difficulty": "medium",
+      "topics": [
+        "Binary Search",
+        "Hash Table"
+      ]
+    },
+    {
+      "id": "q_fixture_14",
+      "title": "Sample Problem 14: Path Count",
+      "url": "https://example.com/dsa-fixture/problems/14",
+      "difficulty": "hard",
+      "topics": [
+        "Graphs",
+        "Strings"
+      ]
+    },
+    {
+      "id": "q_fixture_15",
+      "title": "Sample Problem 15: Interval Merge",
+      "url": "https://example.com/dsa-fixture/problems/15",
+      "difficulty": "easy",
+      "topics": [
+        "Binary Search",
+        "Hash Table"
+      ]
+    },
+    {
+      "id": "q_fixture_16",
+      "title": "Sample Problem 16: Prefix Query",
+      "url": "https://example.com/dsa-fixture/problems/16",
+      "difficulty": "medium",
+      "topics": [
+        "Binary Search",
+        "Dynamic Programming"
+      ]
+    },
+    {
+      "id": "q_fixture_17",
+      "title": "Sample Problem 17: Cycle Check",
+      "url": "https://example.com/dsa-fixture/problems/17",
+      "difficulty": "hard",
+      "topics": [
+        "Graphs"
+      ]
+    },
+    {
+      "id": "q_fixture_18",
+      "title": "Sample Problem 18: Pair Sum",
+      "url": "https://example.com/dsa-fixture/problems/18",
+      "difficulty": "easy",
+      "topics": [
+        "Arrays",
+        "Hash Table"
+      ]
+    },
+    {
+      "id": "q_fixture_19",
+      "title": "Sample Problem 19: Window Maximum",
+      "url": "https://example.com/dsa-fixture/problems/19",
+      "difficulty": "medium",
+      "topics": [
+        "Binary Search",
+        "Hash Table"
+      ]
+    },
+    {
+      "id": "q_fixture_20",
+      "title": "Sample Problem 20: Path Count",
+      "url": "https://example.com/dsa-fixture/problems/20",
+      "difficulty": "hard",
+      "topics": [
+        "Graphs",
+        "Strings"
+      ]
+    },
+    {
+      "id": "q_fixture_21",
+      "title": "Sample Problem 21: Interval Merge",
+      "url": "https://example.com/dsa-fixture/problems/21",
+      "difficulty": "easy",
+      "topics": [
+        "Binary Search",
+        "Hash Table"
+      ]
+    },
+    {
+      "id": "q_fixture_22",
+      "title": "Sample Problem 22: Prefix Query",
+      "url": "https://example.com/dsa-fixture/problems/22",
+      "difficulty": "medium",
+      "topics": [
+        "Binary Search",
+        "Dynamic Programming"
+      ]
+    },
+    {
+      "id": "q_fixture_23",
+      "title": "Sample Problem 23: Cycle Check",
+      "url": "https://example.com/dsa-fixture/problems/23",
+      "difficulty": "hard",
+      "topics": [
+        "Graphs"
+      ]
+    },
+    {
+      "id": "q_fixture_24",
+      "title": "Sample Problem 24: Pair Sum",
+      "url": "https://example.com/dsa-fixture/problems/24",
+      "difficulty": "easy",
+      "topics": [
+        "Arrays",
+        "Hash Table"
+      ]
+    }
+  ],
+  "associations": [
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_01"
+    },
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_02"
+    },
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_03"
+    },
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_04"
+    },
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_05"
+    },
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_06"
+    },
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_07"
+    },
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_08"
+    },
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_09"
+    },
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_10"
+    },
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_11"
+    },
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_12"
+    },
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_13"
+    },
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_14"
+    },
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_15"
+    },
+    {
+      "company_id": "fixture-company-a",
+      "question_id": "q_fixture_16"
+    },
+    {
+      "company_id": "fixture-company-b",
+      "question_id": "q_fixture_10"
+    },
+    {
+      "company_id": "fixture-company-b",
+      "question_id": "q_fixture_11"
+    },
+    {
+      "company_id": "fixture-company-b",
+      "question_id": "q_fixture_12"
+    },
+    {
+      "company_id": "fixture-company-b",
+      "question_id": "q_fixture_13"
+    },
+    {
+      "company_id": "fixture-company-b",
+      "question_id": "q_fixture_14"
+    },
+    {
+      "company_id": "fixture-company-b",
+      "question_id": "q_fixture_15"
+    },
+    {
+      "company_id": "fixture-company-b",
+      "question_id": "q_fixture_16"
+    },
+    {
+      "company_id": "fixture-company-b",
+      "question_id": "q_fixture_17"
+    },
+    {
+      "company_id": "fixture-company-b",
+      "question_id": "q_fixture_18"
+    },
+    {
+      "company_id": "fixture-company-b",
+      "question_id": "q_fixture_19"
+    },
+    {
+      "company_id": "fixture-company-b",
+      "question_id": "q_fixture_20"
+    },
+    {
+      "company_id": "fixture-company-b",
+      "question_id": "q_fixture_21"
+    },
+    {
+      "company_id": "fixture-company-b",
+      "question_id": "q_fixture_22"
+    },
+    {
+      "company_id": "fixture-company-b",
+      "question_id": "q_fixture_23"
+    },
+    {
+      "company_id": "fixture-company-b",
+      "question_id": "q_fixture_24"
+    }
+  ]
+}

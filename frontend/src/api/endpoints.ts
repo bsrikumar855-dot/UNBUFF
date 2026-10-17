@@ -12,6 +12,13 @@ import type {
   FixTaskRequest,
   FixTaskResponse,
   SessionsResponse,
+  CompaniesResponse,
+  CompanyDetailResponse,
+  QuestionsResponse,
+  QuestionDetailResponse,
+  DsaProgress,
+  DsaProgressListResponse,
+  DsaProgressUpdate,
 } from "@/types/contract";
 
 /**
@@ -19,6 +26,13 @@ import type {
  * Strict 1:1 mapping with frozen endpoints in CONTRACT.md §5.
  * This is a thin transport layer with zero local scoring or business decisions.
  */
+function queryString(params: Record<string, string | number | undefined>): string {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "") q.set(k, String(v));
+  const s = q.toString();
+  return s ? `?${s}` : "";
+}
+
 export const api = {
   /**
    * GET /api/health
@@ -97,6 +111,44 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     });
+  },
+
+  /** GET /api/companies: public catalogue, searched and paginated on the server. */
+  async getCompanies(params: Record<string, string | number | undefined> = {}): Promise<CompaniesResponse> {
+    return apiClient<CompaniesResponse>(`/companies${queryString(params)}`, { method: "GET" });
+  },
+
+  /** GET /api/companies/:companyId */
+  async getCompany(companyId: string): Promise<CompanyDetailResponse> {
+    return apiClient<CompanyDetailResponse>(`/companies/${encodeURIComponent(companyId)}`, { method: "GET" });
+  },
+
+  /** GET /api/questions (or /api/companies/:id/questions when `company` is given): server-side filters and paging. */
+  async getQuestions(params: Record<string, string | number | undefined> = {}): Promise<QuestionsResponse> {
+    return apiClient<QuestionsResponse>(`/questions${queryString(params)}`, { method: "GET" });
+  },
+
+  /** GET /api/questions/:questionId */
+  async getQuestion(questionId: string): Promise<QuestionDetailResponse> {
+    return apiClient<QuestionDetailResponse>(`/questions/${encodeURIComponent(questionId)}`, { method: "GET" });
+  },
+
+  /** GET /api/me/dsa-progress: the signed-in student's own records. */
+  async getDsaProgress(): Promise<DsaProgressListResponse> {
+    return apiClient<DsaProgressListResponse>("/me/dsa-progress", { method: "GET" });
+  },
+
+  /** PUT /api/me/dsa-progress/:questionId: creates or updates the single record for this question. */
+  async putDsaProgress(questionId: string, update: DsaProgressUpdate): Promise<DsaProgress> {
+    return apiClient<DsaProgress>(`/me/dsa-progress/${encodeURIComponent(questionId)}`, {
+      method: "PUT",
+      body: JSON.stringify(update),
+    });
+  },
+
+  /** DELETE /api/me/dsa-progress/:questionId */
+  async deleteDsaProgress(questionId: string): Promise<void> {
+    return apiClient<void>(`/me/dsa-progress/${encodeURIComponent(questionId)}`, { method: "DELETE" });
   },
 
   /**

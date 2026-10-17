@@ -306,3 +306,10 @@ everything once gcloud is available.
 - **Production refuses `STORE=memory`** unless `ALLOW_EPHEMERAL_STORE=true`, and requires `FIREBASE_PROJECT_ID`.
 - **Legacy records are not migrated.** They stay unreadable until an operator deletes or claims them.
 - **Test helper `testApp` injects a default test user** when no Authorization header is sent, so the pre-auth flow tests still run unchanged; `autoAuth: false` gives the real 401 behaviour.
+
+## Phase 3 — company-wise DSA Arena
+
+- **No dataset was imported.** The reference repository (liquidslr/leetcode-company-wise-problems) declares no licence; the importer refuses it unless its source URL is accompanied by `licensed` or `permission_granted` with a note. The app ships only a clearly labelled synthetic fixture (example.com links, invented company links) that the UI marks as sample data.
+- **Catalogue = validated JSON file loaded at startup** (like roles), not a second database. Personal progress is separate (`unbluff_dsa_progress`, doc id `<uid>~<questionId>`) so refreshes never touch it.
+- **Catalogue endpoints are public; `/api/me/*` requires the verified token.** Contract updated (§5), including the previously missing Phase 2 `/api/sessions` rows.
+- **Production without `DSA_CATALOGUE_PATH` serves an empty catalogue**, never the fixture.

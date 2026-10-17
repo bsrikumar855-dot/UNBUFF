@@ -9,6 +9,8 @@ const ERROR_COPY: Record<ErrorCode, string> = {
   UNAUTHENTICATED: "Please sign in to continue.",
   BAD_REQUEST: "That request wasn't valid. Check the form and try again.",
   NOT_FOUND: "That page or resource doesn't exist.",
+  COMPANY_NOT_FOUND: "We couldn't find that company.",
+  QUESTION_NOT_FOUND: "We couldn't find that question. It may have been removed from the catalogue.",
   ROLE_NOT_FOUND: "We couldn't find that role. Pick another one.",
   SESSION_NOT_FOUND: "This session has expired. Start over from Setup.",
   CLAIM_NOT_FOUND: "That claim is no longer in this session.",
