@@ -18,6 +18,8 @@ import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import dotenv from "dotenv";
+import { applicationDefault, initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 
 const root = join(import.meta.dirname, "..");
 const webEnv = dotenv.parse(readFileSync(join(root, "..", "frontend", ".env"), "utf8"));
@@ -197,35 +199,56 @@ async function main() {
     check("a sample run executed in the real sandbox and matched the sample output", run.status === 200 && /accepted|passed|completed/i.test(JSON.stringify(run.body)), `status ${run.status}`);
     check("a sample run is not stored", ((await call("GET", "/code/submissions", "a")).body?.submissions ?? []).length === 0);
 
-    // judged submissions in every language
-    const verdicts: string[] = [];
+    // 1. two wrong answers first: counted failures create ONE revision item (only when the provider is verified)
+    const revItems = async (who: string) => (await call("GET", "/me/dsa-revision?view=all", who)).body?.items ?? [];
+    const overview = async (who: string) => (await call("GET", "/me/dsa-analytics", who)).body?.totals ?? {};
+    const wantStatus = verified ? "counted" : "excluded_unverified_provider";
+    for (let i = 1; i <= 2; i++) {
+      const wrong = await call("POST", "/code/submit", "a", { question_id: QID, language: "python", source: WRONG_PY });
+      check(`wrong answer #${i} is judged wrong_answer with a failed-test number only`, wrong.status === 200 && wrong.body?.verdict === "wrong_answer" && typeof wrong.body?.failed_test === "number" && wrong.body?.analytics_status === wantStatus, `verdict ${wrong.body?.verdict}, analytics ${wrong.body?.analytics_status}`);
+    }
+    if (verified) {
+      const items = await revItems("a");
+      check("two counted failures created exactly one revision item (pending, due now)", items.length === 1 && items[0]?.question_id === QID && items[0]?.status === "pending", `${items.length} item(s), status ${items[0]?.status}`);
+      check("analytics: 2 eligible attempts, nothing solved yet", (await overview("a")).eligible_attempts === 2 && (await overview("a")).solved_unique === 0);
+      check("progress is not marked solved by wrong answers", !JSON.stringify((await call("GET", "/me/dsa-progress", "a")).body).includes('"solved"'));
+    } else {
+      check("uncounted failures create no revision item", (await revItems("a")).length === 0);
+    }
+
+    // 2. accepted submissions in every language
+    let firstAccepted = true;
     for (const lang of ["python", "javascript", "cpp", "java"]) {
       const r = await call("POST", "/code/submit", "a", { question_id: QID, language: lang, source: SOLUTIONS[lang] });
-      verdicts.push(`${lang}:${r.body?.verdict}`);
       check(`judged ${lang} submission against the hidden tests: accepted`, r.status === 200 && r.body?.verdict === "accepted", `verdict ${r.body?.verdict}, ${r.body?.passed}/${r.body?.total}`);
       check(`${lang}: the response shows no hidden test input or expected output`, !/expected_output|"input"/.test(JSON.stringify(r.body)));
-      const status = r.body?.analytics_status;
-      check(`${lang}: analytics status is ${verified ? "counted" : "excluded_unverified_provider"}`, status === (verified ? "counted" : "excluded_unverified_provider"), `status ${status}`);
+      check(`${lang}: analytics status is ${wantStatus}`, r.body?.analytics_status === wantStatus, `status ${r.body?.analytics_status}`);
+      if (verified && firstAccepted) {
+        firstAccepted = false;
+        check("the first accepted submission updated this student's progress", r.body?.progress_updated === true);
+        const items = await revItems("a");
+        check("the revision item became spaced review (scheduled, due later), not a second item", items.length === 1 && items[0]?.status === "scheduled", `${items.length} item(s), status ${items[0]?.status}, stage ${items[0]?.stage}`);
+      }
     }
-    const wrong = await call("POST", "/code/submit", "a", { question_id: QID, language: "python", source: WRONG_PY });
-    check("a wrong answer is judged wrong_answer with a failed-test number only", wrong.status === 200 && wrong.body?.verdict === "wrong_answer" && typeof wrong.body?.failed_test === "number", `verdict ${wrong.body?.verdict}`);
     const ce = await call("POST", "/code/submit", "a", { question_id: QID, language: "cpp", source: BROKEN_CPP });
     check("broken C++ is reported as a compile error", ce.status === 200 && /compil/i.test(String(ce.body?.verdict)), `verdict ${ce.body?.verdict}`);
 
-    // storage, ownership, progress
+    // 3. storage, ownership, progress, analytics
     const mine = (await call("GET", "/code/submissions", "a")).body?.submissions ?? [];
-    check("all six judged submissions are stored for the owner (this also proves the composite index)", mine.length === 6, `${mine.length} stored`);
+    check("all seven judged submissions are stored for the owner (this also proves the composite index)", mine.length === 7, `${mine.length} stored`);
     check("another student cannot list or open them", ((await call("GET", "/code/submissions", "b")).body?.submissions ?? []).length === 0 && (await call("GET", `/code/submissions/${mine[0]?.id}`, "b")).status === 404);
-    const totals = (await call("GET", "/me/dsa-analytics", "a")).body?.totals ?? {};
-    const rev = (await call("GET", "/me/dsa-revision?view=all", "a")).body?.items ?? [];
+    const totals = await overview("a");
     if (verified) {
-      check("analytics count the accepted attempts and one solved question", totals.solved_unique === 1 && totals.accepted_attempts >= 4, JSON.stringify(totals));
-      check("the revision queue has the failed question's follow-up only for this student", ((await call("GET", "/me/dsa-revision?view=all", "b")).body?.items ?? []).length === 0);
+      check("analytics: 1 question solved, 4 accepted attempts, 7 eligible attempts", totals.solved_unique === 1 && totals.accepted_attempts === 4 && totals.eligible_attempts === 7, JSON.stringify(totals));
+      const prog = (await call("GET", "/me/dsa-progress", "a")).body;
+      check("the question is recorded as solved for this student only", JSON.stringify(prog).includes(QID) && JSON.stringify(prog).includes("solved") && !JSON.stringify((await call("GET", "/me/dsa-progress", "b")).body).includes(QID));
+      const after = await revItems("a");
+      check("still exactly one revision item after all submissions (no duplicates)", after.length === 1, `${after.length} item(s), status ${after[0]?.status}`);
+      check("student B has no revision items and no analytics", (await revItems("b")).length === 0 && (await overview("b")).eligible_attempts === 0);
     } else {
       check("no result was counted: zero eligible attempts and nothing solved", totals.eligible_attempts === 0 && totals.solved_unique === 0, JSON.stringify(totals));
-      check("no revision item was created from uncounted results", rev.length === 0);
+      check("student B's analytics are untouched", (await overview("b")).eligible_attempts === 0);
     }
-    check("student B's analytics are untouched", ((await call("GET", "/me/dsa-analytics", "b")).body?.totals?.eligible_attempts ?? 0) === 0);
 
     // cleanup
     for (const s of mine) await call("DELETE", `/code/submissions/${s.id}`, "a");
@@ -234,6 +257,18 @@ async function main() {
     check("backend logs contain no token or submitted source code", !Object.values(tokens).some((t) => log.includes(t)) && !log.includes("std::getline") && !log.includes("ArrayDeque"));
   } finally {
     await stopBackend();
+    // remove what this test created (owner_uid is the throwaway user's own id), then prove nothing is left
+    const db = (initializeApp({ credential: applicationDefault(), projectId: project }), getFirestore());
+    let left = 0;
+    for (const t of Object.values(tokens)) {
+      const uid = (JSON.parse(Buffer.from(t.split(".")[1]!, "base64url").toString()) as { user_id: string }).user_id;
+      for (const col of ["unbluff_code_submissions", "unbluff_dsa_progress", "unbluff_dsa_revision", "unbluff_dsa_stats"]) {
+        const snap = await db.collection(col).where("owner_uid", "==", uid).get();
+        await Promise.all(snap.docs.map((d) => d.ref.delete()));
+        left += (await db.collection(col).where("owner_uid", "==", uid).get()).size;
+      }
+    }
+    if (Object.keys(tokens).length > 0) check("no records created by this test are left in Firestore", left === 0, `${left} left`);
     let removed = 0;
     for (const t of Object.values(tokens)) {
       const del = await fetch(`${idt}/accounts:delete?key=${webKey}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ idToken: t }) }).catch(() => null);
