@@ -13,6 +13,7 @@ import {
   Stat,
   WeeklyChart,
 } from "@/components/dsa/AnalyticsBits";
+import { ExternalProgressNote } from "@/components/leetcode/ExternalProgressNote";
 import { Button } from "@/components/ui/button";
 import { Page, PageHeader } from "@/components/ui/Page";
 import { buttonClasses } from "@/lib/buttonClasses";
@@ -390,6 +391,7 @@ const DsaAnalyticsPage: React.FC = () => {
           </section>
         </>
       )}
+      <ExternalProgressNote />
     </Page>
   );
 };

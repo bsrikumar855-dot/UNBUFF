@@ -26,6 +26,7 @@ vi.mock("@/api/endpoints", () => ({
     getGithubActivity: vi.fn(),
     getHealth: vi.fn(),
     getRoles: vi.fn(),
+    getLeetCodeConnection: vi.fn(), // the Settings page also shows the LeetCode panel, which these tests do not exercise
   },
 }));
 const mocked = vi.mocked(api);
@@ -203,6 +204,7 @@ const realLocation = window.location;
 let assign: ReturnType<typeof vi.fn>;
 beforeEach(() => {
   vi.resetAllMocks();
+  mocked.getLeetCodeConnection.mockReturnValue(new Promise(() => undefined)); // stays loading: GitHub is what is under test here
   assign = vi.fn();
   Object.defineProperty(window, "location", {
     configurable: true,

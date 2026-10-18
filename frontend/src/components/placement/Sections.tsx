@@ -1,3 +1,6 @@
+import { Enter } from "@/components/motion/Enter";
+import { Strike } from "@/components/motion/Marks";
+import { RISE } from "@/components/motion/tokens";
 import React from "react";
 import { cn } from "@/lib/cn";
 import {
@@ -53,8 +56,15 @@ export const TodaySection: React.FC<{
       </EmptyState>
     ) : (
       <ul className="border-t border-line">
-        {d.today_tasks.map((t) => (
-          <TaskCard key={t.id} task={t} today={d.today} busy={busy} onAction={onAction} />
+        {d.today_tasks.map((t, i) => (
+          <TaskCard
+            key={t.id}
+            index={i}
+            task={t}
+            today={d.today}
+            busy={busy}
+            onAction={onAction}
+          />
         ))}
       </ul>
     )}
@@ -83,8 +93,11 @@ export const WeekSection: React.FC<{
       }
     >
       <ol className="border-t border-line" aria-label="Next seven days">
-        {d.week.map((day) => (
-          <li
+        {d.week.map((day, di) => (
+          <Enter
+            as="li"
+            index={di}
+            y={RISE.sm}
             key={day.date}
             className={cn(
               "grid gap-x-6 gap-y-1 border-b border-line py-3 md:grid-cols-[11.5rem_minmax(0,1fr)]",
@@ -110,13 +123,7 @@ export const WeekSection: React.FC<{
               <ul className="flex flex-col gap-1 text-sm">
                 {day.tasks.map((t) => (
                   <li key={t.id} className="text-ink-secondary">
-                    <span
-                      className={
-                        t.status === "completed" ? "text-ink-muted line-through" : ""
-                      }
-                    >
-                      {t.title}
-                    </span>{" "}
+                    <Strike on={t.status === "completed"}>{t.title}</Strike>{" "}
                     <span className="text-xs text-ink-muted">
                       ({t.estimated_minutes} min{t.status === "completed" ? ", done" : ""}
                       )
@@ -125,7 +132,7 @@ export const WeekSection: React.FC<{
                 ))}
               </ul>
             )}
-          </li>
+          </Enter>
         ))}
       </ol>
       {later.length > 0 && (

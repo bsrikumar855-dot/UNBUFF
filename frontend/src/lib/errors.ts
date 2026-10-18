@@ -30,6 +30,11 @@ const ERROR_COPY: Record<ErrorCode, string> = {
   ROLE_NOT_FOUND: "We couldn't find that role. Pick another one.",
   SESSION_NOT_FOUND: "This session has expired. Start over from Setup.",
   CLAIM_NOT_FOUND: "That claim is no longer in this session.",
+  CAREER_UNAVAILABLE: "The job source could not be reached or answered unexpectedly. Nothing was changed; try again in a moment.",
+  CAREER_RATE_LIMITED: "The job source is receiving too many requests right now. Wait a little, then try again.",
+  CAREER_JOB_NOT_FOUND: "That listing could not be found. It may have been removed.",
+  LEETCODE_IMPORT_INVALID: "That data could not be imported. Check the points listed and try again.",
+  LEETCODE_IMPORT_CONFLICT: "That import clashes with a snapshot you already have, so nothing was changed.",
   RATE_LIMITED: "Too many requests — wait a moment and try again.",
   LLM_INVALID_OUTPUT: "The model returned something we couldn't grade. Try again.",
   LLM_TIMEOUT: "The model took too long to respond. Try again.",
@@ -46,7 +51,7 @@ export function isRetryableError(error: unknown): boolean {
 export function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     // 400 messages are written for users by the backend (e.g. "Retest unlocks after 2 more concepts").
-    if (error.code === "BAD_REQUEST" && error.message) return error.message;
+    if ((error.code === "BAD_REQUEST" || error.code === "LEETCODE_IMPORT_INVALID" || error.code === "LEETCODE_IMPORT_CONFLICT") && error.message) return error.message;
     return ERROR_COPY[error.code as ErrorCode] ?? error.message;
   }
   if (error instanceof Error) {

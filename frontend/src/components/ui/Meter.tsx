@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/cn";
+import { GrowBar } from "@/components/motion/GrowBar";
 
 /**
  * A thin ruled progress meter. The number is always printed next to it (the bar is a glance, the number is the
@@ -29,13 +30,7 @@ export const Meter: React.FC<{
       aria-valuetext={`${value} of ${max}`}
       className={cn("h-1.5 w-full overflow-hidden bg-surface-200", className)}
     >
-      <div
-        className={cn(
-          "h-full origin-left transition-transform duration-500 ease-out motion-reduce:transition-none",
-          fill
-        )}
-        style={{ transform: `scaleX(${pct})` }}
-      />
+      <GrowBar value={pct} className="h-full w-full" barClassName={fill} />
     </div>
   );
 };

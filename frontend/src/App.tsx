@@ -32,6 +32,8 @@ const DsaRevisionPage = lazy(() => import("@/pages/DsaRevisionPage"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
 const GithubInsightsPage = lazy(() => import("@/pages/GithubInsightsPage"));
 const PlacementPage = lazy(() => import("@/pages/PlacementPage"));
+const CareerPage = lazy(() => import("@/pages/CareerPage"));
+const LeetCodeInsightsPage = lazy(() => import("@/pages/LeetCodeInsightsPage"));
 const GraphqlLabPage = lazy(() => import("@/pages/GraphqlLabPage"));
 const GraphqlLabModulePage = lazy(() => import("@/pages/GraphqlLabModulePage"));
 const GraphqlPlaygroundPage = lazy(() => import("@/pages/GraphqlPlaygroundPage"));
@@ -70,7 +72,9 @@ export const AppRoutes: React.FC = () => (
         <Route path="/mentor/memory" element={<MentorMemoryPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/github" element={<GithubInsightsPage />} />
+        <Route path="/leetcode" element={<LeetCodeInsightsPage />} />
         <Route path="/placement" element={<PlacementPage />} />
+        <Route path="/career" element={<CareerPage />} />
         <Route path="/graphql-lab" element={<GraphqlLabPage />} />
         <Route path="/graphql-lab/playground" element={<GraphqlPlaygroundPage />} />
         <Route path="/graphql-lab/modules/:moduleId" element={<GraphqlLabModulePage />} />

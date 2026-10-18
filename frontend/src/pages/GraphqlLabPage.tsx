@@ -1,3 +1,5 @@
+import { Enter } from "@/components/motion/Enter";
+import { RISE } from "@/components/motion/tokens";
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/api/endpoints";
@@ -205,8 +207,14 @@ const GraphqlLabPage: React.FC = () => {
               </p>
             )}
             <ol className="mt-4 border-t border-line">
-              {modules.modules.map((m) => (
-                <li key={m.id} className="border-b border-line py-5">
+              {modules.modules.map((m, mi) => (
+                <Enter
+                  as="li"
+                  index={mi}
+                  y={RISE.sm}
+                  key={m.id}
+                  className="border-b border-line py-5"
+                >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <p className="eyebrow">
@@ -245,7 +253,7 @@ const GraphqlLabPage: React.FC = () => {
                       can still open this module now.
                     </p>
                   )}
-                </li>
+                </Enter>
               ))}
             </ol>
           </section>

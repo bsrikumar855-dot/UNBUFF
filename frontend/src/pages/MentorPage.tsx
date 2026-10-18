@@ -3,8 +3,14 @@ import { Link, useSearchParams } from "react-router-dom";
 import { api } from "@/api/endpoints";
 import { ApiError } from "@/api/types";
 import { Button } from "@/components/ui/button";
+import { m } from "motion/react";
+import { canObserve } from "@/components/motion/ease";
+import { DUR, RISE, settle } from "@/components/motion/tokens";
+import { Thinking } from "@/components/motion/Thinking";
+import { useNewIds } from "@/components/motion/useNewIds";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { LEETCODE_STARTERS } from "@/lib/leetcode";
 import { MODES, newClientMessageId, PROVENANCE_LABEL } from "@/lib/mentor";
 import { cn } from "@/lib/cn";
 import { routes } from "@/lib/routes";
@@ -66,6 +72,15 @@ const STARTERS: Record<MentorMode, string[]> = {
   ],
 };
 
+/** Shown instead when the student arrives from Career: the questions the job-matching context exists to answer. */
+const CAREER_STARTERS = [
+  "Which internships fit my current skills?",
+  "Which roles best match my placement goals?",
+  "What are the most important missing skills across my strongest matches?",
+  "What should I learn to qualify for these positions?",
+  "Which opportunities should I prioritize applying to this week?",
+];
+
 /**
  * Says which engine this server uses for answers, read from the server's own health report. It is always visible, so a
  * mock deployment can never be mistaken for the real model. Nothing is shown if the server cannot be asked.
@@ -83,14 +98,20 @@ const MentorEngineNote: React.FC = () => {
   }, []);
   if (!engine) return null;
   return engine.llm_mode === "mock" ? (
-    <p role="note" className="mt-3 max-w-2xl border-l-2 border-redline pl-3 text-sm text-ink-primary">
-      <span className="font-semibold">Mock mode.</span> This server answers with a built-in stand-in, not an AI
-      model. Nothing you read here comes from Gemini.
+    <p
+      role="note"
+      className="mt-3 max-w-2xl border-l-2 border-redline pl-3 text-sm text-ink-primary"
+    >
+      <span className="font-semibold">Mock mode.</span> This server answers with a
+      built-in stand-in, not an AI model. Nothing you read here comes from Gemini.
     </p>
   ) : (
-    <p role="note" className="mt-3 max-w-2xl border-l-2 border-verified pl-3 text-sm text-ink-secondary">
-      <span className="font-semibold text-ink-primary">Live model.</span> Answers come from{" "}
-      {engine.model ?? "the AI model"} through the UNBLUFF server.
+    <p
+      role="note"
+      className="mt-3 max-w-2xl border-l-2 border-verified pl-3 text-sm text-ink-secondary"
+    >
+      <span className="font-semibold text-ink-primary">Live model.</span> Answers come
+      from {engine.model ?? "the AI model"} through the UNBLUFF server.
     </p>
   );
 };
@@ -100,7 +121,11 @@ const MentorPage: React.FC = () => {
   const [params] = useSearchParams();
   const questionId = params.get("question");
 
-  const [mode, setMode] = useState<MentorMode>("dsa_coach");
+  const careerContext = params.get("career") === "1";
+  const leetcodeContext = params.get("leetcode") === "1";
+  const [mode, setMode] = useState<MentorMode>(
+    careerContext || leetcodeContext ? "placement_mentor" : "dsa_coach"
+  );
   const [conversations, setConversations] = useState<MentorConversationSummary[] | null>(
     null
   );
@@ -108,11 +133,13 @@ const MentorPage: React.FC = () => {
   const [active, setActive] = useState<MentorConversationSummary | null>(null);
   const [messages, setMessages] = useState<MentorMessage[]>([]);
   const [notice, setNotice] = useState<MentorChatResponse | null>(null);
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState(() => (leetcodeContext ? (params.get("prompt") ?? "").slice(0, 300) : ""));
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [retry, setRetry] = useState<Pending | null>(null);
   const [loadingConversation, setLoadingConversation] = useState(false);
+  // Bumped when the student opens a different conversation or starts a new one, which cross-fades the transcript.
+  const [view, setView] = useState(0);
   const [showList, setShowList] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [questionTitle, setQuestionTitle] = useState<string | null>(null);
@@ -173,6 +200,8 @@ const MentorPage: React.FC = () => {
         client_message_id: pending.clientMessageId,
         assist: pending.assist,
         question_id: questionId ?? undefined,
+        career_context: careerContext || undefined,
+        leetcode_context: leetcodeContext || undefined,
       });
       setMessages((m) => [...m, res.reply]);
       setActive(res.conversation);
@@ -208,6 +237,7 @@ const MentorPage: React.FC = () => {
       const c = await api.getMentorConversation(id);
       setActive(c);
       setMessages(c.messages);
+      setView((v) => v + 1);
       setMode(c.mode);
       setShowList(false);
     } catch (e) {
@@ -220,6 +250,7 @@ const MentorPage: React.FC = () => {
   const startNew = () => {
     setActive(null);
     setMessages([]);
+    setView((v) => v + 1);
     setNotice(null);
     setError(null);
     setRetry(null);
@@ -238,6 +269,13 @@ const MentorPage: React.FC = () => {
       setListError(e);
     }
   };
+
+  const isNew = useNewIds(
+    messages.map((x) => x.id),
+    String(view),
+    !loadingConversation
+  );
+  const animateMessages = canObserve();
 
   const rateLimited = error instanceof ApiError && error.code === "RATE_LIMITED";
 
@@ -340,6 +378,33 @@ const MentorPage: React.FC = () => {
             make mistakes, so check important facts.
           </p>
           <MentorEngineNote />
+          {careerContext && (
+            <p
+              role="note"
+              className="mt-3 max-w-2xl border-l-2 border-line-strong pl-3 text-sm text-ink-secondary"
+            >
+              <span className="font-semibold text-ink-primary">
+                Career context is on.
+              </span>{" "}
+              The mentor sees your best-matching listings, with scores the app computed,
+              and your saved and applied jobs. It cannot see job descriptions, and it can
+              only discuss listings it was given.
+            </p>
+          )}
+
+          {leetcodeContext && (
+            <p
+              role="note"
+              className="mt-3 max-w-2xl border-l-2 border-line-strong pl-3 text-sm text-ink-secondary"
+            >
+              <span className="font-semibold text-ink-primary">
+                LeetCode context is on.
+              </span>{" "}
+              The mentor sees a short summary of the numbers you imported, labelled as
+              supplied by you and dated. It cannot see your LeetCode account, and it will
+              not treat the numbers as live or as proof of problem-solving ability.
+            </p>
+          )}
 
           <div
             role="radiogroup"
@@ -385,17 +450,18 @@ const MentorPage: React.FC = () => {
           <LoadingState className="px-4 py-3 sm:px-8" message="Loading conversation…" />
         )}
         <div
+          key={view}
           role="log"
           aria-label="Conversation"
           aria-live="polite"
           aria-relevant="additions"
-          className="flex min-h-[18rem] flex-1 flex-col gap-6 overflow-y-auto px-4 py-6 sm:px-8 lg:min-h-0"
+          className="flex min-h-[18rem] flex-1 flex-col gap-6 overflow-y-auto px-4 py-6 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200 sm:px-8 lg:min-h-0"
         >
           {messages.length === 0 && !loadingConversation && (
             <div className="max-w-xl text-sm text-ink-secondary">
               <p className="eyebrow mb-3">Start a conversation. For example:</p>
               <ul className="flex flex-col gap-1">
-                {STARTERS[mode].map((s) => (
+                {(careerContext ? CAREER_STARTERS : leetcodeContext ? LEETCODE_STARTERS : STARTERS[mode]).map((s) => (
                   <li key={s}>
                     <button
                       type="button"
@@ -409,21 +475,30 @@ const MentorPage: React.FC = () => {
               </ul>
             </div>
           )}
-          {messages.map((m) => (
-            <div
-              key={m.id}
+          {messages.map((msg) => (
+            <m.div
+              key={msg.id}
+              initial={
+                animateMessages && isNew(msg.id)
+                  ? msg.role === "user"
+                    ? { opacity: 0, x: RISE.sm }
+                    : { opacity: 0, y: RISE.sm }
+                  : false
+              }
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              transition={settle(DUR.base)}
               className={cn(
                 "max-w-[46rem] text-[15.5px] leading-relaxed",
-                m.role === "user"
+                msg.role === "user"
                   ? "self-end border-l-2 border-ink-primary bg-surface-100 px-4 py-3"
                   : "self-start"
               )}
             >
-              <p className="eyebrow mb-1">{m.role === "user" ? "You" : "Mentor"}</p>
-              <MessageBody text={m.content} />
-            </div>
+              <p className="eyebrow mb-1">{msg.role === "user" ? "You" : "Mentor"}</p>
+              <MessageBody text={msg.content} />
+            </m.div>
           ))}
-          {sending && <LoadingState message="The mentor is thinking…" />}
+          {sending && <Thinking message="The mentor is thinking…" />}
         </div>
 
         {error !== null && (
@@ -564,6 +639,13 @@ const MentorNotices: React.FC<{ notice: MentorChatResponse }> = ({ notice }) => 
         {new Date(notice.github_context.synced_at ?? "").toLocaleString()}
         {notice.github_context.stale ? ", may be out of date" : ""}). It is partial
         evidence, not a skill score.
+      </p>
+    )}
+    {notice.leetcode_context && (
+      <p role="note" className="border-l-2 border-line-strong pl-3 text-ink-secondary">
+        {notice.leetcode_context.used
+          ? `This answer used a short summary of the LeetCode numbers you imported (captured ${new Date(notice.leetcode_context.captured_at ?? "").toLocaleDateString()}${notice.leetcode_context.stale ? ", out of date" : ""}). They are your own supplied numbers: not live and not verified.`
+          : "You have not imported any LeetCode numbers, so the mentor had none to use. Import your own on the LeetCode page."}
       </p>
     )}
     {notice.memory_saved.length > 0 && (

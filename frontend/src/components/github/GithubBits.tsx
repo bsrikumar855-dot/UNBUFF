@@ -1,4 +1,6 @@
-import React from "react";
+import { canObserve } from "@/components/motion/ease";
+import { useSeen } from "@/components/motion/useSeen";
+import React, { useRef } from "react";
 import {
   CHECK_STATUS_LABEL,
   FRESHNESS_LABEL,
@@ -40,8 +42,17 @@ export const Heatmap: React.FC<{
   to: string | null;
 }> = ({ weeks, total, from, to }) => {
   const max = Math.max(0, ...weeks.flatMap((w) => w.days.map((d) => d.count)));
+  // The grid sweeps in once, a column at a time, the first time it is seen. The numbers are in the document throughout.
+  const ref = useRef<HTMLDivElement>(null);
+  const armed = canObserve();
+  const seen = useSeen(ref as React.RefObject<Element>, "0px 0px -8% 0px");
   return (
-    <div>
+    <div
+      ref={ref}
+      className="heat"
+      data-armed={armed ? "true" : "false"}
+      data-seen={seen ? "true" : "false"}
+    >
       {/* The grid shares the available width instead of scrolling sideways: every cell is a square that shrinks with the screen. */}
       <div
         role="img"
@@ -51,8 +62,12 @@ export const Heatmap: React.FC<{
           gridTemplateColumns: `repeat(${Math.max(1, weeks.length)}, minmax(0, 1fr))`,
         }}
       >
-        {weeks.map((w) => (
-          <div key={w.starts_on} className="grid gap-[2px]">
+        {weeks.map((w, wi) => (
+          <div
+            key={w.starts_on}
+            className="heat-col grid gap-[2px]"
+            style={{ "--i": wi } as React.CSSProperties}
+          >
             {w.days.map((d) => (
               <div
                 key={d.date}

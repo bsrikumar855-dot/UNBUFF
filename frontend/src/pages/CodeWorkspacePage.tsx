@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { SplitPane } from "@/components/ui/SplitPane";
+import { Enter } from "@/components/motion/Enter";
+import { DUR } from "@/components/motion/tokens";
 import { Stamp } from "@/components/motion/Stamp";
 import { cn } from "@/lib/cn";
 import { loadDraft, removeDraft, saveDraft } from "@/lib/drafts";
@@ -533,11 +535,21 @@ const CodeWorkspacePage: React.FC = () => {
                     )}
 
                     {runResult && (
-                      <div
+                      <Enter
+                        key={`${runResult.status}:${runResult.time_ms}:${runResult.stdout?.length ?? 0}:${runResult.sample_passed}`}
                         role="region"
                         aria-label="Run output"
                         aria-live="polite"
-                        className="mt-4 border-l-2 border-ink-primary pl-4"
+                        y={0}
+                        duration={DUR.fast}
+                        className={cn(
+                          "mt-4 border-l-2 pl-4 transition-colors duration-200",
+                          runResult.sample_passed === true
+                            ? "border-verified"
+                            : runResult.sample_passed === false
+                              ? "border-redline"
+                              : "border-ink-primary"
+                        )}
                       >
                         <p className="text-sm font-semibold text-ink-primary">
                           {RUN_LABEL[runResult.status]}
@@ -566,7 +578,7 @@ const CodeWorkspacePage: React.FC = () => {
                           Running code never changes your progress. Only an accepted
                           submission can mark a question solved.
                         </p>
-                      </div>
+                      </Enter>
                     )}
 
                     {submission && (

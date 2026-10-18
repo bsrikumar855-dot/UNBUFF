@@ -2,6 +2,7 @@ import {
   BarChart3,
   Brain,
   Braces,
+  Briefcase,
   CalendarCheck,
   Code2,
   FileSearch,
@@ -13,6 +14,7 @@ import {
   MessagesSquare,
   Repeat,
   Settings,
+  Trophy,
   type LucideIcon,
 } from "lucide-react";
 import { routes } from "@/lib/routes";
@@ -56,6 +58,13 @@ export function navGroups(sessionId: string | null): NavGroup[] {
           icon: CalendarCheck,
           hint: "Today's tasks, weekly plan, evidence by skill",
           match: is("/placement"),
+        },
+        {
+          label: "Career",
+          to: routes.career,
+          icon: Briefcase,
+          hint: "Jobs and internships matched to your profile, saved jobs, applications",
+          match: is("/career"),
         },
       ],
     },
@@ -165,6 +174,13 @@ export function navGroups(sessionId: string | null): NavGroup[] {
           icon: Github,
           hint: "Contribution calendar and repositories",
           match: is("/github"),
+        },
+        {
+          label: "LeetCode",
+          to: routes.leetcode,
+          icon: Trophy,
+          hint: "Link your profile and import your own progress numbers",
+          match: is("/leetcode"),
         },
         {
           label: "Roadmap",

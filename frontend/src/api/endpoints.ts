@@ -1,6 +1,25 @@
 import { apiClient } from "./client";
 import type {
+  CareerFacetsResponse,
+  CareerFeedResponse,
+  CareerJobDetailResponse,
+  CareerPreferences,
+  CareerPreferencesResponse,
+  CareerTab,
+  CareerTrackedItem,
+  CareerTrackedResponse,
+  CareerTrackerUpdate,
   HealthResponse,
+  LeetCodeConnectionResponse,
+  LeetCodeHistoryResponse,
+  LeetCodeImportConfirmRequest,
+  LeetCodeImportConfirmResponse,
+  LeetCodeImportPreview,
+  LeetCodeImportRequest,
+  LeetCodeInsightsResponse,
+  LeetCodeUnlinkResponse,
+  ResumeSkillsExtractResponse,
+  ResumeSkillsResponse,
   RolesResponse,
   Role,
   ExtractRequest,
@@ -86,12 +105,115 @@ function queryString(params: Record<string, string | number | undefined>): strin
   return s ? `?${s}` : "";
 }
 
+export type CareerFeedParams = {
+  tab: CareerTab;
+  q?: string;
+  search_in?: "all" | "title" | "company";
+  category?: string[];
+  skills?: string[];
+  skills_mode?: "and";
+  countries?: string[];
+  cities?: string[];
+  work_mode?: string[];
+  seniority?: string[];
+  employment_type?: string[];
+  include_stale?: boolean;
+  tech_only?: boolean;
+  broaden?: boolean;
+  sort?: "best_match" | "newest";
+  posted_within_days?: number;
+  salary_min?: number;
+  offset?: number;
+  limit?: number;
+};
+
+/** Lists become comma-separated values and empty values are left out, so the URL carries exactly what the student chose. */
+function careerQuery(params: object): string {
+  const out: Record<string, string | number> = {};
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0)) continue;
+    out[k] = Array.isArray(v) ? v.join(",") : typeof v === "boolean" ? String(v) : (v as string | number);
+  }
+  return queryString(out);
+}
+
 export const api = {
+  /** GET /api/leetcode/connection: the saved username, what is imported, and what is (not) true about the link. */
+  async getLeetCodeConnection(): Promise<LeetCodeConnectionResponse> {
+    return apiClient<LeetCodeConnectionResponse>("/leetcode/connection", { method: "GET" });
+  },
+  /** PUT /api/leetcode/connection: saves a username. Nothing is looked up or verified. */
+  async linkLeetCode(profile: string): Promise<LeetCodeConnectionResponse> {
+    return apiClient<LeetCodeConnectionResponse>("/leetcode/connection", { method: "PUT", body: JSON.stringify({ profile }) });
+  },
+  /** DELETE /api/leetcode/connection: removes the link, and with mode "all" every imported snapshot. */
+  async unlinkLeetCode(mode: "link" | "all"): Promise<LeetCodeUnlinkResponse> {
+    return apiClient<LeetCodeUnlinkResponse>(`/leetcode/connection?mode=${mode}`, { method: "DELETE" });
+  },
+  /** POST /api/leetcode/import/preview: validates the student's own data. Nothing is stored. */
+  async previewLeetCodeImport(body: LeetCodeImportRequest): Promise<LeetCodeImportPreview> {
+    return apiClient<LeetCodeImportPreview>("/leetcode/import/preview", { method: "POST", body: JSON.stringify(body) });
+  },
+  /** POST /api/leetcode/import/confirm: stores exactly what was previewed (the same data is never stored twice). */
+  async confirmLeetCodeImport(body: LeetCodeImportConfirmRequest): Promise<LeetCodeImportConfirmResponse> {
+    return apiClient<LeetCodeImportConfirmResponse>("/leetcode/import/confirm", { method: "POST", body: JSON.stringify(body) });
+  },
+  async getLeetCodeInsights(): Promise<LeetCodeInsightsResponse> {
+    return apiClient<LeetCodeInsightsResponse>("/leetcode/insights", { method: "GET" });
+  },
+  async getLeetCodeHistory(): Promise<LeetCodeHistoryResponse> {
+    return apiClient<LeetCodeHistoryResponse>("/leetcode/import-history", { method: "GET" });
+  },
+  async deleteLeetCodeSnapshot(id: string): Promise<void> {
+    await apiClient<void>(`/leetcode/import-history/${encodeURIComponent(id)}`, { method: "DELETE" });
+  },
+
   /**
    * GET /api/health
    */
   async getHealth(): Promise<HealthResponse> {
     return apiClient<HealthResponse>("/health", { method: "GET" });
+  },
+
+  /** GET /api/career/jobs: Freehire listings, matched against the student's own profile. */
+  async getCareerJobs(params: CareerFeedParams): Promise<CareerFeedResponse> {
+    return apiClient<CareerFeedResponse>(`/career/jobs${careerQuery(params)}`, { method: "GET", timeoutMs: 30_000 });
+  },
+  async getCareerJob(slug: string): Promise<CareerJobDetailResponse> {
+    return apiClient<CareerJobDetailResponse>(`/career/jobs/${encodeURIComponent(slug)}`, { method: "GET", timeoutMs: 30_000 });
+  },
+  async getCareerFacets(params: Omit<CareerFeedParams, "tab" | "offset" | "limit"> = {}): Promise<CareerFacetsResponse> {
+    return apiClient<CareerFacetsResponse>(`/career/facets${careerQuery(params)}`, { method: "GET", timeoutMs: 30_000 });
+  },
+  async getCareerPreferences(): Promise<CareerPreferencesResponse> {
+    return apiClient<CareerPreferencesResponse>("/career/preferences", { method: "GET" });
+  },
+  async putCareerPreferences(preferences: CareerPreferences): Promise<CareerPreferencesResponse> {
+    return apiClient<CareerPreferencesResponse>("/career/preferences", { method: "PUT", body: JSON.stringify(preferences) });
+  },
+  /** POST /api/career/resume-skills/extract: suggestions only. The text is read, not stored. */
+  async extractResumeSkills(text: string): Promise<ResumeSkillsExtractResponse> {
+    return apiClient<ResumeSkillsExtractResponse>("/career/resume-skills/extract", { method: "POST", body: JSON.stringify({ text }), timeoutMs: 30_000 });
+  },
+  async getResumeSkills(): Promise<ResumeSkillsResponse> {
+    return apiClient<ResumeSkillsResponse>("/career/resume-skills", { method: "GET" });
+  },
+  /** PUT /api/career/resume-skills: replaces the skills the student confirmed from their resume. */
+  async saveResumeSkills(skills: string[]): Promise<ResumeSkillsResponse> {
+    return apiClient<ResumeSkillsResponse>("/career/resume-skills", { method: "PUT", body: JSON.stringify({ skills }) });
+  },
+  async deleteResumeSkills(): Promise<void> {
+    await apiClient<void>("/career/resume-skills", { method: "DELETE" });
+  },
+  async getCareerTracked(filter: "saved" | "applications" | "all" = "all"): Promise<CareerTrackedResponse> {
+    return apiClient<CareerTrackedResponse>(`/career/tracked?filter=${filter}`, { method: "GET" });
+  },
+  /** PUT /api/career/tracked/:slug: bookmark, status, dates and private notes for one listing. */
+  async updateCareerTracked(slug: string, update: CareerTrackerUpdate): Promise<{ item: CareerTrackedItem | null }> {
+    return apiClient<{ item: CareerTrackedItem | null }>(`/career/tracked/${encodeURIComponent(slug)}`, { method: "PUT", body: JSON.stringify(update), timeoutMs: 30_000 });
+  },
+  async removeCareerTracked(slug: string, mode: "bookmark" | "all"): Promise<void> {
+    await apiClient<void>(`/career/tracked/${encodeURIComponent(slug)}?mode=${mode}`, { method: "DELETE" });
   },
 
   /**

@@ -1,3 +1,5 @@
+import { Enter } from "@/components/motion/Enter";
+import { DUR, RISE } from "@/components/motion/tokens";
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api } from "@/api/endpoints";
@@ -244,11 +246,18 @@ const DsaQuestionsPage: React.FC = () => {
                         : "The loaded catalogue contains no questions."}
                 </EmptyState>
               ) : (
-                <ul className="border-t border-ink-primary">
-                  {data.questions.map((question) => {
+                <ul
+                  className="border-t border-ink-primary"
+                  key={`${data.page}:${data.total}:${data.questions[0]?.id ?? ""}`}
+                >
+                  {data.questions.map((question, qi) => {
                     const mine = progress.byQuestion.get(question.id);
                     return (
-                      <li
+                      <Enter
+                        as="li"
+                        index={Math.min(qi, 5)}
+                        y={RISE.sm}
+                        duration={DUR.fast}
                         key={question.id}
                         className="grid gap-x-6 gap-y-1.5 border-b border-line py-3.5 sm:grid-cols-[minmax(0,1fr)_6rem_9rem] sm:items-baseline"
                       >
@@ -272,7 +281,7 @@ const DsaQuestionsPage: React.FC = () => {
                             />
                           ) : null}
                         </div>
-                      </li>
+                      </Enter>
                     );
                   })}
                 </ul>

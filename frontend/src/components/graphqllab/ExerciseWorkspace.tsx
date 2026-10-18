@@ -1,3 +1,7 @@
+import { Enter } from "@/components/motion/Enter";
+import { CheckMark } from "@/components/motion/Marks";
+import { DUR, RISE } from "@/components/motion/tokens";
+import { cn } from "@/lib/cn";
 import React, { useEffect, useRef, useState } from "react";
 import { api } from "@/api/endpoints";
 import { Button } from "@/components/ui/button";
@@ -277,9 +281,15 @@ export const ExerciseWorkspace: React.FC<ExerciseWorkspaceProps> = ({
       {submitting && <LoadingState message="Checking your answer…" />}
 
       {result && !submitting && (
-        <div
+        <Enter
+          key={`${result.outcome}:${result.feedback}:${result.checks.length}`}
           aria-label="Check result"
-          className="flex flex-col gap-3 rounded-md border border-line bg-surface-50 p-4"
+          y={RISE.sm}
+          duration={DUR.base}
+          className={cn(
+            "flex flex-col gap-3 rounded-md border bg-surface-50 p-4 transition-colors duration-200",
+            result.outcome === "passed" ? "border-verified/60" : "border-line"
+          )}
         >
           <p role="status" className="text-base font-semibold text-ink-primary">
             {result.outcome === "passed" ? "Passed" : "Not yet"}
@@ -287,11 +297,20 @@ export const ExerciseWorkspace: React.FC<ExerciseWorkspaceProps> = ({
           </p>
           <p className="text-sm text-ink-secondary">{result.feedback}</p>
           <ul aria-label="Checks" className="flex flex-col gap-1 text-sm">
-            {result.checks.map((c) => (
-              <li key={c.label} className="text-ink-primary">
-                <span aria-hidden="true">{c.passed ? "✓ " : "✗ "}</span>
+            {result.checks.map((c, ci) => (
+              <Enter
+                as="li"
+                index={ci}
+                y={RISE.sm}
+                duration={DUR.fast}
+                key={c.label}
+                className="text-ink-primary"
+              >
+                <span aria-hidden="true" className="mr-1.5 inline-block w-4 align-[-2px]">
+                  {c.passed ? <CheckMark size={14} className="text-verified" /> : "✗"}
+                </span>
                 {c.label}: {c.passed ? "met" : "not met"}
-              </li>
+              </Enter>
             ))}
           </ul>
           {result.hint && <p className="text-sm text-ink-primary">Hint: {result.hint}</p>}
@@ -327,7 +346,7 @@ export const ExerciseWorkspace: React.FC<ExerciseWorkspaceProps> = ({
               </div>
             </details>
           )}
-        </div>
+        </Enter>
       )}
 
       <div>

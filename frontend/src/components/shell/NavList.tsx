@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { LayoutGroup, m } from "motion/react";
 import { SPRING_GLIDE } from "@/components/motion/ease";
 import { cn } from "@/lib/cn";
+import { isPlainClick, useRouteNavigate } from "@/lib/viewTransition";
 import { useSessionState } from "@/state/useSession";
 import { navGroups } from "./nav";
 
@@ -13,6 +14,7 @@ import { navGroups } from "./nav";
  */
 export const NavList: React.FC<{ onNavigate?: () => void }> = ({ onNavigate }) => {
   const { pathname } = useLocation();
+  const go = useRouteNavigate();
   const { state } = useSessionState();
   const group = useId();
   const groups = navGroups(state.sessionId);
@@ -31,7 +33,14 @@ export const NavList: React.FC<{ onNavigate?: () => void }> = ({ onNavigate }) =
                   <li key={item.label}>
                     <Link
                       to={item.to}
-                      onClick={onNavigate}
+                      onClick={(e) => {
+                        onNavigate?.();
+                        // Cross-fade the page content on a plain click; a new-tab click or a click on the current page is left alone.
+                        if (isPlainClick(e) && !active && typeof document.startViewTransition === "function") {
+                          e.preventDefault();
+                          go(item.to);
+                        }
+                      }}
                       aria-current={active ? "page" : undefined}
                       className={cn(
                         "group relative isolate flex min-h-10 items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",

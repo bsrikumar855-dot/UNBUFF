@@ -1,5 +1,5 @@
+import { useRouteNavigate } from "@/lib/viewTransition";
 import React, { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   CommandDialog,
   CommandEmpty,
@@ -21,13 +21,13 @@ export const CommandPalette: React.FC<{
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }> = ({ open, onOpenChange }) => {
-  const navigate = useNavigate();
+  const routeGo = useRouteNavigate();
   const { state } = useSessionState();
   const groups = useMemo(() => navGroups(state.sessionId), [state.sessionId]);
 
   const go = (to: string) => {
     onOpenChange(false);
-    navigate(to);
+    routeGo(to);
   };
 
   return (

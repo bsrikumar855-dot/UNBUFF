@@ -1,3 +1,4 @@
+import { GrowBar } from "@/components/motion/GrowBar";
 import React from "react";
 import type { BreakdownRow, RateMetric, WeeklyBucket } from "@/types/contract";
 import { cn } from "@/lib/cn";
@@ -52,7 +53,7 @@ export const BreakdownBars: React.FC<{
   const max = Math.max(1, ...rows.map((r) => r.attempts));
   return (
     <ul aria-label={label} className="flex flex-col gap-5">
-      {rows.map((r) => (
+      {rows.map((r, bi) => (
         <li key={r.key}>
           <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
             <span className="font-medium text-ink-primary">
@@ -65,21 +66,18 @@ export const BreakdownBars: React.FC<{
               solved
             </span>
           </div>
-          <div
+          <GrowBar
+            value={r.attempts / max}
+            delay={bi * 0.05}
             className="mt-1.5 h-1.5 w-full overflow-hidden bg-surface-200"
-            aria-hidden="true"
+            barClassName="flex"
           >
             <div
-              className="flex h-full"
-              style={{ width: `${(r.attempts / max) * 100}%` }}
-            >
-              <div
-                className="h-full bg-verified"
-                style={{ width: `${r.attempts ? (r.accepted / r.attempts) * 100 : 0}%` }}
-              />
-              <div className="h-full flex-1 bg-redline/70" />
-            </div>
-          </div>
+              className="h-full bg-verified"
+              style={{ width: `${r.attempts ? (r.accepted / r.attempts) * 100 : 0}%` }}
+            />
+            <div className="h-full flex-1 bg-redline/70" />
+          </GrowBar>
           <p className="mt-0.5 text-xs text-ink-muted">
             Accuracy: <RateText metric={r.accuracy} />
           </p>
@@ -102,23 +100,20 @@ export const WeeklyChart: React.FC<{ weeks: WeeklyBucket[] }> = ({ weeks }) => {
           : `${total} counted submissions in the last ${weeks.length} weeks, ${accepted} accepted.`}
       </figcaption>
       <ol aria-label="Submissions per week" className="flex items-end gap-2">
-        {weeks.map((w) => (
+        {weeks.map((w, wi) => (
           <li
             key={w.week_start}
             className="flex min-w-0 flex-1 flex-col items-center gap-1 text-xs text-ink-muted"
           >
             <div className="flex h-24 w-full items-end bg-surface-100" aria-hidden="true">
-              <div
-                className="w-full bg-redline/70"
-                style={{ height: `${(w.attempts / max) * 100}%` }}
-              >
+              <GrowBar axis="y" value={w.attempts / max} delay={wi * 0.04} className="h-full w-full" barClassName="relative bg-redline/70">
                 <div
-                  className="w-full bg-verified"
+                  className="absolute inset-x-0 bottom-0 bg-verified"
                   style={{
                     height: `${w.attempts ? (w.accepted / w.attempts) * 100 : 0}%`,
                   }}
                 />
-              </div>
+              </GrowBar>
             </div>
             <span className="text-ink-primary">{w.attempts}</span>
             <span className="truncate">{w.week_start.slice(5)}</span>

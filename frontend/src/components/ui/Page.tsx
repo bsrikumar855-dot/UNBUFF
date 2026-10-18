@@ -2,6 +2,9 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { Enter } from "@/components/motion/Enter";
+import { RuleDraw } from "@/components/motion/RuleDraw";
+import { RISE } from "@/components/motion/tokens";
 
 const WIDTH = {
   /** Reading and forms. */
@@ -42,7 +45,7 @@ export const PageHeader: React.FC<{
   actions?: React.ReactNode;
   className?: string;
 }> = ({ title, description, eyebrow, crumbs, actions, className }) => (
-  <header className={cn("mb-8 border-b border-line pb-6", className)}>
+  <header className={cn("relative mb-8 pb-6", className)}>
     {crumbs && crumbs.length > 0 && (
       <nav aria-label="Breadcrumb" className="mb-3">
         <ol className="flex flex-wrap items-center gap-1 text-sm text-ink-muted">
@@ -66,14 +69,27 @@ export const PageHeader: React.FC<{
     )}
     <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
       <div className="min-w-0 max-w-3xl">
-        {eyebrow && <p className="eyebrow mb-2 text-redline">{eyebrow}</p>}
-        <h1 className="serif text-title font-medium text-ink-primary">{title}</h1>
+        {eyebrow && (
+          <Enter y={RISE.sm}>
+            <p className="eyebrow mb-2 text-redline">{eyebrow}</p>
+          </Enter>
+        )}
+        <Enter index={1} y={RISE.sm}>
+          <h1 className="serif text-title font-medium text-ink-primary">{title}</h1>
+        </Enter>
         {description && (
-          <p className="mt-3 leading-relaxed text-ink-secondary">{description}</p>
+          <Enter index={2} y={RISE.sm}>
+            <p className="mt-3 leading-relaxed text-ink-secondary">{description}</p>
+          </Enter>
         )}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && (
+        <Enter index={2} y={RISE.sm}>
+          <div className="flex flex-wrap items-center gap-2">{actions}</div>
+        </Enter>
+      )}
     </div>
+    <RuleDraw className="absolute inset-x-0 bottom-0" delay={0.12} />
   </header>
 );
 
@@ -92,8 +108,9 @@ export const Section: React.FC<{
     <section
       aria-labelledby={headingId}
       id={id}
-      className={cn("border-t border-ink-primary pt-4", className)}
+      className={cn("relative pt-4", className)}
     >
+      <RuleDraw tone="ink" className="absolute inset-x-0 top-0" />
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           {index && <p className="eyebrow mb-1">{index}</p>}

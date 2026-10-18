@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { Bookmark, ExternalLink } from "lucide-react";
+import { Swap } from "@/components/motion/Marks";
 import { api } from "@/api/endpoints";
 import type { DsaStatus, QuestionDetailResponse } from "@/types/contract";
 import { DifficultyBadge, SourceBanner, TopicTags } from "@/components/dsa/DsaBits";
@@ -230,11 +231,13 @@ const DsaQuestionPage: React.FC = () => {
                     onClick={() => void toggleBookmark()}
                     className={buttonClasses("secondary", "md")}
                   >
-                    <Bookmark
-                      size={16}
-                      className={mine?.bookmarked ? "fill-current text-redline" : ""}
-                      aria-hidden="true"
-                    />
+                    <Swap state={mine?.bookmarked ? "on" : "off"}>
+                      <Bookmark
+                        size={16}
+                        className={mine?.bookmarked ? "fill-current text-redline" : ""}
+                        aria-hidden="true"
+                      />
+                    </Swap>
                     {mine?.bookmarked ? "Bookmarked" : "Bookmark"}
                   </button>
                 </div>

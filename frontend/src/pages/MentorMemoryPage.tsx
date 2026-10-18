@@ -1,3 +1,4 @@
+import { ResumeSkillsSection } from "@/components/career/ResumeSkills";
 import React, { useCallback, useEffect, useState } from "react";
 import { api } from "@/api/endpoints";
 import { Pager } from "@/components/dsa/DsaBits";
@@ -108,6 +109,8 @@ const MentorMemoryPage: React.FC = () => {
       </section>
 
       <ProfileForm onSaved={reload} />
+
+      <ResumeSkillsSection />
 
       <section
         aria-labelledby="memories-heading"

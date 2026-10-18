@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { Enter } from "@/components/motion/Enter";
+import { CheckMark, Strike } from "@/components/motion/Marks";
+import { RISE } from "@/components/motion/tokens";
 import { Button } from "@/components/ui/button";
 import { PRIORITY_LABEL, TASK_TYPE_LABEL } from "@/lib/placement";
 import type { PlacementTask, PlacementTaskActionRequest } from "@/types/contract";
@@ -11,6 +14,8 @@ export interface TaskCardProps {
   onAction: (task: PlacementTask, body: PlacementTaskActionRequest) => void;
   /** Hide the controls (history lists). */
   readOnly?: boolean;
+  /** Position in its list, for the staggered entrance. */
+  index?: number;
 }
 
 const field =
@@ -23,13 +28,14 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   busy,
   onAction,
   readOnly = false,
+  index = 0,
 }) => {
   const [mode, setMode] = useState<"none" | "move" | "skip">("none");
   const [date, setDate] = useState(task.due_date > today ? task.due_date : today);
   const [reason, setReason] = useState("");
   const open = task.status === "planned" || task.status === "in_progress";
   return (
-    <li className="border-b border-line py-4">
+    <Enter as="li" index={index} y={RISE.sm} className="border-b border-line py-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="eyebrow">
@@ -42,7 +48,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             {task.status === "skipped" ? " · skipped" : ""}
           </p>
           <h4 className="mt-1 text-[17px] font-semibold leading-snug text-ink-primary">
-            {task.title}
+            {task.status === "completed" && <CheckMark className="mr-1.5 inline text-verified" />}
+            <Strike on={task.status === "completed"}>{task.title}</Strike>
           </h4>
         </div>
         {open && (
@@ -171,6 +178,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           </Button>
         </div>
       )}
-    </li>
+    </Enter>
   );
 };

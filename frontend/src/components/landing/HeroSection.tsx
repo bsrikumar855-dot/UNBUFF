@@ -7,6 +7,7 @@ import { MaskedText } from "@/components/motion/MaskedText";
 import { EASE, canObserve } from "@/components/motion/ease";
 import { buttonClasses } from "@/lib/buttonClasses";
 import { CropMarks, Ruler } from "./Decor";
+import { VerdictKey } from "./VerdictKey";
 
 /**
  * The entrance. One enormous sentence is the whole argument; it is revealed word by word out of masks, the red pen
@@ -21,6 +22,7 @@ export const HeroSection: React.FC = () => {
   });
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "-14%"]);
   const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0.2]);
+  const keyY = useTransform(scrollYProgress, [0, 1], ["0px", "-56px"]);
   const animated = canObserve();
 
   return (
@@ -80,22 +82,27 @@ export const HeroSection: React.FC = () => {
               saved until you sign in.
             </p>
           </m.div>
-          <m.a
-            href="#interrogation"
-            aria-label="Scroll to how a claim is tested"
-            initial={animated ? { opacity: 0 } : false}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 1.7 }}
-            className="eyebrow group hidden items-center gap-3 justify-self-end text-ink-secondary sm:flex"
-          >
-            Scroll: the audit begins
-            <span
-              aria-hidden="true"
-              className="relative block h-10 w-px overflow-hidden bg-line-strong"
+          <div className="justify-self-end lg:w-[min(100%,26rem)]">
+            <m.div style={animated ? { y: keyY } : undefined} className="hidden lg:block">
+              <VerdictKey />
+            </m.div>
+            <m.a
+              href="#interrogation"
+              aria-label="Scroll to how a claim is tested"
+              initial={animated ? { opacity: 0 } : false}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 1.7 }}
+              className="eyebrow group mt-5 hidden items-center justify-end gap-3 text-ink-secondary sm:flex"
             >
-              <span className="absolute inset-x-0 top-0 h-1/2 animate-scroll-cue bg-foreground" />
-            </span>
-          </m.a>
+              Scroll: the audit begins
+              <span
+                aria-hidden="true"
+                className="relative block h-10 w-px overflow-hidden bg-line-strong"
+              >
+                <span className="absolute inset-x-0 top-0 h-1/2 animate-scroll-cue bg-foreground" />
+              </span>
+            </m.a>
+          </div>
         </div>
       </div>
     </section>

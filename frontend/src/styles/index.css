@@ -205,3 +205,73 @@ body::before {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Route transitions (View Transitions API, where the browser has it): only the page content crossfades, so the rail and
+   the headers stay put and nothing waits for the animation: the new page is already live while the old one fades out.
+   Navigation started from the rail and the command palette uses it; other links get the page's own entrance. */
+@media (prefers-reduced-motion: no-preference) {
+  main#main {
+    view-transition-name: route-content;
+  }
+  ::view-transition-group(root) {
+    animation: none;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+  ::view-transition-old(route-content) {
+    animation: vt-out 140ms var(--ease-out) both;
+  }
+  ::view-transition-new(route-content) {
+    animation: vt-in 240ms var(--ease-out) 40ms both;
+  }
+}
+@keyframes vt-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vt-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The mentor's "waiting" dots. Still under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .think-dot {
+    animation: think-dot 1.05s var(--ease-out) infinite;
+  }
+}
+@keyframes think-dot {
+  0%,
+  70%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  35% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+/* GitHub contribution grid: swept in one column at a time, once, when first seen. */
+@media (prefers-reduced-motion: no-preference) {
+  .heat[data-armed="true"][data-seen="false"] .heat-col {
+    opacity: 0;
+  }
+  .heat[data-armed="true"][data-seen="true"] .heat-col {
+    animation: heat-in 420ms var(--ease-out) backwards;
+    animation-delay: calc(var(--i) * 8ms);
+  }
+}
+@keyframes heat-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}

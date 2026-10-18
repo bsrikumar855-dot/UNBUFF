@@ -12,6 +12,7 @@ import {
 } from "@/components/placement/Sections";
 import { Button } from "@/components/ui/button";
 import { CountUp } from "@/components/motion/CountUp";
+import { ScanReveal } from "@/components/motion/ScanReveal";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Page, PageHeader } from "@/components/ui/Page";
@@ -167,30 +168,47 @@ const PlacementPage: React.FC = () => {
                 aria-label="Plan status"
                 className="border border-ink-primary bg-surface p-4 sm:p-5"
               >
-                <dl className="mb-5 grid grid-cols-2 gap-x-6 gap-y-4 border-b border-line pb-5 sm:grid-cols-4">
-                  {[
-                    dash.plan?.days_until_placement !== null &&
-                    dash.plan?.days_until_placement !== undefined
-                      ? { label: "Days to placement", value: dash.plan.days_until_placement, accent: true }
-                      : null,
-                    { label: "Due today", value: dash.today_tasks.length, accent: false },
-                    { label: "Open tasks", value: dash.counts.planned + dash.counts.in_progress, accent: false },
-                    { label: "Completed", value: dash.counts.completed, accent: false },
-                  ]
-                    .filter((s): s is { label: string; value: number; accent: boolean } => s !== null)
-                    .map((s) => (
-                      <div key={s.label} className="min-w-0">
-                        <dt className="eyebrow">{s.label}</dt>
-                        <dd
-                          className={`serif num mt-1 text-display font-medium leading-none ${
-                            s.accent ? "text-redline" : "text-ink-primary"
-                          }`}
-                        >
-                          <CountUp value={s.value} />
-                        </dd>
-                      </div>
-                    ))}
-                </dl>
+                <ScanReveal className="mb-5">
+                  <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-b border-line pb-5 sm:grid-cols-4">
+                    {[
+                      dash.plan?.days_until_placement !== null &&
+                      dash.plan?.days_until_placement !== undefined
+                        ? {
+                            label: "Days to placement",
+                            value: dash.plan.days_until_placement,
+                            accent: true,
+                          }
+                        : null,
+                      {
+                        label: "Due today",
+                        value: dash.today_tasks.length,
+                        accent: false,
+                      },
+                      {
+                        label: "Open tasks",
+                        value: dash.counts.planned + dash.counts.in_progress,
+                        accent: false,
+                      },
+                      { label: "Completed", value: dash.counts.completed, accent: false },
+                    ]
+                      .filter(
+                        (s): s is { label: string; value: number; accent: boolean } =>
+                          s !== null
+                      )
+                      .map((s) => (
+                        <div key={s.label} className="min-w-0">
+                          <dt className="eyebrow">{s.label}</dt>
+                          <dd
+                            className={`serif num mt-1 text-display font-medium leading-none ${
+                              s.accent ? "text-redline" : "text-ink-primary"
+                            }`}
+                          >
+                            <CountUp value={s.value} />
+                          </dd>
+                        </div>
+                      ))}
+                  </dl>
+                </ScanReveal>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-ink-primary">
@@ -199,7 +217,10 @@ const PlacementPage: React.FC = () => {
                       dash.plan?.days_until_placement !== undefined ? (
                         <>
                           {" · "}
-                          <CountUp value={dash.plan.days_until_placement} className="num" />
+                          <CountUp
+                            value={dash.plan.days_until_placement}
+                            className="num"
+                          />
                           {" day(s) to your placement date"}
                         </>
                       ) : null}

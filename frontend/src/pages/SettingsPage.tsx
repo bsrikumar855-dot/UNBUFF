@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Page, PageHeader } from "@/components/ui/Page";
 import { Link, useSearchParams } from "react-router-dom";
 import { GithubConnectionPanel } from "@/components/github/GithubConnectionPanel";
+import { LeetCodeConnectionPanel } from "@/components/leetcode/LeetCodeConnectionPanel";
 import { CALLBACK_REASON_COPY, isCallbackReason } from "@/lib/github";
 import { routes } from "@/lib/routes";
 
@@ -58,9 +59,14 @@ const SettingsPage: React.FC = () => {
 
       <div className="mt-6 flex flex-col gap-6">
         <GithubConnectionPanel autoSync={autoSync} />
+        <LeetCodeConnectionPanel showInsightsLink />
         <p className="text-sm text-ink-secondary">
           <Link to={routes.github} className="underline">
             Open GitHub insights
+          </Link>
+          {" · "}
+          <Link to={routes.leetcode} className="underline">
+            LeetCode insights
           </Link>
           {" · "}
           <Link to={routes.mentorMemory} className="underline">

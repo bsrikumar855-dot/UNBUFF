@@ -30,6 +30,10 @@ vi.mock("@/api/endpoints", () => ({
     getQuestion: vi.fn(),
     getRoles: vi.fn(),
     getHealth: vi.fn(),
+    getResumeSkills: vi.fn(),
+    extractResumeSkills: vi.fn(),
+    saveResumeSkills: vi.fn(),
+    deleteResumeSkills: vi.fn(),
   },
 }));
 const mocked = vi.mocked(api);
@@ -688,5 +692,96 @@ describe("Which engine answers is always visible", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(/could not get an answer from the AI model/i);
     expect(screen.getAllByText("explain heaps")).toHaveLength(1);
     expect(screen.queryByText(/Think about|\(mock mentor/)).not.toBeInTheDocument();
+  });
+});
+
+describe("Skills from your resume (Memory)", () => {
+  const found = [
+    { slug: "react", label: "React", mentions: 3, evidence: "Built a dashboard with React and tests" },
+    { slug: "docker", label: "Docker", mentions: 1, evidence: "Containerised services with Docker" },
+  ];
+  const openMemory = async () => {
+    mocked.listMentorMemories.mockResolvedValue(memories([]));
+    mocked.getMentorProfile.mockResolvedValue({ profile: { target_roles: [], target_companies: [], preferred_languages: [], daily_study_minutes: null, placement_timeline: null, explanation_style: null, current_goals: null, skill_self_assessment: {} }, updated_at: null } as never);
+    renderAt("/mentor/memory");
+    return screen.findByRole("heading", { name: "Skills from your resume" });
+  };
+
+  it("explains what is and is not kept, and offers the upload where the resume is read", async () => {
+    mocked.getResumeSkills.mockResolvedValue({ skills: [], saved_at: null });
+    await openMemory();
+    expect(screen.getByText(/neither the file nor the text is stored/)).toBeInTheDocument();
+    expect(screen.getByText(/count as stated by you, not as verified/)).toBeInTheDocument();
+    expect(await screen.findByText("No resume skills saved yet.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Your resume")).toBeInTheDocument();
+    expect(screen.getByText("Upload PDF")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Find skills in this resume" })).toBeDisabled();
+  });
+
+  it("finds skills in the text, lets the student keep only some, and saves exactly those", async () => {
+    mocked.getResumeSkills.mockResolvedValue({ skills: [], saved_at: null });
+    mocked.extractResumeSkills.mockResolvedValue({ skills: found, text_chars: 80, vocabulary_size: 114 });
+    mocked.saveResumeSkills.mockResolvedValue({ skills: [{ slug: "react", label: "React" }], saved_at: "2026-10-18T10:00:00.000Z" });
+    await openMemory();
+    fireEvent.change(screen.getByLabelText("Your resume"), { target: { value: "Built a dashboard with React. Containerised services with Docker." } });
+    fireEvent.click(screen.getByRole("button", { name: "Find skills in this resume" }));
+    await waitFor(() => expect(mocked.extractResumeSkills).toHaveBeenCalledWith("Built a dashboard with React. Containerised services with Docker."));
+    expect(await screen.findByText(/Found 2 skills/)).toBeInTheDocument();
+    expect(screen.getByText(/Built a dashboard with React and tests/)).toBeInTheDocument();
+    expect(screen.getByText(/mentioned 3 times/)).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /React/ })).toBeChecked();
+    fireEvent.click(screen.getByRole("checkbox", { name: /Docker/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Save 1 skill" }));
+    await waitFor(() => expect(mocked.saveResumeSkills).toHaveBeenCalledWith(["react"]));
+    expect(await screen.findByText(/Saved 1 skill/)).toBeInTheDocument();
+    const kept = await screen.findByLabelText("Saved resume skills");
+    expect(within(kept).getByText("React")).toBeInTheDocument();
+    expect(screen.getByLabelText("Your resume")).toHaveValue(""); // the text is dropped from the page once the skills are kept
+  });
+
+  it("supports select all and none, and says plainly when nothing is recognised", async () => {
+    mocked.getResumeSkills.mockResolvedValue({ skills: [], saved_at: null });
+    mocked.extractResumeSkills.mockResolvedValueOnce({ skills: found, text_chars: 80, vocabulary_size: 114 }).mockResolvedValueOnce({ skills: [], text_chars: 20, vocabulary_size: 114 });
+    await openMemory();
+    fireEvent.change(screen.getByLabelText("Your resume"), { target: { value: "some text" } });
+    fireEvent.click(screen.getByRole("button", { name: "Find skills in this resume" }));
+    await screen.findByText(/Found 2 skills/);
+    fireEvent.click(screen.getByRole("button", { name: "Select none" }));
+    expect(screen.getByRole("button", { name: "Save none (clears saved skills)" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Select all" }));
+    expect(screen.getByRole("button", { name: "Save 2 skills" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.click(screen.getByRole("button", { name: "Find skills in this resume" }));
+    expect(await screen.findByText(/No skills this app recognises were found/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Save (none|d+ skills?)/ })).not.toBeInTheDocument(); // nothing to save, and Back never wipes saved skills
+    expect(mocked.saveResumeSkills).not.toHaveBeenCalled();
+  });
+
+  it("shows saved skills with the date, and removes them on request", async () => {
+    mocked.getResumeSkills.mockResolvedValue({ skills: [{ slug: "react", label: "React" }, { slug: "css", label: "CSS" }], saved_at: "2026-10-18T10:00:00.000Z" });
+    mocked.deleteResumeSkills.mockResolvedValue(undefined);
+    await openMemory();
+    const kept = await screen.findByLabelText("Saved resume skills");
+    expect(within(kept).getByText("CSS")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Find skills in this resume and replace" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Remove my resume skills" }));
+    await waitFor(() => expect(mocked.deleteResumeSkills).toHaveBeenCalled());
+    expect(await screen.findByText("Your resume skills were removed.")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Saved resume skills")).not.toBeInTheDocument();
+  });
+
+  it("shows why finding or saving failed", async () => {
+    mocked.getResumeSkills.mockResolvedValue({ skills: [], saved_at: null });
+    mocked.extractResumeSkills.mockRejectedValueOnce(new ApiError("The resume text is too long (at most 50,000 characters).", "BAD_REQUEST", 400)).mockResolvedValueOnce({ skills: found, text_chars: 5, vocabulary_size: 114 });
+    mocked.saveResumeSkills.mockRejectedValue(new ApiError("down", "INTERNAL", 500));
+    await openMemory();
+    fireEvent.change(screen.getByLabelText("Your resume"), { target: { value: "x" } });
+    fireEvent.click(screen.getByRole("button", { name: "Find skills in this resume" }));
+    expect(await screen.findByText(/too long/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Find skills in this resume" }));
+    await screen.findByText(/Found 2 skills/);
+    fireEvent.click(screen.getByRole("button", { name: "Save 2 skills" }));
+    expect(await screen.findByText(/Something went wrong on our side/)).toBeInTheDocument();
+    expect(screen.getByText(/Found 2 skills/)).toBeInTheDocument(); // the review stays open so nothing is lost
   });
 });
