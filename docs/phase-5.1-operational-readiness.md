@@ -38,7 +38,7 @@ Supported languages: Python 3, JavaScript (Node.js), C++ (GCC) and Java (JDK/Ope
 
 ## 2. First-party practice pack (production-eligible content)
 
-Ten original exercises, written for this project; no company associations, no external pages (`url: null`), no third-party text, solutions or tests. Provenance is `own_work`; every exercise is labelled a first-party practice problem, not a company interview question.
+Thirty original exercises (ten from Phase 5.1, twenty added later, see `docs/post-redesign-functional-audit.md`), written for this project; no company associations, no external pages (`url: null`), no third-party text, solutions or tests. Provenance is `own_work`; every exercise is labelled a first-party practice problem, not a company interview question.
 
 | Id | Title | Difficulty | Topics | Hidden tests |
 |---|---|---|---|---|

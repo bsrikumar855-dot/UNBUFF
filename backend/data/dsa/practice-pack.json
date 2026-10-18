@@ -109,6 +109,201 @@
         "Dynamic Programming",
         "Strings"
       ]
+    },
+    {
+      "id": "fp_011_max_gap",
+      "title": "Max Gap",
+      "url": null,
+      "difficulty": "easy",
+      "topics": [
+        "Arrays",
+        "Sorting"
+      ]
+    },
+    {
+      "id": "fp_012_mirror_phrase",
+      "title": "Mirror Phrase",
+      "url": null,
+      "difficulty": "easy",
+      "topics": [
+        "Strings",
+        "Two Pointers"
+      ]
+    },
+    {
+      "id": "fp_013_missing_number",
+      "title": "Missing Number",
+      "url": null,
+      "difficulty": "easy",
+      "topics": [
+        "Arrays",
+        "Hash Table"
+      ]
+    },
+    {
+      "id": "fp_014_range_sums",
+      "title": "Range Sums",
+      "url": null,
+      "difficulty": "easy",
+      "topics": [
+        "Arrays"
+      ]
+    },
+    {
+      "id": "fp_015_stair_ways",
+      "title": "Stair Ways",
+      "url": null,
+      "difficulty": "easy",
+      "topics": [
+        "Dynamic Programming"
+      ]
+    },
+    {
+      "id": "fp_016_anagram_check",
+      "title": "Anagram Check",
+      "url": null,
+      "difficulty": "easy",
+      "topics": [
+        "Hash Table",
+        "Sorting",
+        "Strings"
+      ]
+    },
+    {
+      "id": "fp_017_peak_count",
+      "title": "Peak Count",
+      "url": null,
+      "difficulty": "easy",
+      "topics": [
+        "Arrays"
+      ]
+    },
+    {
+      "id": "fp_018_best_stretch",
+      "title": "Best Stretch",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Arrays",
+        "Dynamic Programming"
+      ]
+    },
+    {
+      "id": "fp_019_rotate_right",
+      "title": "Rotate Right",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Arrays",
+        "Two Pointers"
+      ]
+    },
+    {
+      "id": "fp_020_triple_zero",
+      "title": "Triple Zero",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Arrays",
+        "Sorting",
+        "Two Pointers"
+      ]
+    },
+    {
+      "id": "fp_021_longest_unique_stretch",
+      "title": "Longest Unique Stretch",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Hash Table",
+        "Sliding Window",
+        "Strings"
+      ]
+    },
+    {
+      "id": "fp_022_merge_overlaps",
+      "title": "Merge Overlaps",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Intervals",
+        "Sorting"
+      ]
+    },
+    {
+      "id": "fp_023_tree_depth",
+      "title": "Tree Depth",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Graphs"
+      ]
+    },
+    {
+      "id": "fp_024_cheapest_route",
+      "title": "Cheapest Route",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Graphs"
+      ]
+    },
+    {
+      "id": "fp_025_knapsack_value",
+      "title": "Knapsack Value",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Dynamic Programming"
+      ]
+    },
+    {
+      "id": "fp_026_course_plan",
+      "title": "Course Plan",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Graphs"
+      ]
+    },
+    {
+      "id": "fp_027_spiral_order",
+      "title": "Spiral Order",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Matrix"
+      ]
+    },
+    {
+      "id": "fp_028_rising_chain",
+      "title": "Rising Chain",
+      "url": null,
+      "difficulty": "hard",
+      "topics": [
+        "Binary Search",
+        "Dynamic Programming"
+      ]
+    },
+    {
+      "id": "fp_029_window_maximums",
+      "title": "Window Maximums",
+      "url": null,
+      "difficulty": "hard",
+      "topics": [
+        "Arrays",
+        "Sliding Window"
+      ]
+    },
+    {
+      "id": "fp_030_rain_trap",
+      "title": "Rain Trap",
+      "url": null,
+      "difficulty": "hard",
+      "topics": [
+        "Arrays",
+        "Two Pointers"
+      ]
     }
   ],
   "associations": []

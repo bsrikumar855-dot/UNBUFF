@@ -183,7 +183,8 @@ describe("judge0_smoke command", () => {
   const tsx = join(import.meta.dirname, "..", "..", "node_modules", "tsx", "dist", "cli.mjs");
   const script = join(import.meta.dirname, "..", "..", "scripts", "judge0_smoke.ts");
   const run = (env: Record<string, string>) => {
-    const clean = { PATH: process.env.PATH ?? "", SystemRoot: process.env.SystemRoot ?? "", ...env };
+    // DOTENV_CONFIG_PATH points at a file that does not exist, so a developer's own backend/.env cannot change the result
+    const clean = { PATH: process.env.PATH ?? "", SystemRoot: process.env.SystemRoot ?? "", DOTENV_CONFIG_PATH: join(import.meta.dirname, "no-such.env"), ...env };
     return spawnSync(process.execPath, [tsx, script], { env: clean, encoding: "utf8", timeout: 60_000 });
   };
 

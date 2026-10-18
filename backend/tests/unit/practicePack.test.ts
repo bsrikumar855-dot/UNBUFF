@@ -5,6 +5,7 @@ import { mergeSuites, serializeSuites } from "../../src/code/suiteImport.js";
 import { isAnalyticsEligible, parseSuiteFile, SuiteRegistry, type Suite } from "../../src/code/suites.js";
 import { Catalogue, parseCatalogueFile } from "../../src/dsa/catalogue.js";
 import { buildPracticePack, exercises, PACK_REVISION, serialize } from "../../scripts/lib/practicePack.js";
+import { crossChecks } from "../../scripts/lib/practicePackMore.js";
 
 const backend = join(import.meta.dirname, "..", "..");
 const packCatalogue = JSON.parse(readFileSync(join(backend, "data", "dsa", "practice-pack.json"), "utf8")) as unknown;
@@ -40,8 +41,8 @@ describe("first-party provenance and eligibility", () => {
   });
 
   it("gives every exercise a stable id, a revision, own_work provenance and a documented eligible status", () => {
-    expect(suites).toHaveLength(10);
-    expect(new Set(suites.map((s) => s.question_id)).size).toBe(10);
+    expect(suites).toHaveLength(30);
+    expect(new Set(suites.map((s) => s.question_id)).size).toBe(30);
     for (const s of suites) {
       expect(s.question_id).toMatch(/^fp_\d{3}_[a-z_]+$/);
       expect(s.revision).toBe(PACK_REVISION);
@@ -206,8 +207,17 @@ describe("hidden suite quality", () => {
     });
   }, 60_000);
 
+  it("exercises 11 to 30 are each reproduced by a different, brute-force style implementation", () => {
+    const byId = new Map(suites.map((s) => [s.question_id, s]));
+    expect(Object.keys(crossChecks)).toHaveLength(20);
+    for (const [id, check] of Object.entries(crossChecks)) {
+      const s = byId.get(id)!;
+      for (const t of [...s.samples, ...s.tests]) expect(`${check(t.input)}\n`, `${id}\n${t.input.slice(0, 60)}`).toBe(t.expected_output);
+    }
+  }, 120_000);
+
   it("the generator's own reference solutions agree with the committed data", () => {
-    expect(all).toHaveLength(10);
+    expect(all).toHaveLength(30);
     const suitesById = new Map(suites.map((s) => [s.question_id, s]));
     for (const e of all) for (const t of suitesById.get(e.id)!.tests) expect(t.expected_output).toBe(`${e.solve(t.input)}\n`);
   });
@@ -230,10 +240,10 @@ describe("seeding is idempotent and safe", () => {
   it("merging the pack twice changes nothing, and serialization is stable", () => {
     const catalogue = new Catalogue(parseCatalogueFile(packCatalogue));
     const first = mergeSuites(null, packSuites, { catalogue });
-    expect(first.report.added).toHaveLength(10);
+    expect(first.report.added).toHaveLength(30);
     const again = mergeSuites(first.file, packSuites, { catalogue });
     expect(again.report).toMatchObject({ added: [], updated: [], changed: false });
-    expect(again.report.unchanged).toHaveLength(10);
+    expect(again.report.unchanged).toHaveLength(30);
     expect(serializeSuites(again.file)).toBe(serializeSuites(first.file));
   });
 
