@@ -3,6 +3,7 @@ import type { Catalogue } from "../dsa/catalogue.js";
 import type { SuiteRegistry } from "../code/suites.js";
 import { buildReport } from "../core/report.js";
 import type { GithubService } from "../github/service.js";
+import { NONE_EVIDENCE, type LeetCodeEvidence } from "../leetcode/context.js";
 import type { LabService } from "../graphqllab/service.js";
 import type { Logger } from "../logger.js";
 import type { MentorService } from "../mentor/service.js";
@@ -98,6 +99,8 @@ export interface EvidenceBundle {
   interview: InterviewEvidence;
   lab: LabEvidence;
   github: GithubEvidence;
+  /** Numbers the student imported from LeetCode: context only, never counted as judged practice. Absent when not read. */
+  leetcode?: LeetCodeEvidence;
   memory: MemoryEvidence;
   conversations: { id: string; mode: string; messages: number; updated_at: string }[];
 }
@@ -108,6 +111,7 @@ export interface EvidenceDeps {
   roles: RoleRegistry;
   lab: LabService;
   github: GithubService;
+  leetcode?: { evidence(uid: string): Promise<LeetCodeEvidence> };
   mentor: MentorService;
   catalogue: () => Catalogue;
   suites: SuiteRegistry;
@@ -126,8 +130,8 @@ export class EvidenceService {
   }
 
   async collect(uid: string): Promise<EvidenceBundle> {
-    const [dsa, interview, lab, github, memory, conversations] = await Promise.all([this.dsa(uid), this.interview(uid), this.labEvidence(uid), this.githubEvidence(uid), this.memory(uid), this.conversations(uid)]);
-    return { generatedAt: this.now().toISOString(), dsa, interview, lab, github, memory, conversations };
+    const [dsa, interview, lab, github, leetcode, memory, conversations] = await Promise.all([this.dsa(uid), this.interview(uid), this.labEvidence(uid), this.githubEvidence(uid), this.leetcodeEvidence(uid), this.memory(uid), this.conversations(uid)]);
+    return { generatedAt: this.now().toISOString(), dsa, interview, lab, github, leetcode, memory, conversations };
   }
 
   /** Questions a student can actually be judged on: they exist in the catalogue and have a hidden-test suite. */
@@ -215,6 +219,16 @@ export class EvidenceService {
     } catch (err) {
       this.deps.logger.warn({ err: (err as Error).message }, "placement: GitHub evidence could not be read");
       return { ...none, readFailed: true };
+    }
+  }
+
+  private async leetcodeEvidence(uid: string): Promise<LeetCodeEvidence> {
+    if (!this.deps.leetcode) return NONE_EVIDENCE;
+    try {
+      return await this.deps.leetcode.evidence(uid);
+    } catch (err) {
+      this.deps.logger.warn({ err: (err as Error).message }, "placement: imported LeetCode data could not be read");
+      return NONE_EVIDENCE;
     }
   }
 

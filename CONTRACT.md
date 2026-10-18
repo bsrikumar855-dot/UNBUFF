@@ -134,6 +134,11 @@ export type ErrorCode =
   | "SESSION_NOT_FOUND"
   | "CLAIM_NOT_FOUND"
   | "RATE_LIMITED"
+  | "CAREER_UNAVAILABLE"
+  | "CAREER_RATE_LIMITED"
+  | "CAREER_JOB_NOT_FOUND"
+  | "LEETCODE_IMPORT_INVALID"
+  | "LEETCODE_IMPORT_CONFLICT"
   | "LLM_INVALID_OUTPUT"
   | "LLM_TIMEOUT"
   | "INTERNAL";
@@ -833,6 +838,8 @@ export interface MentorChatRequest {
   client_message_id: string; // makes a retry safe: the same id returns the stored answer
   assist?: "hint" | "solution"; // graduated help: a full solution is only given after enough hints
   question_id?: string; // the DSA question being discussed (must exist in the catalogue)
+  career_context?: boolean; // include the student's own best-matching job listings (computed by the app) as context
+  leetcode_context?: boolean; // include a short summary of the LeetCode data the student imported (never live data)
 }
 
 export interface MentorReference {
@@ -862,6 +869,7 @@ export interface MentorChatResponse {
   degraded: boolean; // true when the answer worked but something could not be saved
   mock: boolean; // true when the answer came from the built-in mock mentor, not a live model
   github_context?: { used: boolean; synced_at: string | null; stale: boolean }; // used: a short GitHub summary was given to the mentor
+  leetcode_context?: { used: boolean; captured_at: string | null; stale: boolean }; // used: a summary of the student's imported LeetCode data was given to the mentor
 }
 
 // ---------- GitHub contribution insights (Phase 7) ----------
@@ -1272,7 +1280,7 @@ export interface PlacementProfileResponse {
 }
 
 export interface EvidenceLimitation {
-  source: "dsa" | "interview" | "graphql" | "github" | "memory";
+  source: "dsa" | "interview" | "graphql" | "github" | "memory" | "leetcode";
   severity: "info" | "limits_accuracy";
   message: string;
 }
@@ -1416,6 +1424,313 @@ export interface PlacementApplyChangeResponse {
 
 export interface ApiErrorBody {
   error: { code: ErrorCode; message: string };
+}
+
+// ---------- Career opportunities (Freehire public API, read-only; see docs/career-job-matching.md) ----------
+export type CareerTab = "for_you" | "internships" | "jobs" | "explore";
+export type CareerSeniority = "intern" | "junior" | "middle" | "senior" | "lead" | "staff" | "principal" | "c_level";
+export type CareerWorkMode = "remote" | "hybrid" | "onsite";
+export type CareerEmployment = "full_time" | "part_time" | "contract" | "internship" | "fellowship";
+export type CareerReality = "fresh" | "stale" | "likely-evergreen";
+export type CareerApplicationStatus = "saved" | "interested" | "applied" | "interviewing" | "offer" | "rejected" | "withdrawn";
+export type CareerComponentKey = "skills" | "category" | "seniority" | "location" | "work_mode" | "employment";
+export type CareerComponentState = "match" | "partial" | "mismatch" | "unknown" | "not_set";
+
+export interface CareerSalary {
+  min: number | null;
+  max: number | null;
+  currency: string | null;
+  period: string | null;
+}
+export interface CareerRequirement {
+  text: string;
+  priority: "required" | "preferred" | "unknown";
+}
+/** One posting from Freehire, normalized. Every optional field is null (or empty) when upstream did not state it. */
+export interface CareerJob {
+  id: string; // "freehire:<public_slug>"
+  slug: string;
+  source: "freehire";
+  source_board: string | null; // the ATS or board the posting was crawled from, for example greenhouse
+  title: string;
+  company: string | null; // null when upstream gives only an opaque identifier instead of a name
+  location: string | null; // the posting's own location text
+  countries: string[];
+  regions: string[];
+  cities: string[];
+  work_mode: CareerWorkMode | null;
+  skills: string[]; // Freehire skill slugs
+  seniority: CareerSeniority | null;
+  employment_type: CareerEmployment | null;
+  category: string | null;
+  experience_years_min: number | null;
+  salary: CareerSalary | null;
+  summary: string | null; // a one or two sentence synopsis written by Freehire's enrichment
+  preview: string | null; // plain-text preview of the description (never HTML)
+  requirements: CareerRequirement[];
+  apply_url: string | null; // the employer's own application page (https only)
+  freehire_url: string;
+  posted_at: string | null;
+  updated_at: string | null;
+  last_seen_at: string | null;
+  closed_at: string | null;
+  reality: { class: CareerReality | null; age_days: number | null; repost_count: number | null; fake_freshness: boolean | null } | null;
+  ghost_level: string | null; // a hedged upstream signal that the posting may not be an active opening
+}
+export interface CareerMatchComponent {
+  key: CareerComponentKey;
+  label: string;
+  weight: number;
+  state: CareerComponentState;
+  value: number | null; // 0..1 when known
+  note: string;
+}
+/** A deterministic comparison of one posting with the student's own profile. Not a probability of an interview or offer. */
+export interface CareerMatch {
+  score: number | null; // 0..100, null when there is not enough evidence to score
+  confidence: "high" | "medium" | "low" | "insufficient";
+  matched_skills: { skill: string; provenance: "verified" | "resume" | "self_reported" }[];
+  missing_skills: string[]; // skills the posting lists that the student has not stated or shown
+  components: CareerMatchComponent[];
+  reasons: string[];
+  hard_mismatches: string[]; // mandatory preferences the posting is known to violate
+  unverified_constraints: string[]; // mandatory preferences the posting's data cannot confirm
+}
+export interface CareerTracker {
+  saved: boolean;
+  status: CareerApplicationStatus | null;
+  applied_on: string | null; // YYYY-MM-DD, as the student recorded it
+  follow_up_on: string | null;
+  notes: string;
+  posting_state: "unknown" | "possibly_unavailable";
+  updated_at: string;
+}
+export interface CareerJobCard {
+  job: CareerJob;
+  match: CareerMatch;
+  tracker: CareerTracker | null;
+}
+export interface CareerSourceInfo {
+  name: "Freehire";
+  url: string;
+  api: string;
+}
+export interface CareerFeedResponse {
+  tab: CareerTab;
+  jobs: CareerJobCard[];
+  total: number | null; // upstream's own count of matching postings; null when it was not reported
+  limit: number;
+  offset: number;
+  has_more: boolean;
+  ranked_window: number | null; // for_you: how many candidates were scored and ranked
+  filters: Record<string, string[]>; // the documented upstream parameters actually sent
+  relaxed: string[]; // filters dropped because they matched nothing (for_you only)
+  ignored_params: { param: string; did_you_mean: string | null }[]; // parameters upstream ignored: results may be broader than asked
+  personalization: { level: "full" | "limited" | "none"; notes: string[] };
+  source: CareerSourceInfo;
+  fetched_at: string;
+}
+export interface CareerFacetValue {
+  value: string;
+  count: number;
+}
+export interface CareerFacetsResponse {
+  total: number | null;
+  facets: Record<string, CareerFacetValue[]>;
+  source: CareerSourceInfo;
+  fetched_at: string;
+}
+export interface CareerJobDetailResponse {
+  job: CareerJob;
+  description: string | null; // plain text, bounded
+  match: CareerMatch;
+  tracker: CareerTracker | null;
+  source: CareerSourceInfo;
+}
+export interface CareerPreferences {
+  categories: string[]; // Freehire category slugs, at most 6
+  skills: string[]; // self-reported Freehire skill slugs, at most 20
+  countries: string[]; // lowercase ISO country codes, at most 8
+  cities: string[]; // at most 8
+  work_modes: CareerWorkMode[];
+  employment_types: CareerEmployment[];
+  must_match_location: boolean;
+  must_match_work_mode: boolean;
+  must_match_employment: boolean;
+}
+export interface CareerPreferencesResponse {
+  preferences: CareerPreferences | null;
+  updated_at: string | null;
+  /** What the matching engine will use from the student's existing placement profile and verified results. */
+  profile: {
+    role_names: string[];
+    experience_level: PlacementExperience | null;
+    derived_categories: string[];
+    verified_skills: string[];
+    resume_skills: string[]; // confirmed by the student from their own resume; counted as self-reported, never as verified
+    resume_skills_saved_at: string | null;
+    self_reported_skills: string[];
+    target_companies: string[];
+    placement_date: string | null;
+  };
+}
+export interface CareerTrackerUpdate {
+  saved?: boolean;
+  status?: CareerApplicationStatus | null;
+  applied_on?: string | null;
+  follow_up_on?: string | null;
+  notes?: string;
+}
+export interface CareerTrackedItem {
+  slug: string;
+  title: string;
+  company: string | null;
+  apply_url: string | null;
+  freehire_url: string;
+  tracker: CareerTracker;
+}
+export interface CareerTrackedResponse {
+  items: CareerTrackedItem[];
+  total: number;
+}
+
+/** One skill the resume text mentions. The snippet is shown to the student for review and is never stored. */
+export interface ResumeSkillSuggestion {
+  slug: string; // Freehire skill slug
+  label: string;
+  mentions: number;
+  evidence: string;
+}
+export interface ResumeSkillsExtractResponse {
+  skills: ResumeSkillSuggestion[];
+  text_chars: number;
+  vocabulary_size: number;
+}
+export interface SavedResumeSkill {
+  slug: string;
+  label: string;
+}
+export interface ResumeSkillsResponse {
+  skills: SavedResumeSkill[];
+  saved_at: string | null;
+}
+
+// ---------- LeetCode profile link and student-supplied progress import ----------
+// LeetCode offers no official API, OAuth or export, and its terms forbid scraping, so UNBLUFF never contacts LeetCode.
+// A student links a public username and imports numbers they supply themselves. Nothing here is live data, nothing is
+// verified against LeetCode, and none of it is merged into UNBLUFF's own judged submissions.
+export type LeetCodeFreshness = "none" | "recent" | "aging" | "stale"; // from the date the numbers were captured, not the date they were imported
+export type LeetCodeSourceKind = "manual_entry" | "json_file" | "csv_file";
+export type LeetCodeDifficulty = "easy" | "medium" | "hard";
+export interface LeetCodeSourceInfo {
+  kind: LeetCodeSourceKind;
+  description: string | null; // the student's own note on where the numbers came from
+}
+export interface LeetCodeStates {
+  profile_linked: boolean; // a username and profile link are saved
+  ownership_unverified: boolean; // always true: no supported way to prove the student owns the profile exists
+  imported_data_available: boolean; // the student supplied data that passed validation
+  officially_connected: false; // never true: there is no official integration
+  live_sync_unavailable: true; // always true: no compliant live data provider exists
+}
+export interface LeetCodeConnection {
+  linked: boolean;
+  username: string | null;
+  profile_url: string | null; // built by the server from the username; opens on leetcode.com
+  linked_at: string | null;
+  mode: "profile_link_and_manual_import"; // the only connection mode that exists
+  states: LeetCodeStates;
+  imported: { snapshot_count: number; last_imported_at: string | null; last_captured_at: string | null; last_source: LeetCodeSourceInfo | null; freshness: LeetCodeFreshness; age_days: number | null };
+  limits: { max_import_bytes: number; max_snapshots: number };
+  notes: string[]; // plain statements of what is and is not supported
+}
+export interface LeetCodeConnectionRequest {
+  profile: string; // a username, or a leetcode.com profile address
+}
+export interface LeetCodeConnectionResponse {
+  connection: LeetCodeConnection;
+}
+export interface LeetCodeUnlinkResponse {
+  connection: LeetCodeConnection;
+  deleted_snapshots: number;
+}
+
+export interface LeetCodeSnapshotData {
+  captured_at: string; // ISO 8601 UTC: when the numbers were true on LeetCode, as stated by the student
+  totals: { solved: number; easy: number | null; medium: number | null; hard: number | null };
+  available: { easy: number; medium: number; hard: number } | null; // problems LeetCode offered at the time, when supplied
+  topics: { topic: string; solved: number }[] | null;
+  contest: { rating: number | null; global_rank: number | null; attended: number | null } | null;
+  activity: { date: string; problems_solved: number }[] | null; // problems first accepted on each date (YYYY-MM-DD)
+}
+export interface LeetCodeSnapshot extends LeetCodeSnapshotData {
+  id: string; // the content hash: the same data is never stored twice
+  source: LeetCodeSourceInfo;
+  imported_at: string;
+  linked_username: string | null; // the username that was linked when this was imported
+}
+export interface LeetCodeSnapshotSummary {
+  id: string;
+  captured_at: string;
+  imported_at: string;
+  solved: number;
+  easy: number | null;
+  medium: number | null;
+  hard: number | null;
+  source: LeetCodeSourceInfo;
+  linked_username: string | null;
+  fields: ("difficulty" | "available" | "topics" | "contest" | "activity")[]; // which optional parts this snapshot holds
+}
+
+export type LeetCodeImportFormat = "json" | "csv";
+export type LeetCodeImportOrigin = "manual" | "file";
+export interface LeetCodeImportRequest {
+  format: LeetCodeImportFormat;
+  origin: LeetCodeImportOrigin; // manual: typed into the form; file: uploaded by the student
+  content: string;
+}
+export interface LeetCodeImportConfirmRequest extends LeetCodeImportRequest {
+  content_hash: string; // from the preview: confirms the student is importing exactly what they reviewed
+}
+export interface LeetCodeImportIssue {
+  path: string; // where in the data, for example totals.hard
+  message: string;
+}
+export interface LeetCodeImportPreview {
+  valid: boolean;
+  issues: LeetCodeImportIssue[]; // reasons the data was rejected
+  warnings: LeetCodeImportIssue[]; // accepted, but worth a second look
+  snapshot: LeetCodeSnapshotData | null;
+  source: LeetCodeSourceInfo | null;
+  content_hash: string | null;
+  already_imported: boolean; // identical data was imported before: confirming changes nothing
+  previous: { id: string; captured_at: string; solved: number } | null; // the closest earlier snapshot, for comparison
+  changes: { days: number; solved: number; easy: number | null; medium: number | null; hard: number | null } | null;
+}
+export interface LeetCodeImportConfirmResponse {
+  status: "imported" | "already_imported";
+  snapshot: LeetCodeSnapshotSummary;
+  connection: LeetCodeConnection;
+}
+export interface LeetCodeHistoryResponse {
+  snapshots: LeetCodeSnapshotSummary[]; // newest capture first
+  total: number;
+}
+
+export interface LeetCodeInsightsResponse {
+  connection: LeetCodeConnection;
+  available: boolean; // false until the student has imported data
+  source: { kind: LeetCodeSourceKind; description: string | null; captured_at: string; imported_at: string; freshness: LeetCodeFreshness; age_days: number; label: string } | null;
+  totals: LeetCodeSnapshotData["totals"] | null;
+  difficulty: { difficulty: LeetCodeDifficulty; solved: number; available: number | null; share_of_solved: number }[] | null;
+  topics: { topic: string; solved: number; share_of_solved: number }[] | null;
+  contest: LeetCodeSnapshotData["contest"];
+  activity: { items: { date: string; problems_solved: number }[]; total: number; last_active_date: string | null } | null;
+  history: { id: string; captured_at: string; solved: number; easy: number | null; medium: number | null; hard: number | null }[]; // oldest first
+  trend: { available: boolean; reason: string | null; from: string | null; to: string | null; solved_change: number | null; days: number | null };
+  unavailable: ("difficulty_breakdown" | "topics" | "contest" | "recent_activity" | "trend")[]; // shown as unavailable, never guessed
+  unbluff: { judged_solved_unique: number | null; judged_available: boolean }; // UNBLUFF's own judged results, kept separate and never added to the LeetCode numbers
+  notes: string[];
 }
 ```
 
@@ -1588,6 +1903,42 @@ Every route requires the bearer token and acts only on the verified uid. All num
 - Task ids are derived from the activity, so the same activity is never planned twice. A task completes automatically only when the real record appears (a judged submission, a revision review, a passed Lab exercise, an assessed interview session, a mentor conversation, a GitHub check); marking a task done yourself is recorded as such and is not evidence.
 - Evidence limitations (unconfigured or unverified code execution, demonstration suites, mock-model interview results, GitHub not connected) are listed in `limitations`; they reduce what can be assessed and never produce invented values.
 - Rate limits per student: refresh/generate 20/min, assistant 12/min, profile, task actions and changes 60/min.
+
+### Career opportunities *(Career)*
+
+Job discovery from Freehire's public API, deterministic matching against the student's own profile, and a private bookmark and application tracker. Every route needs a verified student. Listings are read live and never copied wholesale into storage. See `docs/career-job-matching.md`.
+
+| Method and path | Purpose |
+|---|---|
+| `GET /api/career/jobs?tab=for_you\|internships\|jobs\|explore&q&search_in&category&skills&skills_mode&countries&cities&work_mode&seniority&employment_type&include_stale&tech_only&broaden&posted_within_days&salary_min&offset&limit` | `CareerFeedResponse`. List values are comma-separated. Unknown parameters are a 400. |
+| `GET /api/career/jobs/:slug` | `CareerJobDetailResponse` (plain-text description, match, tracker). Updates a tracked listing's `posting_state`. |
+| `GET /api/career/facets?...` | `CareerFacetsResponse`: live vocabulary and counts for the filters. |
+| `GET /api/career/preferences`, `PUT /api/career/preferences` | `CareerPreferencesResponse` / `CareerPreferences` body. |
+| `GET /api/career/tracked?filter=saved\|applications\|all` | `CareerTrackedResponse`. |
+| `PUT /api/career/tracked/:slug` | `CareerTrackerUpdate` body; returns `{ item: CareerTrackedItem \| null }`. Title, company and link always come from Freehire. |
+| `DELETE /api/career/tracked/:slug?mode=bookmark\|all` | 204. `bookmark` keeps application history; `all` removes the record. |
+| `POST /api/career/resume-skills/extract` | `{ text }` (resume text, read in the browser) gives `ResumeSkillsExtractResponse`: known skills with a short evidence snippet. Nothing is stored and the text is not logged. |
+| `GET /api/career/resume-skills`, `PUT /api/career/resume-skills`, `DELETE /api/career/resume-skills` | `ResumeSkillsResponse`. `PUT { skills: string[] }` replaces the skills the student confirmed (only recognised skills are accepted; the resume itself is never stored). |
+| `DELETE /api/career/data` | 204. Removes the student's career preferences and tracked jobs. |
+
+Errors: `CAREER_UNAVAILABLE` (502), `CAREER_RATE_LIMITED` (429), `CAREER_JOB_NOT_FOUND` (404), `BAD_REQUEST` (400). `POST /api/mentor/chat` accepts `career_context: boolean`.
+
+### LeetCode profile link and student-supplied import *(LeetCode)*
+
+A saved username and progress numbers the student imports themselves. LeetCode has no official API, OAuth or export and forbids scraping, so these routes never contact LeetCode: nothing is live, verified or synchronised, and ownership of the profile is never established. Every route needs a verified student and the owner is always the token's uid.
+
+| Method and path | Purpose |
+|---|---|
+| `GET /api/leetcode/connection` | `{ connection: LeetCodeConnection }`: username, server-built profile address, the five `states`, import summary and limits. |
+| `PUT /api/leetcode/connection` | `LeetCodeConnectionRequest` (`{ profile }`: a username or leetcode.com profile address) gives `LeetCodeConnectionResponse`. Saves a label only. |
+| `DELETE /api/leetcode/connection?mode=link\|all` | `LeetCodeUnlinkResponse`. `link` (default) removes the link and keeps imported numbers; `all` also deletes every snapshot. |
+| `POST /api/leetcode/import/preview` | `LeetCodeImportRequest` gives `LeetCodeImportPreview`. Validates only; stores nothing. Rejected data comes back `valid: false` with `issues`. |
+| `POST /api/leetcode/import/confirm` | `LeetCodeImportConfirmRequest` (the same data plus the preview's `content_hash`) gives `LeetCodeImportConfirmResponse`. Re-validates; the same data is stored once (`already_imported`); earlier history is never overwritten. |
+| `GET /api/leetcode/insights` | `LeetCodeInsightsResponse`: only fields present in the imported data, the rest listed in `unavailable`; UNBLUFF's judged count is returned separately in `unbluff`. |
+| `GET /api/leetcode/import-history` | `LeetCodeHistoryResponse`, newest capture first. |
+| `DELETE /api/leetcode/import-history/:id` | 204. Removes one snapshot. 404 if it is not the caller's. |
+
+Import format: `docs/leetcode-integration.md` (schema `unbluff.leetcode-import/1`, JSON or key,value CSV, at most 64 KB). Errors: `LEETCODE_IMPORT_INVALID` (400), `LEETCODE_IMPORT_CONFLICT` (409), `BAD_REQUEST` (400), `NOT_FOUND` (404). `POST /api/mentor/chat` accepts `leetcode_context: boolean` and answers with `leetcode_context: { used, captured_at, stale }`.
 
 ### `POST /api/claims/extract`
 - *(added)* Optional `mode`: `"prepare"` (teach as you go) or `"defense"` (default, interview simulation). Stored on the session and echoed as `ClaimsResponse.mode` / `Report.mode`.

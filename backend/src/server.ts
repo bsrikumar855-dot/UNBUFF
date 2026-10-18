@@ -7,6 +7,11 @@ import { FirebaseTokenVerifier } from "./auth/verifier.js";
 import { EvidenceService } from "./placement/evidence.js";
 import { PlacementService } from "./placement/service.js";
 import { FirestorePlacementStore, MemoryPlacementStore, type PlacementStore } from "./placement/store.js";
+import { CareerService } from "./careers/service.js";
+import { FirestoreCareerStore, MemoryCareerStore, type CareerStore } from "./careers/store.js";
+import { FreehireClient } from "./careers/freehire.js";
+import { LeetCodeService } from "./leetcode/service.js";
+import { FirestoreLeetCodeStore, MemoryLeetCodeStore, type LeetCodeStore } from "./leetcode/store.js";
 import { FirestoreLabStore, MemoryLabStore, type LabStore } from "./graphqllab/store.js";
 import { LabService } from "./graphqllab/service.js";
 import { GithubGraphQL } from "./github/client.js";
@@ -42,8 +47,8 @@ function backendRoot(): string {
   return here.includes(`${join("dist", "src")}`) ? join(here, "..", "..") : join(here, "..");
 }
 
-function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore; github: GithubStore; lab: LabStore; placement: PlacementStore } {
-  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore(), mentor: new MemoryMentorStore(), github: new MemoryGithubStore(), lab: new MemoryLabStore(), placement: new MemoryPlacementStore() };
+function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore; github: GithubStore; lab: LabStore; placement: PlacementStore; career: CareerStore; leetcode: LeetCodeStore } {
+  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore(), mentor: new MemoryMentorStore(), github: new MemoryGithubStore(), lab: new MemoryLabStore(), placement: new MemoryPlacementStore(), career: new MemoryCareerStore(), leetcode: new MemoryLeetCodeStore() };
   const account = config.FIREBASE_SERVICE_ACCOUNT_JSON ? parseServiceAccount(config.FIREBASE_SERVICE_ACCOUNT_JSON) : null;
   const projectId = config.GOOGLE_CLOUD_PROJECT ?? account?.project_id ?? config.FIREBASE_PROJECT_ID;
   // Without a service-account secret, Application Default Credentials apply (Cloud Run identity, gcloud login, emulator).
@@ -52,7 +57,7 @@ function createStores(config: Config): { sessions: SessionStore; progress: Progr
     ignoreUndefinedProperties: true,
     ...(account ? { credentials: { client_email: account.client_email, private_key: account.private_key } } : {}),
   });
-  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db), mentor: new FirestoreMentorStore(undefined, db), github: new FirestoreGithubStore(db), lab: new FirestoreLabStore(db), placement: new FirestorePlacementStore(db) };
+  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db), mentor: new FirestoreMentorStore(undefined, db), github: new FirestoreGithubStore(db), lab: new FirestoreLabStore(db), placement: new FirestorePlacementStore(db), career: new FirestoreCareerStore(db), leetcode: new FirestoreLeetCodeStore(db) };
 }
 
 /**
@@ -136,6 +141,16 @@ function main(): void {
     logger.warn("EXECUTION_PROVIDER_VERIFIED is not true: judged submissions will not count toward analytics until the operator confirms the service is a real deployment");
   }
   const github = createGithub(config, stores.github, logger);
+  // LeetCode has no official API and forbids scraping: this service only holds a saved username and numbers the student imports.
+  const leetcode = new LeetCodeService({
+    store: stores.leetcode,
+    logger,
+    judged: async (uid) => {
+      const o = await analytics.overview(uid);
+      return { solved_unique: o.totals.solved_unique, available: o.has_eligible_activity };
+    },
+  });
+  const careerHolder: { current?: CareerService } = {}; // the Career service is built after the placement service, which needs the mentor
   const mentor = new MentorService({
     store: stores.mentor,
     llm,
@@ -148,6 +163,8 @@ function main(): void {
     roles,
     logger,
     github,
+    leetcode,
+    career: () => careerHolder.current,
     retention: { conversationDays: config.MENTOR_CONVERSATION_RETENTION_DAYS, summaryDays: config.MENTOR_SUMMARY_RETENTION_DAYS, learningDays: config.MENTOR_LEARNING_RETENTION_DAYS },
   });
   const lab = new LabService({ store: stores.lab, mentor, logger });
@@ -167,7 +184,7 @@ function main(): void {
   const executionStatus = { configured: config.EXECUTION_PROVIDER === "judge0", verified: config.EXECUTION_PROVIDER === "judge0" && config.EXECUTION_PROVIDER_VERIFIED };
   const placement = new PlacementService({
     store: stores.placement,
-    evidence: new EvidenceService({ analytics, sessions: stores.sessions, roles, lab, github, mentor, catalogue: () => catalogue, suites, execution: executionStatus, llmMode: llm.mode, logger }),
+    evidence: new EvidenceService({ analytics, sessions: stores.sessions, roles, lab, github, leetcode, mentor, catalogue: () => catalogue, suites, execution: executionStatus, llmMode: llm.mode, logger }),
     roles,
     topics: () => catalogue.allTopics(),
     mentor,
@@ -177,6 +194,8 @@ function main(): void {
       return { preferred_language: p.preferred_languages[0] ?? null, daily_minutes: p.daily_study_minutes };
     },
   });
+  const career = new CareerService({ freehire: new FreehireClient(), store: stores.career, placement, logger });
+  careerHolder.current = career;
   const verifier = new FirebaseTokenVerifier(config.FIREBASE_PROJECT_ID);
   if (config.NODE_ENV === "production" && config.STORE === "memory") {
     logger.warn("ALLOW_EPHEMERAL_STORE is set: sessions are lost on restart/redeploy and are not shared between instances");
@@ -195,6 +214,8 @@ function main(): void {
     github,
     lab,
     placement,
+    career,
+    leetcode,
     llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
   const server = app.listen(config.PORT, "0.0.0.0", (err?: Error) => {
     if (err) {

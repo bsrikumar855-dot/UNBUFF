@@ -22,6 +22,8 @@ const ChatBody = z.strictObject({
   client_message_id: clientId,
   assist: z.enum(["hint", "solution"]).optional(),
   question_id: questionId.optional(),
+  career_context: z.boolean().optional(),
+  leetcode_context: z.boolean().optional(),
 });
 const PageQuery = z.strictObject({ page, page_size: pageSize });
 const MemoriesQuery = z.strictObject({ type: z.enum(["profile", "learning", "summary", "goal"]).optional(), page, page_size: pageSize });

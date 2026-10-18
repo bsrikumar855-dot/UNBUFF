@@ -19,6 +19,7 @@ import type {
   MentorSavedMemory,
 } from "../types.js";
 import { githubBlock, NOT_CONNECTED_TEXT, wantsGithub, type CachedGithub } from "../github/context.js";
+import { wantsLeetcode } from "../leetcode/context.js";
 import { buildActivityContext, type ActivityDeps } from "./activity.js";
 import { evaluateGoals } from "./goals.js";
 import {
@@ -55,6 +56,10 @@ export interface MentorDeps extends ActivityDeps {
   retention?: RetentionConfig;
   /** Optional GitHub summary source. The mentor works the same without it. */
   github?: { cachedForMentor(uid: string): Promise<CachedGithub | null> };
+  /** Optional job-listing context (lazy, because the Career service is built after the mentor). The mentor works the same without it. */
+  career?: () => { mentorContext(uid: string): Promise<{ text: string; available: boolean }> } | undefined;
+  /** Optional: a minimal summary of the numbers the student imported from LeetCode (never live data). The mentor works the same without it. */
+  leetcode?: { mentorContext(uid: string): Promise<{ text: string; used: boolean; captured_at: string | null; stale: boolean }> };
 }
 
 const MAX_STORED_MESSAGES = 60;
@@ -160,6 +165,25 @@ export class MentorService {
       githubMeta = { used: cached !== null, synced_at: cached?.syncedAt ?? null, stale: cached?.stale ?? false };
     }
 
+    // ---- job listings, only when the student asked for career context; the application computed every score
+    let careerText: string | undefined;
+    const careerSource = req.career_context ? this.deps.career?.() : undefined;
+    if (careerSource) careerText = (await careerSource.mentorContext(uid).catch(() => ({ text: "The job listings could not be loaded right now. Do not invent any.", available: false }))).text;
+
+    // ---- imported LeetCode numbers: only when the message is about LeetCode (or the student turned it on); aggregates only, labelled as student-supplied
+    let leetcodeText: string | undefined;
+    let leetcodeMeta: { used: boolean; captured_at: string | null; stale: boolean } | undefined;
+    if (this.deps.leetcode && (req.leetcode_context || wantsLeetcode(message))) {
+      const c = await this.deps.leetcode.mentorContext(uid).catch(() => null);
+      if (c) {
+        leetcodeText = c.text;
+        leetcodeMeta = { used: c.used, captured_at: c.captured_at, stale: c.stale };
+      } else {
+        leetcodeText = "(The imported LeetCode data could not be read right now. You have NO LeetCode statistics; say so and do not guess any number.)";
+        leetcodeMeta = { used: false, captured_at: null, stale: false };
+      }
+    }
+
     // ---- the model (skipped when a full solution is requested too early)
     let replyText: string;
     let proposals: Parameters<typeof validateProposals>[0] = [];
@@ -168,8 +192,8 @@ export class MentorService {
     } else {
       try {
         const out = await llm.mentorChat({
-          system: systemPrompt(req.mode, { hintLevel, solutionAllowed: req.assist === "solution", github: githubText !== undefined }),
-          prompt: chatPrompt({ activity: activity.text, profile: nonEmptyProfileJson(profile), memories: selected, recent: conv?.messages ?? [], message, ...(githubText !== undefined ? { github: githubText } : {}) }),
+          system: systemPrompt(req.mode, { hintLevel, solutionAllowed: req.assist === "solution", github: githubText !== undefined, career: careerText !== undefined, leetcode: leetcodeText !== undefined }),
+          prompt: chatPrompt({ activity: activity.text, profile: nonEmptyProfileJson(profile), memories: selected, recent: conv?.messages ?? [], message, ...(githubText !== undefined ? { github: githubText } : {}), ...(careerText !== undefined ? { career: careerText } : {}), ...(leetcodeText !== undefined ? { leetcode: leetcodeText } : {}) }),
         });
         replyText = stripControl(out.reply).trim().slice(0, 6000);
         proposals = out.memory_updates;
@@ -247,6 +271,7 @@ export class MentorService {
       degraded: conversationStatus === "failed" || memoryStatus === "failed",
       mock: llm.mode === "mock",
       ...(githubMeta ? { github_context: githubMeta } : {}),
+      ...(leetcodeMeta ? { leetcode_context: leetcodeMeta } : {}),
     };
   }
 

@@ -51,7 +51,7 @@ describe("every route requires a verified student unless it is explicitly public
 
   it("finds the routes (guards against the audit silently checking nothing)", () => {
     expect(all.length).toBeGreaterThanOrEqual(72);
-    for (const f of ["mentor.ts", "github.ts", "graphqlLab.ts", "placement.ts", "code.ts", "analytics.ts", "sessions.ts"]) expect(all.some((r) => r.file === f), f).toBe(true);
+    for (const f of ["mentor.ts", "github.ts", "graphqlLab.ts", "placement.ts", "code.ts", "analytics.ts", "sessions.ts", "career.ts"]) expect(all.some((r) => r.file === f), f).toBe(true);
   });
 
   it("refuses a missing, malformed or invalid token on every private route, with no detail", async () => {
@@ -66,7 +66,7 @@ describe("every route requires a verified student unless it is explicitly public
         expect(JSON.stringify(res.body)).not.toMatch(/stack|at .*\.ts|firebase|token/i);
       }
     }
-  });
+  }, 60_000);
 
   it("the public list is accurate: each listed route really answers without a token, and none is missing from the code", async () => {
     const known = new Set(all.map((r) => `${r.method} ${r.path}`));

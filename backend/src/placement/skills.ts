@@ -2,6 +2,7 @@ import type { EvidenceConfidence, EvidenceLimitation, EvidenceRecency, Placement
 import type { RoleRegistry } from "../services/roles.js";
 import { diffDays, ymd } from "./dates.js";
 import type { EvidenceBundle } from "./evidence.js";
+import { normalizeTopic, type LeetCodeEvidence } from "../leetcode/context.js";
 
 /**
  * Deterministic skill assessment, one entry per skill area. There is deliberately NO overall readiness score and no
@@ -29,6 +30,7 @@ export const METHOD: string[] = [
   "Interview skills: the existing interview report's skill state and proficiency for your target roles. Results graded by the built-in mock model are shown as demonstrations, with no estimate.",
   "GraphQL: the share of Lab exercises you have passed. Each pass is decided by running your query against a reference; reading a lesson alone counts for nothing.",
   "Projects: GitHub activity is context only. It gives no estimate and is never counted towards coverage.",
+  "LeetCode: numbers you import yourself are listed beside matching DSA topics as your own reported context, with their capture date. They never change an estimate, a status, a confidence level or coverage, and they are never merged with judged submissions.",
   "Confidence depends on how much evidence there is (see the thresholds in the documentation); recency is days since the last piece of evidence. Self-reported levels are displayed separately.",
   "There is no overall readiness score and no offer probability.",
 ];
@@ -47,6 +49,14 @@ function selfReported(area: string, profile: PlacementProfile | null, mentorLeve
   if (profile?.weak_areas.some((s) => s.toLowerCase() === key)) return "You listed this as a weak area";
   const level = mentorLevels ? Object.entries(mentorLevels).find(([k]) => k.toLowerCase() === key)?.[1] : undefined;
   return level ? `You told the mentor your level is ${level}` : null;
+}
+
+/** What the student's own imported LeetCode numbers say about a topic (exact match after plural and spacing differences), or null. Context only. */
+export function leetcodeTopicNote(lc: LeetCodeEvidence | undefined, topic: string): string | null {
+  if (!lc || lc.status !== "available" || !lc.data?.topics || !lc.captured_at) return null;
+  const key = normalizeTopic(topic);
+  const hit = lc.data.topics.find((t) => normalizeTopic(t.topic) === key);
+  return hit ? `You reported ${hit.solved} "${hit.topic}" problems on LeetCode (imported, captured ${lc.captured_at.slice(0, 10)}${lc.stale ? ", out of date" : ""}); not verified and not counted here` : null;
 }
 
 export function assessSkills(ev: EvidenceBundle, profile: PlacementProfile | null, roles: RoleRegistry, now: Date): PlacementSkillsResponse {
@@ -98,7 +108,7 @@ export function assessSkills(ev: EvidenceBundle, profile: PlacementProfile | nul
       evidence: { kind: attempts > 0 ? "dsa_judged" : "none", provenance: attempts > 0 ? "verified" : "unavailable", count: attempts, unit: "judged submissions", last_at: lastAt, recency: recencyOf(lastAt, now) },
       confidence,
       gaps,
-      self_reported: selfReported(topic, profile, mentorLevels),
+      self_reported: [selfReported(topic, profile, mentorLevels), leetcodeTopicNote(ev.leetcode, topic)].filter((x): x is string => x !== null).join(" · ") || null,
       next_assessment:
         status === "unassessed"
           ? { type: "diagnostic", description: `Solve one ${topic} question to get a first measurement.` }
@@ -195,6 +205,11 @@ export function assessSkills(ev: EvidenceBundle, profile: PlacementProfile | nul
       next_assessment: gh.gaps.length > 0 ? { type: "project", description: `Improve ${gh.gaps[0]!.repository}: ${gh.gaps[0]!.label}.` } : null,
       note: "Project activity is context, not a measure of algorithmic or interview ability, and it does not count towards coverage.",
     });
+  }
+
+  const lc = ev.leetcode;
+  if (lc?.status === "available") {
+    limitations.push({ source: "leetcode", severity: "info", message: `LeetCode numbers you imported (captured ${lc.captured_at?.slice(0, 10)}${lc.stale ? ", now out of date" : ""}) appear beside matching DSA topics as your own reported context. They are not verified, never counted as judged results and never change an estimate.` });
   }
 
   if (ev.memory.readFailed) limitations.push({ source: "memory", severity: "info", message: "Saved mentor memory could not be read right now." });

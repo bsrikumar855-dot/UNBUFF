@@ -15,7 +15,7 @@ import type { Logger } from "./logger.js";
 import type { LLMProvider } from "./llm/provider.js";
 import { requireAuth } from "./middleware/auth.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
-import { createCodeLimiters, createGithubLimiters, createLabLimiters, createMentorLimiter, createPlacementLimiters, createRateLimiters, DEFAULT_RATE_LIMITS, type RateLimitOptions } from "./middleware/rateLimit.js";
+import { createCareerLimiters, createCodeLimiters, createGithubLimiters, createLabLimiters, createLeetcodeLimiters, createMentorLimiter, createPlacementLimiters, createRateLimiters, DEFAULT_RATE_LIMITS, type RateLimitOptions } from "./middleware/rateLimit.js";
 import { claimsRouter } from "./routes/claims.js";
 import { demoRouter } from "./routes/demo.js";
 import { fixTaskRouter } from "./routes/fixTask.js";
@@ -31,6 +31,10 @@ import { mentorRouter } from "./routes/mentor.js";
 import { codePrivateRouter, codePublicRouter } from "./routes/code.js";
 import { dsaCatalogueRouter, dsaProgressRouter } from "./routes/dsa.js";
 import { sessionsRouter } from "./routes/sessions.js";
+import { careerRouter } from "./routes/career.js";
+import type { CareerService } from "./careers/service.js";
+import { leetcodeRouter } from "./routes/leetcode.js";
+import type { LeetCodeService } from "./leetcode/service.js";
 import type { AssessmentService } from "./services/assessment.js";
 import type { RoleRegistry } from "./services/roles.js";
 
@@ -54,6 +58,10 @@ export interface AppDeps {
   lab: LabService;
   /** Unified placement intelligence: profile, evidence, skills, plan, tasks and the plan assistant. */
   placement: PlacementService;
+  /** Job discovery from Freehire's public API, deterministic matching, and the private bookmark and application tracker. */
+  career: CareerService;
+  /** A saved LeetCode username and progress the student imports themselves. Never contacts LeetCode: there is no official API and scraping is forbidden. */
+  leetcode: LeetCodeService;
   llm: LLMProvider;
   logger: Logger;
   demoReportJson: string;
@@ -97,12 +105,14 @@ export function createApp(deps: AppDeps): Express {
   const githubLimiters = createGithubLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS);
   api.use(githubCallbackRouter(deps.github, githubLimiters.callback)); // GitHub's redirect carries no bearer token; identified by one-time state
   // Everything below is private student data: a verified Firebase ID token is required.
-  api.use(["/claims", "/interrogate", "/fix-task", "/report", "/sessions", "/me", "/code/run", "/code/submit", "/code/submissions", "/mentor", "/github", "/graphql-lab", "/placement"], requireAuth(deps.verifier));
+  api.use(["/claims", "/interrogate", "/fix-task", "/report", "/sessions", "/me", "/code/run", "/code/submit", "/code/submissions", "/mentor", "/github", "/graphql-lab", "/placement", "/career", "/leetcode"], requireAuth(deps.verifier));
   api.use(sessionsRouter(deps.service));
   api.use(dsaProgressRouter(deps.dsaProgress));
   api.use(analyticsRouter(deps.analytics));
   api.use(githubRouter(deps.github, githubLimiters));
   api.use(placementRouter(deps.placement, createPlacementLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS)));
+  api.use(careerRouter(deps.career, createCareerLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS)));
+  api.use(leetcodeRouter(deps.leetcode, createLeetcodeLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS)));
   api.use(graphqlLabRouter(deps.lab, createLabLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS)));
   api.use(mentorRouter(deps.mentor, createMentorLimiter(deps.rateLimits ?? DEFAULT_RATE_LIMITS)));
   api.use(codePrivateRouter(deps.code, createCodeLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS)));

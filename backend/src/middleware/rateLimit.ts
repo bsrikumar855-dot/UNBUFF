@@ -17,6 +17,10 @@ export interface RateLimitOptions {
   placementRefreshPerMinute?: number;
   placementAssistantPerMinute?: number;
   placementActionPerMinute?: number;
+  careerReadPerMinute?: number;
+  careerWritePerMinute?: number;
+  leetcodeReadPerMinute?: number;
+  leetcodeWritePerMinute?: number;
 }
 
 export const DEFAULT_RATE_LIMITS: RateLimitOptions = { globalPerMinute: 300, llmPerMinute: 40 };
@@ -60,6 +64,16 @@ export function createMentorLimiter(opts: RateLimitOptions = DEFAULT_RATE_LIMITS
 /** Placement planner: refreshing/generating the plan, assistant questions and task actions, each per student. Mount after requireAuth. */
 export function createPlacementLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
   return { refresh: userLimiter(opts.placementRefreshPerMinute ?? 20), assistant: userLimiter(opts.placementAssistantPerMinute ?? 12), action: userLimiter(opts.placementActionPerMinute ?? 60) };
+}
+
+/** Career: reads (each can be one or two Freehire requests, cached) and writes (tracker, preferences), per student. Mount after requireAuth. */
+export function createCareerLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
+  return { read: userLimiter(opts.careerReadPerMinute ?? 90), write: userLimiter(opts.careerWritePerMinute ?? 60) };
+}
+
+/** LeetCode link and import: local reads and writes only (no request ever leaves for LeetCode), per student. Mount after requireAuth. */
+export function createLeetcodeLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
+  return { read: userLimiter(opts.leetcodeReadPerMinute ?? 90), write: userLimiter(opts.leetcodeWritePerMinute ?? 30) };
 }
 
 /** GraphQL Learning Lab: running queries, grading submissions and mentor help, each per student. Mount after requireAuth. */

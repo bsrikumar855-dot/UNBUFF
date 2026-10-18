@@ -25,6 +25,11 @@ import { ExecutionError, UnavailableProvider, type ExecutionProvider } from "../
 import { Catalogue, parseCatalogueFile } from "../../src/dsa/catalogue.js";
 import { DsaProgressService } from "../../src/dsa/progressService.js";
 import { MemoryProgressStore, type ProgressStore } from "../../src/dsa/progressStore.js";
+import { CareerService } from "../../src/careers/service.js";
+import { FreehireError, type FreehireClient } from "../../src/careers/freehire.js";
+import { MemoryCareerStore, type CareerStore } from "../../src/careers/store.js";
+import { LeetCodeService } from "../../src/leetcode/service.js";
+import { MemoryLeetCodeStore, type LeetCodeStore } from "../../src/leetcode/store.js";
 import { AssessmentService } from "../../src/services/assessment.js";
 import type { SessionStore } from "../../src/store/SessionStore.js";
 import { MemoryStore } from "../../src/store/memoryStore.js";
@@ -76,7 +81,7 @@ export const DEFAULT_TEST_UID = "student-a";
  * 401 behaviour. The wrapper only touches headers; the app under test is unchanged.
  */
 export function testApp(
-  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService; lab?: LabService; labStore?: LabStore; placement?: PlacementService; placementStore?: PlacementStore; execution?: { configured: boolean; verified: boolean }; llmMode?: "live" | "mock"; now?: () => Date } = {},
+  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService; lab?: LabService; labStore?: LabStore; placement?: PlacementService; placementStore?: PlacementStore; career?: CareerService; careerStore?: CareerStore; leetcode?: LeetCodeService; leetcodeStore?: LeetCodeStore; freehire?: Pick<FreehireClient, "search" | "getJob" | "facets">; execution?: { configured: boolean; verified: boolean }; llmMode?: "live" | "mock"; now?: () => Date } = {},
 ): Express {
   const llm = opts.llm ?? new MockProvider();
   const catalogue = opts.catalogue ?? fixtureCatalogue();
@@ -99,6 +104,19 @@ export function testApp(
   const github =
     opts.github ??
     new GithubService({ store: new MemoryGithubStore(), gql: new GithubGraphQL(), oauth: null, vault: null, logger: silentLogger, frontendUrl: "http://localhost:5173" });
+  // LeetCode: only a saved username and numbers the student imports. It never contacts LeetCode.
+  const leetcode =
+    opts.leetcode ??
+    new LeetCodeService({
+      store: opts.leetcodeStore ?? new MemoryLeetCodeStore(),
+      logger: silentLogger,
+      judged: async (uid) => {
+        const o = await analytics.overview(uid);
+        return { solved_unique: o.totals.solved_unique, available: o.has_eligible_activity };
+      },
+      now: opts.now,
+    });
+  const careerHolder: { current?: CareerService } = {}; // the Career service needs the placement service, which needs the mentor
   const mentor =
     opts.mentor ??
     new MentorService({
@@ -113,6 +131,8 @@ export function testApp(
       roles,
       logger: silentLogger,
       github,
+      leetcode,
+      career: () => careerHolder.current,
     });
   const lab = opts.lab ?? new LabService({ store: opts.labStore ?? new MemoryLabStore(), mentor, logger: silentLogger });
   const placement =
@@ -125,6 +145,7 @@ export function testApp(
         roles,
         lab,
         github,
+        leetcode,
         mentor,
         catalogue: () => catalogue,
         suites: opts.suites ?? fixtureSuites(),
@@ -139,6 +160,20 @@ export function testApp(
       logger: silentLogger,
       now: opts.now,
     });
+  // Default: the job source is unreachable, so no test can pass because of a listing that was never fetched.
+  const unreachable = async (): Promise<never> => {
+    throw new FreehireError("unavailable", "The job source could not be reached.");
+  };
+  const career =
+    opts.career ??
+    new CareerService({
+      freehire: opts.freehire ?? { search: unreachable, getJob: unreachable, facets: unreachable },
+      store: opts.careerStore ?? new MemoryCareerStore(),
+      placement,
+      logger: silentLogger,
+      now: opts.now,
+    });
+  careerHolder.current = career;
   const service = new AssessmentService({ store: sessionStore, llm, roles, logger: silentLogger });
   const app = createApp({
     service,
@@ -160,6 +195,8 @@ export function testApp(
     github,
     lab,
     placement,
+    career,
+    leetcode,
     llm,
     logger: silentLogger,
     demoReportJson,
