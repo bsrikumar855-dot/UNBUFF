@@ -8,6 +8,8 @@ interface VitestConfig extends UserConfig {
     environment: string;
     setupFiles: string[];
     include: string[];
+    testTimeout: number;
+    hookTimeout: number;
   };
 }
 
@@ -32,5 +34,8 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./tests/setup.ts"],
     include: ["tests/**/*.{test,spec}.{ts,tsx}"],
+    // These tests render whole pages with lazy chunks. A shared two-core CI runner is several times slower than a laptop.
+    testTimeout: 20_000,
+    hookTimeout: 20_000,
   },
 } as VitestConfig);

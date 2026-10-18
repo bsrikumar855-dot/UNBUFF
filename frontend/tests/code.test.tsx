@@ -99,7 +99,15 @@ const renderWorkspace = (u: AuthUser | null) =>
     </AuthProvider>,
   );
 
-const editor = () => screen.findByLabelText(/Code editor, Python/);
+/**
+ * The editor element exists a moment before the page loads the starter code or saved draft into it, so wait for that
+ * too: acting on an empty editor (Run is disabled, assertions see "") made these tests depend on machine speed.
+ */
+const editor = async () => {
+  const el = await screen.findByLabelText(/Code editor, Python/);
+  await waitFor(() => expect(el).not.toHaveValue(""));
+  return el;
+};
 
 beforeEach(() => {
   vi.resetAllMocks();
