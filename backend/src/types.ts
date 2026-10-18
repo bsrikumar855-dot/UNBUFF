@@ -305,7 +305,7 @@ export interface SessionsResponse {
 // ---------- Company-wise DSA Arena ----------
 export type DsaDifficulty = "easy" | "medium" | "hard";
 export type DsaStatus = "not_started" | "attempted" | "solved" | "needs_revision";
-export type DsaLicenseStatus = "licensed" | "permission_granted" | "public_domain" | "own_work" | "development_fixture";
+export type DsaLicenseStatus = "licensed" | "permission_granted" | "public_domain" | "own_work" | "development_fixture" | "unlicensed_local_use"; // unlicensed_local_use: the source declares no licence; local evaluation only, refused in production
 
 /** Provenance of the loaded catalogue. `null` in a response means no catalogue is loaded. */
 export interface DsaSource {

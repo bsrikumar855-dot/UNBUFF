@@ -18,7 +18,7 @@ import type {
  * elsewhere and only refers to question ids.
  */
 
-export const LICENSE_STATUSES = ["licensed", "permission_granted", "public_domain", "own_work", "development_fixture"] as const satisfies readonly DsaLicenseStatus[];
+export const LICENSE_STATUSES = ["licensed", "permission_granted", "public_domain", "own_work", "development_fixture", "unlicensed_local_use"] as const satisfies readonly DsaLicenseStatus[];
 export const DIFFICULTIES = ["easy", "medium", "hard"] as const satisfies readonly DsaDifficulty[];
 const DIFFICULTY_RANK: Record<DsaDifficulty, number> = { easy: 1, medium: 2, hard: 3 };
 
@@ -92,6 +92,13 @@ export interface QuestionQuery {
   order?: "asc" | "desc";
   page?: number;
   page_size?: number;
+}
+
+/** A catalogue whose source declares no licence may be used locally, never served by a production deployment. */
+export function assertCatalogueServable(nodeEnv: string | undefined, source: DsaSource | null): void {
+  if (nodeEnv === "production" && source?.license_status === "unlicensed_local_use") {
+    throw new Error("The DSA catalogue is marked unlicensed_local_use (the source declares no licence): it must not be served when NODE_ENV=production");
+  }
 }
 
 export const DEFAULT_PAGE_SIZE = 20;

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Catalogue, parseCatalogueFile, type CatalogueFile } from "../../src/dsa/catalogue.js";
+import { Catalogue, assertCatalogueServable, parseCatalogueFile, type CatalogueFile } from "../../src/dsa/catalogue.js";
 
 const base = (): CatalogueFile => ({
   schema_version: 1,
@@ -211,5 +211,21 @@ describe("the production default catalogue is labelled honestly", () => {
     const c = new Catalogue(file);
     expect(c.source).toMatchObject({ license_status: "development_fixture", is_sample_data: true });
     expect(c.source?.license_note).toMatch(/invented/i);
+  });
+});
+
+describe("a catalogue from a source with no licence stays local", () => {
+  const local = (): Catalogue => {
+    const f = base();
+    f.source.license_status = "unlicensed_local_use";
+    return new Catalogue(parseCatalogueFile(f));
+  };
+
+  it("is accepted outside production and refused in production", () => {
+    expect(() => assertCatalogueServable("development", local().source)).not.toThrow();
+    expect(() => assertCatalogueServable("test", local().source)).not.toThrow();
+    expect(() => assertCatalogueServable("production", local().source)).toThrow(/unlicensed_local_use/);
+    expect(() => assertCatalogueServable("production", new Catalogue(parseCatalogueFile(base())).source)).not.toThrow();
+    expect(() => assertCatalogueServable("production", null)).not.toThrow();
   });
 });

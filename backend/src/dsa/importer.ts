@@ -7,7 +7,11 @@ import type { DsaDifficulty } from "../types.js";
  * Nothing here fetches data: the operator supplies the file and states its licence/permission status.
  */
 
-export const IMPORT_LICENSE_STATUSES = ["licensed", "permission_granted", "public_domain", "own_work"] as const;
+/**
+ * `unlicensed_local_use` is the honest label for a source that declares no licence and that the operator chooses to use
+ * on their own machine anyway. It is never "permission". The server refuses to start with such a catalogue in production.
+ */
+export const IMPORT_LICENSE_STATUSES = ["licensed", "permission_granted", "public_domain", "own_work", "unlicensed_local_use"] as const;
 export type ImportLicenseStatus = (typeof IMPORT_LICENSE_STATUSES)[number];
 
 export interface RawRecord {
@@ -215,8 +219,8 @@ export function assertSourceAllowed(source: ImportSource): void {
     throw new ImportError([`license_status must be one of ${IMPORT_LICENSE_STATUSES.join(", ")}`]);
   }
   if (!source.name.trim() || !source.license_note.trim()) throw new ImportError(["source name and a licence/permission note are required"]);
-  if (source.url && BLOCKED_REPO.test(source.url) && !["licensed", "permission_granted"].includes(source.license_status)) {
-    throw new ImportError(["that repository declares no licence: only licensed or permission_granted (with a note recording the permission) can be imported"]);
+  if (source.url && BLOCKED_REPO.test(source.url) && !["licensed", "permission_granted", "unlicensed_local_use"].includes(source.license_status)) {
+    throw new ImportError(["that repository declares no licence: import it as licensed or permission_granted (with a note recording the permission), or as unlicensed_local_use for local evaluation only"]);
   }
   for (const d of [source.source_updated_at]) if (d && Number.isNaN(Date.parse(d))) throw new ImportError(["source_updated_at must be an ISO-8601 date"]);
 }

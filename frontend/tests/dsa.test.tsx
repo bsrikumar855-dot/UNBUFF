@@ -328,3 +328,32 @@ describe("Catalogue size and provenance are reported honestly", () => {
     await waitFor(() => expect(mocked.getQuestions).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2, page_size: 20 })));
   });
 });
+
+describe("A catalogue from an unlicensed source is labelled as local evaluation only", () => {
+  it("shows the no-licence warning and the real source, and does not call it sample data", async () => {
+    const local: DsaSource = {
+      name: "Example list (GitHub)",
+      license_status: "unlicensed_local_use",
+      license_note: "No licence declared; local evaluation only.",
+      url: "https://github.com/example/list",
+      imported_at: "2026-10-18T00:00:00.000Z",
+      source_updated_at: "2025-06-20",
+      is_sample_data: false,
+    };
+    mocked.getCompanies.mockResolvedValue({
+      companies: [{ id: "acme", name: "Acme", question_count: 129, catalogue_available: true }],
+      page: 1,
+      page_size: 24,
+      total: 1,
+      total_pages: 1,
+      source: local,
+    });
+    mocked.getQuestions.mockResolvedValue(questionsPage([q(1)], { source: local }));
+    renderAt("/dsa");
+    expect(await screen.findByText(/declares no licence/i)).toBeInTheDocument();
+    expect(screen.getByText(/must not be deployed or redistributed/i)).toBeInTheDocument();
+    expect(screen.getByRole("note")).toHaveTextContent(/unlicensed local use/i);
+    expect(screen.queryByText(/Sample data for development/i)).not.toBeInTheDocument();
+    expect(await screen.findByText(/129 questions in the catalogue/)).toBeInTheDocument();
+  });
+});

@@ -23,7 +23,7 @@ import { UnavailableProvider, type ExecutionProvider } from "./code/provider.js"
 import { CodeService } from "./code/service.js";
 import { FirestoreSubmissionStore, MemorySubmissionStore, type SubmissionStore } from "./code/submissionStore.js";
 import { SuiteRegistry } from "./code/suites.js";
-import { Catalogue } from "./dsa/catalogue.js";
+import { Catalogue, assertCatalogueServable } from "./dsa/catalogue.js";
 import { DsaProgressService } from "./dsa/progressService.js";
 import { FirestoreProgressStore, MemoryProgressStore, type ProgressStore } from "./dsa/progressStore.js";
 import { loadConfig, parseServiceAccount, type Config } from "./config.js";
@@ -63,6 +63,7 @@ function loadCatalogue(config: Config, root: string, logger: ReturnType<typeof c
   const path = config.DSA_CATALOGUE_PATH ?? join(root, "data", "dsa", config.NODE_ENV === "production" ? "practice-pack.json" : "fixture.json");
   if (!config.DSA_CATALOGUE_PATH) logger.info({ path }, "DSA_CATALOGUE_PATH is not set: using the bundled default for this environment");
   const catalogue = Catalogue.fromPath(path); // validates; throws (fail fast) on a malformed file
+  assertCatalogueServable(config.NODE_ENV, catalogue.source);
   logger.info({ source: catalogue.source?.name, license_status: catalogue.source?.license_status }, "DSA catalogue loaded");
   return catalogue;
 }

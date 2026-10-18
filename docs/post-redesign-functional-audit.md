@@ -114,3 +114,20 @@ Backend: `src/config.ts`, `src/server.ts`, `src/llm/select.ts` (new), `.env.exam
 * Past conversations made in mock mode are stored like any other; individual messages carry no mock marker, so the page-level note describes the *current* server only.
 * `gemini-3.1-flash-lite` answers took about 14 s each here; the client timeout is 60 s.
 * Code Run/Submit is unavailable unless `EXECUTION_PROVIDER` is configured (unrelated to these two problems; `EXECUTION_PROVIDER_VERIFIED` was not set).
+
+## 7. Follow-up: company-wise catalogue loaded locally at the operator's request
+
+The operator asked for the lists from `liquidslr/leetcode-company-wise-problems` to be loaded. The repository **still declares no licence** (GitHub reports `license: null`, no licence file, none in its README), so this is not permission and was not labelled as permission.
+
+* **What was done**: a shallow clone into a scratch folder outside the project; each company's `5. All.csv` converted to the importer's schema (`company,title,url,difficulty,topics`; frequency and acceptance rate are not carried over); imported with the existing `npm run dsa:import` (`--replace`, `--allowed-hosts leetcode.com`) into `backend/data/dsa/local/company-wise.json`, which is **gitignored** so it is not committed, pushed or baked into the image by git.
+* **Result**: 470 company folders, 428 with questions (42 folders have an empty file in the source and are omitted, not invented), 17,316 company-question links, 3,392 distinct questions, 173 topics. The API reports `total: 3392` over 170 pages of 20 and 428 companies over 5 pages of 100; Google has 2,344 questions (118 pages), shown in the UI with the pager. `dsa:validate` passes.
+* **Honest labelling (new)**: a new licence status, `unlicensed_local_use`, means "the source declares no licence; local evaluation only". The importer accepts it for this repository (it still refuses `own_work`/`public_domain` for it), the Arena shows a prominent warning with the real source, and the server **refuses to start with such a catalogue when `NODE_ENV=production`** (`assertCatalogueServable`). The status was added to the contract (`CONTRACT.md`, backend and frontend types).
+* **Local config**: `backend/.env` (ignored) gained `DSA_CATALOGUE_PATH=data/dsa/local/company-wise.json`. Remove that line to return to the bundled catalogue.
+* **Tests**: importer (honest label accepted, empty note refused), catalogue (allowed outside production, refused in production), frontend banner. Backend 856 passed, frontend 206 passed, lint and typecheck clean.
+* **Not resolved by this**: the licence question. Deploying this data, committing the generated file, or showing it to other users would be redistribution of material whose terms the source does not state, and the company lists derive from LeetCode's company tags. Obtain permission from the repository owner (or use an own dataset) before any of that, then re-import with `permission_granted` and a note.
+
+### Follow-up: "compiler not working" on the imported questions
+
+Cause: the local backend had no code-execution provider configured (`EXECUTION_PROVIDER` unset), so Run was correctly reported unavailable and no languages were offered. `backend/.env` (ignored) now sets `EXECUTION_PROVIDER=judge0` and `JUDGE0_URL=https://ce.judge0.com`, the public community instance the operator chose in Phase 10.2 (shared, rate-limited, test use only; student code is sent to that third party). `npm run smoke:judge0`: **PASS** (Python, JavaScript, C++ and Java run; compile errors reported); `GET /api/code/languages` returns the languages. `EXECUTION_PROVIDER_VERIFIED` was not set.
+
+Not a defect: the imported company questions have **no hidden test suite**, so **Submit stays disabled** for them ("no test suite for this question") and only Run with your own input works. Judged submissions need a first-party suite (the 10 practice-pack exercises have them).

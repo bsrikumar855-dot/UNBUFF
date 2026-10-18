@@ -8,3 +8,6 @@ coverage/
 *.log
 *.tsbuildinfo
 .DS_Store
+
+# Locally imported catalogues whose source declares no licence: never commit or redistribute
+backend/data/dsa/local/

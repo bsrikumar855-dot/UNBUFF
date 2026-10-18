@@ -40,7 +40,7 @@ export const SourceBanner: React.FC<{ source: DsaSource | null; className?: stri
       role="note"
       className={cn(
         "border-l-2 py-2 pl-4 pr-3 text-sm",
-        source.is_sample_data
+        source.is_sample_data || source.license_status === "unlicensed_local_use"
           ? "border-verdict-shaky-fg bg-surface text-ink-primary"
           : "border-line-strong bg-surface-100/60 text-ink-secondary",
         className
@@ -50,6 +50,12 @@ export const SourceBanner: React.FC<{ source: DsaSource | null; className?: stri
         <p className="mb-1 font-semibold">
           Sample data for development: not real company interview data. Companies and
           links below are invented.
+        </p>
+      )}
+      {source.license_status === "unlicensed_local_use" && (
+        <p className="mb-1 font-semibold">
+          The source of this data declares no licence. It is loaded for local evaluation only and
+          must not be deployed or redistributed.
         </p>
       )}
       <p>

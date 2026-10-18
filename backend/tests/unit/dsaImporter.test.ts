@@ -129,6 +129,15 @@ describe("buildCatalogue", () => {
     expect(() => buildCatalogue(rows, null, { source: { ...source, url: repo, license_status: "permission_granted" }, now: t0 })).not.toThrow();
   });
 
+  it("an unlicensed source can only be loaded under the honest unlicensed_local_use label, and never as permission", () => {
+    const repo = "https://github.com/liquidslr/leetcode-company-wise-problems";
+    const local = { ...source, url: repo, license_status: "unlicensed_local_use" as const, license_note: "No licence declared; local evaluation only." };
+    const { file } = buildCatalogue(rows, null, { source: local, now: t0 });
+    expect(file.source.license_status).toBe("unlicensed_local_use");
+    expect(new Catalogue(parseCatalogueFile(file)).source).toMatchObject({ license_status: "unlicensed_local_use", is_sample_data: false });
+    expect(() => buildCatalogue(rows, null, { source: { ...local, license_note: " " }, now: t0 })).toThrow(/note are required/);
+  });
+
   it("is idempotent: importing the same input twice changes nothing, not even imported_at", () => {
     const first = buildCatalogue(rows, null, { source, now: t0 });
     const second = buildCatalogue(rows, first.file, { source, now: t1 });
