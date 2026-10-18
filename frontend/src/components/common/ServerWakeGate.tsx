@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { apiClient } from "@/api/client";
 import type { HealthResponse } from "@/types/contract";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 const WAKE_TIMEOUT_MS = 90_000;
 const SLOW_AFTER_MS = 3_000;
@@ -42,7 +42,7 @@ export const ServerWakeGate: React.FC = () => {
       {phase === "waking" ? (
         <div role="status" className="max-w-sm text-center">
           <span
-            className="mx-auto mb-4 block h-8 w-8 animate-spin rounded-full border-4 border-line-strong border-t-primary motion-reduce:animate-none"
+            className="mx-auto mb-4 block h-8 w-8 animate-spin rounded-full border-4 border-line-strong border-t-redline motion-reduce:animate-none"
             aria-hidden="true"
           />
           <p className="text-lg font-semibold text-ink-primary">Waking up the server… (~30–60s)</p>

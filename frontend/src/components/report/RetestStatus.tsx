@@ -18,8 +18,8 @@ const chip = "inline-flex items-center gap-1.5 rounded-sm px-2 py-1 text-xs font
 export const RetestStatus: React.FC<RetestStatusProps> = ({ claim, sessionId }) => {
   if (claim.retest_status === "done" && claim.retest) {
     return (
-      <span className={`${chip} bg-verdict-defended-bg text-verdict-defended-fg`}>
-        <CheckCircle2 size={14} aria-hidden="true" />
+      <span className={`${chip} bg-verdict-defended-bg text-ink-primary`}>
+        <CheckCircle2 size={14} aria-hidden="true" className="text-verdict-defended-fg" />
         Verified after {plural(claim.retest.interleaved_claims, "other concept")} ·{" "}
         {percent(claim.retest.before)} → {percent(claim.retest.after)}
       </span>
@@ -28,7 +28,7 @@ export const RetestStatus: React.FC<RetestStatusProps> = ({ claim, sessionId }) 
   if (claim.retest_status === "due") {
     if (!sessionId) {
       return (
-        <span className={`${chip} bg-primary-soft text-primary-dark`}>
+        <span className={`${chip} bg-redline-soft text-redline-dark`}>
           <RotateCcw size={14} aria-hidden="true" />
           Retest ready
         </span>
@@ -54,7 +54,11 @@ export const RetestStatus: React.FC<RetestStatusProps> = ({ claim, sessionId }) 
     );
   }
   if (isWeak(claim)) {
-    return <span className={`${chip} bg-surface-100 text-ink-secondary`}>Open the fix task to schedule a retest</span>;
+    return (
+      <span className={`${chip} bg-surface-100 text-ink-secondary`}>
+        Open the fix task to schedule a retest
+      </span>
+    );
   }
   return null;
 };

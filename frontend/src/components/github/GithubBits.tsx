@@ -23,12 +23,13 @@ export const SourceNote: React.FC<{ source: GithubSourceInfo }> = ({ source }) =
   </p>
 );
 
+// A neutral ink scale, deliberately not red (reads as an error) or green (reads as verified): GitHub activity is context.
 const LEVEL = [
-  "bg-surface-100",
-  "bg-primary-soft",
-  "bg-primary/40",
-  "bg-primary/70",
-  "bg-primary",
+  "bg-surface-200",
+  "bg-[#CFC8B6]",
+  "bg-[#9D9582]",
+  "bg-[#5C564B]",
+  "bg-ink-primary",
 ];
 
 /** Heatmap drawn with plain divs; the numbers are repeated as text in the monthly table below it. */
@@ -40,25 +41,32 @@ export const Heatmap: React.FC<{
 }> = ({ weeks, total, from, to }) => {
   const max = Math.max(0, ...weeks.flatMap((w) => w.days.map((d) => d.count)));
   return (
-    <div className="overflow-x-auto">
+    <div>
+      {/* The grid shares the available width instead of scrolling sideways: every cell is a square that shrinks with the screen. */}
       <div
         role="img"
         aria-label={`Contribution heatmap from ${from ?? "?"} to ${to ?? "?"}: ${total ?? 0} contributions in total. Monthly totals are listed below.`}
-        className="flex w-max gap-0.5"
+        className="grid w-full max-w-4xl gap-[2px]"
+        style={{
+          gridTemplateColumns: `repeat(${Math.max(1, weeks.length)}, minmax(0, 1fr))`,
+        }}
       >
         {weeks.map((w) => (
-          <div key={w.starts_on} className="flex flex-col gap-0.5">
+          <div key={w.starts_on} className="grid gap-[2px]">
             {w.days.map((d) => (
               <div
                 key={d.date}
                 title={`${d.date}: ${d.count} contribution${d.count === 1 ? "" : "s"}`}
-                className={cn("h-3 w-3 rounded-sm", LEVEL[heatLevel(d.count, max)])}
+                className={cn(
+                  "aspect-square w-full rounded-[1px]",
+                  LEVEL[heatLevel(d.count, max)]
+                )}
               />
             ))}
           </div>
         ))}
       </div>
-      <p className="mt-2 text-xs text-ink-muted">
+      <p className="mt-3 text-xs text-ink-muted">
         Darker squares mean more contributions that day, relative to your busiest day.
       </p>
     </div>
@@ -72,22 +80,19 @@ export const PeriodBars: React.FC<{
 }> = ({ rows, label, month }) => {
   const max = Math.max(1, ...rows.map((r) => r.total));
   return (
-    <ul aria-label={label} className="flex flex-col gap-1.5">
+    <ul aria-label={label} className="flex flex-col gap-2">
       {rows.map((r) => (
         <li key={r.period} className="flex items-center gap-3 text-sm">
           <span className="w-24 shrink-0 text-ink-secondary">
             {month ? monthLabel(r.period) : r.period.slice(5)}
           </span>
-          <div
-            className="h-2.5 flex-1 overflow-hidden rounded bg-surface-100"
-            aria-hidden="true"
-          >
+          <div className="h-1.5 flex-1 overflow-hidden bg-surface-200" aria-hidden="true">
             <div
-              className="h-full bg-primary"
+              className="h-full bg-ink-primary"
               style={{ width: `${(r.total / max) * 100}%` }}
             />
           </div>
-          <span className="w-10 text-right text-ink-primary">{r.total}</span>
+          <span className="num w-10 text-right text-ink-primary">{r.total}</span>
         </li>
       ))}
     </ul>
@@ -102,14 +107,14 @@ export const Checklist: React.FC<{ items: GithubChecklistItem[] }> = ({ items })
   for (const i of items)
     byRepo.set(i.repository, [...(byRepo.get(i.repository) ?? []), i]);
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       {[...byRepo.entries()].map(([repo, list]) => (
         <section
           key={repo}
           aria-label={`Checklist for ${repo}`}
-          className="rounded-md border border-line p-3"
+          className="border-t border-line pt-3"
         >
-          <h3 className="text-sm font-semibold text-ink-primary">{repo}</h3>
+          <h3 className="text-[15px] font-semibold text-ink-primary">{repo}</h3>
           <ul className="mt-2 flex flex-col gap-1.5">
             {list.map((i) => (
               <li key={i.check} className="text-sm">

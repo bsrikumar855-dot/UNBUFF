@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { PRIORITY_LABEL, TASK_TYPE_LABEL } from "@/lib/placement";
 import type { PlacementTask, PlacementTaskActionRequest } from "@/types/contract";
 
@@ -13,7 +13,8 @@ export interface TaskCardProps {
   readOnly?: boolean;
 }
 
-const field = "rounded-md border border-line-strong bg-white px-2 py-1 text-sm";
+const field =
+  "min-h-10 rounded-md border border-line-strong bg-surface px-2 py-1 text-sm";
 
 /** One task with why it is suggested, how it completes and the controls to act on it. */
 export const TaskCard: React.FC<TaskCardProps> = ({
@@ -28,10 +29,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const [reason, setReason] = useState("");
   const open = task.status === "planned" || task.status === "in_progress";
   return (
-    <li className="rounded-lg border border-line bg-white p-3">
+    <li className="border-b border-line py-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+          <p className="eyebrow">
             {TASK_TYPE_LABEL[task.type]} · {PRIORITY_LABEL(task.priority)} priority ·{" "}
             {task.estimated_minutes} min · due {task.due_date}
             {task.status === "in_progress" ? " · started" : ""}
@@ -40,12 +41,14 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               : ""}
             {task.status === "skipped" ? " · skipped" : ""}
           </p>
-          <h4 className="mt-0.5 font-semibold text-ink-primary">{task.title}</h4>
+          <h4 className="mt-1 text-[17px] font-semibold leading-snug text-ink-primary">
+            {task.title}
+          </h4>
         </div>
         {open && (
           <Link
             to={task.link}
-            className="shrink-0 text-sm font-medium text-primary underline"
+            className="inline-flex min-h-10 shrink-0 items-center text-sm font-medium text-redline underline underline-offset-4"
           >
             Open
           </Link>
@@ -76,7 +79,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           {task.status === "planned" && !task.blocked && (
             <Button
               size="sm"
-              variant="secondary"
+              variant="outline"
               disabled={busy}
               onClick={() => onAction(task, { action: "start" })}
             >

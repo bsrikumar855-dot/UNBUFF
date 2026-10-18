@@ -38,7 +38,9 @@ const ReportPage: React.FC<{ demo?: boolean }> = ({ demo = false }) => {
   if (error !== null && !report) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10">
-        <h1 className="mb-4 text-2xl font-bold text-ink-primary">Readiness report</h1>
+        <h1 className="mb-4 serif text-title font-medium text-ink-primary">
+          Readiness report
+        </h1>
         <ErrorState error={error} onRetry={refresh} />
         <Link to={routes.setup} className={buttonClasses("secondary", "md", "mt-4")}>
           Start a new audit
@@ -49,7 +51,9 @@ const ReportPage: React.FC<{ demo?: boolean }> = ({ demo = false }) => {
   if (!report) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10">
-        <h1 className="mb-4 text-2xl font-bold text-ink-primary">Readiness report</h1>
+        <h1 className="mb-4 serif text-title font-medium text-ink-primary">
+          Readiness report
+        </h1>
         <LoadingState message="Building your report…" />
       </div>
     );

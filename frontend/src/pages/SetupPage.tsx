@@ -22,26 +22,26 @@ export const SetupPage: React.FC = () => {
   }
 
   return (
-    <div className="mx-auto max-w-2xl p-4 pb-16 pt-8 sm:p-8">
+    <div className="mx-auto max-w-3xl p-4 pb-16 pt-8 sm:p-8 sm:pt-12">
       <StepProgress current={1} />
 
-      <h1 className="mt-6 text-2xl font-bold tracking-tight text-ink-primary sm:text-3xl">
+      <h1 className="serif mt-8 text-title font-medium text-ink-primary">
         Prepare your claims
       </h1>
-      <p className="mt-2 text-ink-secondary">
+      <p className="mt-3 max-w-xl leading-relaxed text-ink-secondary">
         Choose the role you&rsquo;re targeting and give UNBLUFF the resume you want to
         defend.
       </p>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-subtle">
+        <h2 className="eyebrow mb-3 border-b border-ink-primary pb-2 text-ink-primary">
           Role
         </h2>
         <RoleSelector value={roleId} onChange={setRoleId} />
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-subtle">
+        <h2 className="eyebrow mb-3 border-b border-ink-primary pb-2 text-ink-primary">
           Mode
         </h2>
         <ModeSelector value={mode} onChange={setMode} />

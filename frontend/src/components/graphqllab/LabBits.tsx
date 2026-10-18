@@ -40,7 +40,7 @@ export const LessonBlocks: React.FC<{
             type="button"
             onClick={() => onTry?.(b)}
             disabled={!onTry}
-            className="rounded-md border border-line-strong bg-white px-3 py-1.5 text-sm font-medium text-primary hover:bg-surface-100 disabled:text-ink-subtle"
+            className="rounded-md border border-line-strong bg-surface px-3 py-1.5 text-sm font-medium text-redline hover:bg-surface-100 disabled:text-ink-subtle"
           >
             Try it: {b.label}
           </button>
@@ -62,7 +62,7 @@ export const ResultPanel: React.FC<{ response: LabExecuteResponse }> = ({ respon
           "rounded-md border p-2 text-sm",
           bad
             ? "border-line-strong bg-surface-50 text-ink-primary"
-            : "border-line bg-white text-ink-secondary"
+            : "border-line bg-surface text-ink-secondary"
         )}
       >
         <strong>{PHASE_LABEL[response.phase]}.</strong>
@@ -75,7 +75,7 @@ export const ResultPanel: React.FC<{ response: LabExecuteResponse }> = ({ respon
       {result.errors && result.errors.length > 0 && (
         <ul aria-label="Errors" className="flex flex-col gap-2">
           {result.errors.map((e, i) => (
-            <li key={i} className="rounded-md border border-line bg-white p-2 text-sm">
+            <li key={i} className="rounded-md border border-line bg-surface p-2 text-sm">
               <span className="mr-2 rounded bg-surface-100 px-1.5 py-0.5 text-xs font-semibold text-ink-primary">
                 {CATEGORY_LABEL[e.category]}
               </span>
@@ -110,7 +110,7 @@ export const ResultPanel: React.FC<{ response: LabExecuteResponse }> = ({ respon
   );
 };
 
-const field = "w-full rounded-md border border-line-strong bg-white px-3 py-2 text-sm";
+const field = "w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm";
 
 /** The schema reference, built from the server's actual schema. Insert buttons add a field at the cursor. */
 export const SchemaExplorer: React.FC<{
@@ -156,18 +156,20 @@ export const SchemaExplorer: React.FC<{
               className={cn(
                 "rounded-md border px-2 py-1 text-xs",
                 open === t.name
-                  ? "border-primary bg-primary-soft text-primary-dark"
-                  : "border-line-strong bg-white text-ink-secondary hover:bg-surface-100"
+                  ? "border-redline bg-redline-soft text-redline-dark"
+                  : "border-line-strong bg-surface text-ink-secondary hover:bg-surface-100"
               )}
             >
               {t.name}
             </button>
           </li>
         ))}
-        {types.length === 0 && <li className="text-sm text-ink-muted">No types match.</li>}
+        {types.length === 0 && (
+          <li className="text-sm text-ink-muted">No types match.</li>
+        )}
       </ul>
       {current && (
-        <div className="rounded-md border border-line bg-white p-3 text-sm">
+        <div className="rounded-md border border-line bg-surface p-3 text-sm">
           <h3 className="font-semibold text-ink-primary">
             {current.name}{" "}
             <span className="text-xs font-normal text-ink-muted">
@@ -200,7 +202,7 @@ export const SchemaExplorer: React.FC<{
                 {onInsert && current.kind === "OBJECT" && (
                   <button
                     type="button"
-                    className="ml-2 text-xs text-primary underline"
+                    className="ml-2 text-xs text-redline underline"
                     onClick={() => onInsert(f.name)}
                     aria-label={`Insert ${f.name} at the cursor`}
                   >

@@ -4,7 +4,7 @@ import { RotateCcw } from "lucide-react";
 import type { FixTask, Mode, TurnResponse } from "@/types/contract";
 import { api } from "@/api/endpoints";
 import { useSessionState } from "@/state/useSession";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { FixTaskCard } from "@/components/common/FixTaskCard";
@@ -53,7 +53,7 @@ const WorkspacePage: React.FC = () => {
         },
       });
     },
-    [dispatch, state.claims],
+    [dispatch, state.claims]
   );
 
   const call = useCallback(
@@ -66,7 +66,9 @@ const WorkspacePage: React.FC = () => {
         applyTurn(t);
         if (t.turn === "done" && t.teach_now) {
           setBusy("teaching");
-          setFixTask(await api.getFixTask({ session_id: sessionId, claim_id: t.claim.id }));
+          setFixTask(
+            await api.getFixTask({ session_id: sessionId, claim_id: t.claim.id })
+          );
         }
       } catch (err) {
         setError(err);
@@ -74,12 +76,12 @@ const WorkspacePage: React.FC = () => {
         setBusy(null);
       }
     },
-    [sessionId, applyTurn],
+    [sessionId, applyTurn]
   );
 
   const startClaim = useCallback(
     (claimId: string, mode: Mode) => call({ claim_id: claimId, mode }, "asking"),
-    [call],
+    [call]
   );
 
   // First visit / refresh: rehydrate from the report if needed, then start the right claim.
@@ -105,7 +107,8 @@ const WorkspacePage: React.FC = () => {
         progress = report.progress;
       }
       const claimId = urlClaim ?? progress.next_claim_id;
-      if (claimId) await startClaim(claimId, urlClaim ? urlMode : (progress.next_mode ?? "assess"));
+      if (claimId)
+        await startClaim(claimId, urlClaim ? urlMode : (progress.next_mode ?? "assess"));
     };
     go().catch(setError);
   }, [sessionId, search, state, dispatch, startClaim]);
@@ -128,8 +131,10 @@ const WorkspacePage: React.FC = () => {
   const nextMode = progress?.next_mode ?? null;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-      <h1 className="mb-4 text-2xl font-bold text-ink-primary">Interrogation</h1>
+    <div className="mx-auto max-w-[88rem] px-4 py-8 sm:px-8 sm:py-10">
+      <h1 className="mb-2 serif text-title font-medium text-ink-primary">
+        Interrogation
+      </h1>
       {progress && (
         <p className="mb-4 text-sm text-ink-muted">
           {progress.claims_done} of {progress.claims_total} claims assessed
@@ -139,21 +144,33 @@ const WorkspacePage: React.FC = () => {
       <div className="grid gap-4 lg:grid-cols-[16rem_minmax(0,1fr)_14rem]">
         <ClaimList claims={state.claims} activeId={turn?.claim_id ?? null} />
 
-        <section aria-label="Question" className="rounded-lg border border-line bg-white p-5">
+        <section
+          aria-label="Question"
+          className="border border-line bg-surface p-5 sm:p-6"
+        >
           {turn?.mode === "retest" && !done && (
-            <p className="mb-4 flex items-center gap-2 rounded-md bg-primary-soft px-3 py-2 text-sm text-primary-dark">
+            <p className="mb-4 flex items-center gap-2 border-l-2 border-redline bg-surface-100/60 px-3 py-2 text-sm text-ink-primary">
               <RotateCcw size={16} aria-hidden="true" />
               {RETEST_BANNER}
             </p>
           )}
           <div aria-live="polite">
-            {turn && !done && turn.question && <QuestionPanel turn={turn} busy={busy !== null} onSubmit={(a) => call({ claim_id: turn.claim_id, answer: a }, "grading")} />}
+            {turn && !done && turn.question && (
+              <QuestionPanel
+                turn={turn}
+                busy={busy !== null}
+                onSubmit={(a) => call({ claim_id: turn.claim_id, answer: a }, "grading")}
+              />
+            )}
             {turn && done && <TurnResult turn={turn} />}
           </div>
 
           {busy && <LoadingState message={BUSY_TEXT[busy]} className="mt-4" />}
           {error !== null && turn && (
-            <div role="alert" className="mt-4 rounded-md border border-verdict-bluff-fg/30 bg-verdict-bluff-bg px-3 py-2 text-sm text-verdict-bluff-fg">
+            <div
+              role="alert"
+              className="mt-4 rounded-md border border-verdict-bluff-fg/30 bg-verdict-bluff-bg px-3 py-2 text-sm text-verdict-bluff-fg"
+            >
               {getErrorMessage(error)}
             </div>
           )}
@@ -173,7 +190,11 @@ const WorkspacePage: React.FC = () => {
                 isWeak(turn.claim) &&
                 !turn.teach_now &&
                 turn.claim.retest_status === "none" && (
-                  <Button variant="secondary" onClick={() => openFixTask(turn.claim.id)} disabled={busy !== null}>
+                  <Button
+                    variant="outline"
+                    onClick={() => openFixTask(turn.claim.id)}
+                    disabled={busy !== null}
+                  >
                     Open fix task (schedules a retest)
                   </Button>
                 )
@@ -181,17 +202,22 @@ const WorkspacePage: React.FC = () => {
               {!fixTask && (
                 <div className="grid gap-2">
                   {nextMode === "retest" && (
-                    <p className="flex items-center gap-2 rounded-md bg-primary-soft px-3 py-2 text-sm text-primary-dark">
+                    <p className="flex items-center gap-2 rounded-md bg-redline-soft px-3 py-2 text-sm text-redline-dark">
                       <RotateCcw size={16} aria-hidden="true" />
                       {RETEST_BANNER}
                     </p>
                   )}
                   {nextId ? (
-                    <Button onClick={() => startClaim(nextId, nextMode ?? "assess")} disabled={busy !== null}>
+                    <Button
+                      onClick={() => startClaim(nextId, nextMode ?? "assess")}
+                      disabled={busy !== null}
+                    >
                       {nextMode === "retest" ? "Start retest →" : "Next claim →"}
                     </Button>
                   ) : (
-                    <Button onClick={() => navigate(routes.report(sessionId))}>See my report →</Button>
+                    <Button onClick={() => navigate(routes.report(sessionId))}>
+                      See my report →
+                    </Button>
                   )}
                 </div>
               )}
@@ -200,14 +226,20 @@ const WorkspacePage: React.FC = () => {
           {error !== null && !turn && (
             <div className="mt-4">
               <ErrorState error={error} />
-              <Link to={routes.setup} className={buttonClasses("secondary", "sm", "mt-3")}>
+              <Link
+                to={routes.setup}
+                className={buttonClasses("secondary", "sm", "mt-3")}
+              >
                 Start over
               </Link>
             </div>
           )}
         </section>
 
-        <LevelTracker current={turn && !done ? turn.level : null} levelsPassed={turn?.claim.levels_passed ?? 0} />
+        <LevelTracker
+          current={turn && !done ? turn.level : null}
+          levelsPassed={turn?.claim.levels_passed ?? 0}
+        />
       </div>
     </div>
   );

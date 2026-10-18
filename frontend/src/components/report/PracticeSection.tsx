@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import type { Claim, FixTask } from "@/types/contract";
 import { api } from "@/api/endpoints";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { VerdictBadge } from "@/components/ui/StatusBadge";
@@ -16,11 +16,11 @@ interface PracticeSectionProps {
   onChanged: () => void;
 }
 
-const PracticeRow: React.FC<{ claim: Claim; sessionId: string | null; onChanged: () => void }> = ({
-  claim,
-  sessionId,
-  onChanged,
-}) => {
+const PracticeRow: React.FC<{
+  claim: Claim;
+  sessionId: string | null;
+  onChanged: () => void;
+}> = ({ claim, sessionId, onChanged }) => {
   const [task, setTask] = useState<FixTask | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
@@ -41,7 +41,7 @@ const PracticeRow: React.FC<{ claim: Claim; sessionId: string | null; onChanged:
 
   const shown = task ?? (claim.retest_status !== "none" ? claim.fix_task : null);
   return (
-    <li className="rounded-md border border-line p-4">
+    <li className="border-b border-line py-5">
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <VerdictBadge verdict={claim.verdict} />
         <span className="text-sm font-medium text-ink-primary">{claim.text}</span>
@@ -54,7 +54,7 @@ const PracticeRow: React.FC<{ claim: Claim; sessionId: string | null; onChanged:
       <div className="flex flex-wrap items-center gap-2">
         <RetestStatus claim={claim} sessionId={sessionId} />
         {sessionId && isWeak(claim) && !shown && (
-          <Button variant="secondary" size="sm" onClick={openTask} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={openTask} disabled={loading}>
             Open fix task
           </Button>
         )}
@@ -71,15 +71,25 @@ const PracticeRow: React.FC<{ claim: Claim; sessionId: string | null; onChanged:
 };
 
 /** Weak and retested claims with their fix task and retest lifecycle. */
-export const PracticeSection: React.FC<PracticeSectionProps> = ({ claims, sessionId, onChanged }) => {
+export const PracticeSection: React.FC<PracticeSectionProps> = ({
+  claims,
+  sessionId,
+  onChanged,
+}) => {
   const rows = claims.filter((c) => isWeak(c) || c.retest !== null);
   if (rows.length === 0) return null;
   return (
-    <section aria-labelledby="practice-heading" className="rounded-lg border border-line bg-white p-5">
-      <h2 id="practice-heading" className="mb-4 text-lg font-semibold text-ink-primary">
+    <section
+      aria-labelledby="practice-heading"
+      className="border-t border-ink-primary pt-4"
+    >
+      <h2
+        id="practice-heading"
+        className="mb-4 text-heading font-semibold text-ink-primary"
+      >
         Practice &amp; retest
       </h2>
-      <ul className="grid gap-3">
+      <ul className="border-t border-line">
         {rows.map((c) => (
           <PracticeRow key={c.id} claim={c} sessionId={sessionId} onChanged={onChanged} />
         ))}

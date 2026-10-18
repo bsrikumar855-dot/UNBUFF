@@ -62,10 +62,10 @@ export function CardRadioGroup<T extends string>({
             onClick={() => onChange(option.value)}
             onKeyDown={(event) => handleKeyDown(event, index)}
             className={cn(
-              "rounded-md border p-4 text-left transition-colors",
+              "min-h-14 rounded-md border p-4 text-left transition-colors",
               selected
-                ? "border-primary bg-primary-soft"
-                : "border-line hover:border-line-strong"
+                ? "border-ink-primary bg-surface-100 shadow-[inset_3px_0_0_0_var(--color-accent)]"
+                : "border-line-strong bg-surface hover:border-ink-primary"
             )}
           >
             <div className="flex items-center justify-between gap-2">
@@ -73,7 +73,11 @@ export function CardRadioGroup<T extends string>({
                 {option.title}
               </span>
               {selected && (
-                <Check size={16} className="shrink-0 text-primary" aria-hidden="true" />
+                <Check
+                  size={16}
+                  className="shrink-0 text-ink-primary"
+                  aria-hidden="true"
+                />
               )}
             </div>
             <p className="mt-1 text-sm leading-relaxed text-ink-secondary">

@@ -19,7 +19,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({ message, className }
     className={cn("flex items-center gap-3 text-sm text-ink-secondary", className)}
   >
     <span
-      className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-line-strong border-t-primary motion-reduce:animate-none"
+      className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-line-strong border-t-redline motion-reduce:animate-none"
       aria-hidden="true"
     />
     {message}

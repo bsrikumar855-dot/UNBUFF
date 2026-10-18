@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useCallback, useRef, useState } from "react";
 import { api } from "@/api/endpoints";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { parseVariables } from "@/lib/graphqlLab";
@@ -9,7 +9,7 @@ import { ResultPanel, SchemaExplorer } from "./LabBits";
 
 const GraphqlEditor = lazy(() => import("./GraphqlEditor"));
 const field =
-  "w-full rounded-md border border-line-strong bg-white px-3 py-2 text-sm font-mono";
+  "w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm font-mono";
 
 export interface QueryWorkbenchProps {
   query: string;

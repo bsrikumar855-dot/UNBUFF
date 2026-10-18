@@ -1,11 +1,18 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/api/endpoints";
-import type { RevisionActionRequest, RevisionItem, RevisionQueueResponse } from "@/types/contract";
+import type {
+  RevisionActionRequest,
+  RevisionItem,
+  RevisionQueueResponse,
+} from "@/types/contract";
 import { Pager } from "@/components/dsa/DsaBits";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
+import { Page, PageHeader } from "@/components/ui/Page";
+import { buttonClasses } from "@/lib/buttonClasses";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { cn } from "@/lib/cn";
 import { routes } from "@/lib/routes";
 
 type View = "due" | "upcoming" | "all";
@@ -21,7 +28,12 @@ const PRIORITY: Record<number, string> = {
   4: "Review scheduled",
   5: "Weak-topic practice",
 };
-const STATUS: Record<RevisionItem["status"], string> = { pending: "Ready", in_progress: "In progress", scheduled: "Scheduled", postponed: "Postponed" };
+const STATUS: Record<RevisionItem["status"], string> = {
+  pending: "Ready",
+  in_progress: "In progress",
+  scheduled: "Scheduled",
+  postponed: "Postponed",
+};
 
 /** The student's revision queue. Items are created by their judged submissions (or added from suggestions), never invented. */
 const DsaRevisionPage: React.FC = () => {
@@ -74,21 +86,23 @@ const DsaRevisionPage: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
-      <nav aria-label="Breadcrumb" className="mb-3 text-sm text-ink-muted">
-        <Link to={routes.dsa} className="underline">
-          DSA Arena
-        </Link>{" "}
-        /{" "}
-        <Link to={routes.dsaAnalytics} className="underline">
-          Analytics
-        </Link>{" "}
-        / Revision
-      </nav>
-      <h1 className="text-2xl font-bold text-ink-primary">Revision queue</h1>
-      <p className="mt-1 mb-5 text-sm text-ink-secondary">Questions to come back to, ordered by priority and due date. Solve one again with a judged submission to move it forward.</p>
+    <Page>
+      <PageHeader
+        crumbs={[
+          { label: "DSA Arena", to: routes.dsa },
+          { label: "Analytics", to: routes.dsaAnalytics },
+          { label: "Revision" },
+        ]}
+        eyebrow="Practice"
+        title="Revision queue"
+        description="Questions to come back to, ordered by priority and due date. Solve one again with a judged submission to move it forward."
+      />
 
-      <div role="tablist" aria-label="Queue view" className="mb-4 flex gap-2">
+      <div
+        role="tablist"
+        aria-label="Queue view"
+        className="mb-6 flex gap-6 border-b border-line"
+      >
         {VIEWS.map((v) => (
           <button
             key={v.value}
@@ -99,10 +113,17 @@ const DsaRevisionPage: React.FC = () => {
               setView(v.value);
               setPage(1);
             }}
-            className={`rounded-md border px-3 py-1.5 text-sm font-medium ${view === v.value ? "border-primary bg-primary-soft text-primary-dark" : "border-line-strong bg-white text-ink-primary hover:bg-surface-100"}`}
+            className={cn(
+              "-mb-px min-h-10 border-b-2 px-0.5 pb-2 pt-1 text-sm font-medium transition-colors",
+              view === v.value
+                ? "border-redline font-semibold text-ink-primary"
+                : "border-transparent text-ink-muted hover:text-ink-primary"
+            )}
           >
             {v.label}
-            {data && v.value !== "all" && ` (${v.value === "due" ? data.counts.due : data.counts.upcoming})`}
+            {data &&
+              v.value !== "all" &&
+              ` (${v.value === "due" ? data.counts.due : data.counts.upcoming})`}
             {data && v.value === "all" && ` (${data.counts.total})`}
           </button>
         ))}
@@ -110,21 +131,28 @@ const DsaRevisionPage: React.FC = () => {
 
       {error !== null && <ErrorState error={error} onRetry={reload} />}
       {actionError !== null && <ErrorState error={actionError} className="mb-4" />}
-      {error === null && data === null && <LoadingState message="Loading your revision queue…" />}
+      {error === null && data === null && (
+        <LoadingState message="Loading your revision queue…" />
+      )}
 
       {data && data.items.length === 0 && (
-        <p className="rounded-md border border-line bg-white p-4 text-sm text-ink-secondary">
-          {view === "due" ? "Nothing is due. Failed judged submissions and solved-after-failure questions appear here automatically." : "No items in this view."}
+        <p className="border border-dashed border-line-strong p-5 text-sm text-ink-secondary">
+          {view === "due"
+            ? "Nothing is due. Failed judged submissions and solved-after-failure questions appear here automatically."
+            : "No items in this view."}
         </p>
       )}
 
       {data && data.items.length > 0 && (
-        <ul className="flex flex-col gap-3">
+        <ul className="border-t border-ink-primary">
           {data.items.map((i) => (
-            <li key={i.question_id} className="rounded-lg border border-line bg-white p-4">
+            <li key={i.question_id} className="border-b border-line py-5">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <Link to={routes.dsaQuestion(i.question_id)} className="font-semibold text-ink-primary hover:underline">
+                  <Link
+                    to={routes.dsaQuestion(i.question_id)}
+                    className="text-[15px] font-semibold text-ink-primary underline-offset-4 hover:text-redline hover:underline"
+                  >
                     {i.title ?? i.question_id}
                   </Link>
                   <p className="text-sm text-ink-secondary">{i.explanation}</p>
@@ -132,36 +160,77 @@ const DsaRevisionPage: React.FC = () => {
                 <div className="text-right text-xs text-ink-muted">
                   <p className="font-medium text-ink-secondary">{PRIORITY[i.priority]}</p>
                   <p>
-                    {STATUS[i.status]} · {i.due ? "due now" : `due ${new Date(i.due_at).toLocaleDateString()}`}
+                    {STATUS[i.status]} ·{" "}
+                    {i.due ? "due now" : `due ${new Date(i.due_at).toLocaleDateString()}`}
                   </p>
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Link to={routes.dsaCode(i.question_id)} className="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-dark">
+                <Link
+                  to={routes.dsaCode(i.question_id)}
+                  className={buttonClasses("primary", "sm")}
+                >
                   Open coding workspace
                 </Link>
-                {(i.status === "pending" || i.status === "postponed" || i.status === "scheduled") && (
-                  <Button variant="secondary" size="sm" disabled={busy === i.question_id} onClick={() => void act(i.question_id, { action: "start" })}>
+                {(i.status === "pending" ||
+                  i.status === "postponed" ||
+                  i.status === "scheduled") && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={busy === i.question_id}
+                    onClick={() => void act(i.question_id, { action: "start" })}
+                  >
                     Start review
                   </Button>
                 )}
                 {(i.status === "pending" || i.status === "in_progress") && (
                   <>
-                    <Button variant="secondary" size="sm" disabled={busy === i.question_id} onClick={() => void act(i.question_id, { action: "complete", outcome: "remembered" })}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={busy === i.question_id}
+                      onClick={() =>
+                        void act(i.question_id, {
+                          action: "complete",
+                          outcome: "remembered",
+                        })
+                      }
+                    >
                       Done: remembered it
                     </Button>
-                    <Button variant="secondary" size="sm" disabled={busy === i.question_id} onClick={() => void act(i.question_id, { action: "complete", outcome: "struggled" })}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={busy === i.question_id}
+                      onClick={() =>
+                        void act(i.question_id, {
+                          action: "complete",
+                          outcome: "struggled",
+                        })
+                      }
+                    >
                       Done: struggled
                     </Button>
                   </>
                 )}
                 {i.status !== "postponed" && (
-                  <Button variant="ghost" size="sm" disabled={busy === i.question_id} onClick={() => void act(i.question_id, { action: "postpone" })}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={busy === i.question_id}
+                    onClick={() => void act(i.question_id, { action: "postpone" })}
+                  >
                     Postpone 2 days
                   </Button>
                 )}
                 {(i.status === "scheduled" || i.status === "postponed") && (
-                  <Button variant="ghost" size="sm" disabled={busy === i.question_id} onClick={() => void act(i.question_id, { action: "revisit" })}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={busy === i.question_id}
+                    onClick={() => void act(i.question_id, { action: "revisit" })}
+                  >
                     Revisit now
                   </Button>
                 )}
@@ -174,20 +243,37 @@ const DsaRevisionPage: React.FC = () => {
 
       {data && data.suggestions.length > 0 && (
         <section aria-labelledby="suggest-heading" className="mt-8">
-          <h2 id="suggest-heading" className="mb-1 text-lg font-semibold text-ink-primary">
+          <h2
+            id="suggest-heading"
+            className="mb-1 text-lg font-semibold text-ink-primary"
+          >
             Suggested practice
           </h2>
-          <p className="mb-3 text-sm text-ink-secondary">Unsolved questions from topics where your recent judged submissions show a real pattern. Nothing is added unless you choose to.</p>
+          <p className="mb-3 text-sm text-ink-secondary">
+            Unsolved questions from topics where your recent judged submissions show a
+            real pattern. Nothing is added unless you choose to.
+          </p>
           <ul className="flex flex-col gap-2">
             {data.suggestions.map((s) => (
-              <li key={s.question_id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-line bg-white p-3 text-sm">
+              <li
+                key={s.question_id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-line bg-surface p-3 text-sm"
+              >
                 <div>
-                  <Link to={routes.dsaQuestion(s.question_id)} className="font-medium text-ink-primary hover:underline">
+                  <Link
+                    to={routes.dsaQuestion(s.question_id)}
+                    className="font-medium text-ink-primary hover:underline"
+                  >
                     {s.title}
                   </Link>
                   <p className="text-ink-secondary">{s.reason}</p>
                 </div>
-                <Button variant="secondary" size="sm" disabled={busy === s.question_id} onClick={() => void add(s.question_id)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={busy === s.question_id}
+                  onClick={() => void add(s.question_id)}
+                >
                   Add to revision
                 </Button>
               </li>
@@ -195,7 +281,7 @@ const DsaRevisionPage: React.FC = () => {
           </ul>
         </section>
       )}
-    </div>
+    </Page>
   );
 };
 

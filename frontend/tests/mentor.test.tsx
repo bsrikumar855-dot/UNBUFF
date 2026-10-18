@@ -651,3 +651,42 @@ describe("memory settings", () => {
     expect(await screen.findByText("Nothing saved here.")).toBeInTheDocument();
   });
 });
+
+describe("Which engine answers is always visible", () => {
+  it("says Live model, with the model name, when the server reports live mode", async () => {
+    mocked.getHealth.mockResolvedValue({ status: "ok", llm_mode: "live", model: "gemini-test-model" });
+    renderAt("/mentor");
+    const note = await screen.findByText(/Live model\./);
+    expect(note.closest("p")).toHaveTextContent(/gemini-test-model/);
+    expect(screen.queryByText(/Mock mode\./)).not.toBeInTheDocument();
+  });
+
+  it("says Mock mode, before anything is sent, when the server reports mock mode", async () => {
+    mocked.getHealth.mockResolvedValue({ status: "ok", llm_mode: "mock", model: null });
+    renderAt("/mentor");
+    const note = await screen.findByText(/Mock mode\./);
+    expect(note.closest("p")).toHaveTextContent(/not an AI model/i);
+    expect(screen.queryByText(/Live model\./)).not.toBeInTheDocument();
+    expect(mocked.mentorChat).not.toHaveBeenCalled();
+  });
+
+  it("shows neither claim when the server cannot be asked", async () => {
+    mocked.getHealth.mockRejectedValue(new Error("down"));
+    renderAt("/mentor");
+    await screen.findByRole("heading", { name: "AI Mentor" });
+    expect(screen.queryByText(/Mock mode\./)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Live model\./)).not.toBeInTheDocument();
+  });
+
+  it("a model failure is an error with a retry, never an invented answer", async () => {
+    mocked.getHealth.mockResolvedValue({ status: "ok", llm_mode: "live", model: "gemini-test-model" });
+    mocked.mentorChat.mockRejectedValue(new ApiError("The mentor could not answer right now. Please try again.", "LLM_INVALID_OUTPUT", 502));
+    renderAt("/mentor");
+    fireEvent.change(await box(), { target: { value: "explain heaps" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    expect(await screen.findByRole("button", { name: "Retry the same message" })).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(/could not get an answer from the AI model/i);
+    expect(screen.getAllByText("explain heaps")).toHaveLength(1);
+    expect(screen.queryByText(/Think about|\(mock mentor/)).not.toBeInTheDocument();
+  });
+});

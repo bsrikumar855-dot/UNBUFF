@@ -97,7 +97,7 @@ Frontend (`frontend/.env` contains `VITE_API_URL=http://localhost:8090`, as in `
 cd frontend && npm ci && cp .env.example .env && npm run dev
 ```
 
-Then open http://localhost:5173. For live Gemini, set `LLM_MODE=live`, `GEMINI_API_KEY` and
+Then open http://localhost:5173. Mock mode is for tests and offline UI work: the AI Mentor page labels it "Mock mode" and `GET /api/health` reports `llm_mode`, and a production server refuses it unless `ALLOW_MOCK_LLM=true`. For live Gemini, set `LLM_MODE=live`, `GEMINI_API_KEY` and
 `GEMINI_MODEL` in `backend/.env` (see `backend/.env.example`).
 
 **How to demo (3 min):** View Demo Report → open a heatmap line (evidence drawer) → Audit My Readiness

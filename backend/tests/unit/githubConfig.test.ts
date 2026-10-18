@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { githubRedirectProblem, loadConfig } from "../../src/config.js";
 
 const KEY = Buffer.alloc(32, 5).toString("base64");
-const base = { LLM_MODE: "mock" };
+const base = { LLM_MODE: "mock", ALLOW_MOCK_LLM: "true" };
 const full = { ...base, GITHUB_CLIENT_ID: "cid", GITHUB_CLIENT_SECRET: "sec", GITHUB_REDIRECT_URI: "http://localhost:8080/api/github/oauth/callback", GITHUB_TOKEN_ENCRYPTION_KEY: KEY };
 const prod = { ...base, NODE_ENV: "production", CORS_ORIGIN: "https://app.example.com", FIREBASE_PROJECT_ID: "p", STORE: "firestore" };
 

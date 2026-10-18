@@ -88,6 +88,15 @@ describe("conversations", () => {
     expect(JSON.stringify(got.body)).not.toMatch(/client_message_id|owner_uid/);
   });
 
+  it("marks a reply as live (mock: false) when a live-mode provider answered, and as mock otherwise", async () => {
+    const c = setup();
+    const mockReply = await c.chat("alice", { message: "Explain two pointers", mode: "dsa_coach" }).expect(200);
+    expect(mockReply.body.mock).toBe(true);
+    (c.llm as { mode: string }).mode = "live"; // the provider reports "live": the response must not claim to be a mock
+    const liveReply = await c.chat("alice", { message: "And sliding window?", mode: "dsa_coach" }).expect(200);
+    expect(liveReply.body.mock).toBe(false);
+  });
+
   it("continues a conversation with follow-ups that carry the earlier turns as context, and allows switching mode", async () => {
     const c = setup();
     const first = await c.chat("alice", { message: "What is a monotonic stack?" }).expect(200);

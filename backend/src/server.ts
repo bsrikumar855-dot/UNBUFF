@@ -1,5 +1,4 @@
 import "dotenv/config";
-import type { ThinkingLevel } from "@google/genai";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -29,9 +28,7 @@ import { DsaProgressService } from "./dsa/progressService.js";
 import { FirestoreProgressStore, MemoryProgressStore, type ProgressStore } from "./dsa/progressStore.js";
 import { loadConfig, parseServiceAccount, type Config } from "./config.js";
 import { createLogger } from "./logger.js";
-import { GeminiProvider } from "./llm/gemini.js";
-import { MockProvider } from "./llm/mock.js";
-import type { LLMProvider } from "./llm/provider.js";
+import { createProvider } from "./llm/select.js";
 import { AssessmentService } from "./services/assessment.js";
 import { RoleRegistry } from "./services/roles.js";
 import { Firestore } from "@google-cloud/firestore";
@@ -43,23 +40,6 @@ import type { SessionStore } from "./store/SessionStore.js";
 function backendRoot(): string {
   const here = dirname(fileURLToPath(import.meta.url));
   return here.includes(`${join("dist", "src")}`) ? join(here, "..", "..") : join(here, "..");
-}
-
-function createProvider(config: Config, logger: ReturnType<typeof createLogger>): LLMProvider {
-  if (config.LLM_MODE === "mock") return new MockProvider();
-  return new GeminiProvider({
-    apiKey: config.GEMINI_API_KEY,
-    model: config.GEMINI_MODEL as string, // required by loadConfig in live mode
-    fallbackModel: config.GEMINI_FALLBACK_MODEL,
-    gradeThinking: config.GRADE_THINKING as ThinkingLevel,
-    vertexai: config.GOOGLE_GENAI_USE_VERTEXAI,
-    project: config.GOOGLE_CLOUD_PROJECT,
-    location: config.GOOGLE_CLOUD_LOCATION,
-    mentorModel: config.MENTOR_MODEL,
-    mentorTemperature: config.MENTOR_TEMPERATURE,
-    mentorTimeoutMs: config.MENTOR_TIMEOUT_MS,
-    logger,
-  });
 }
 
 function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore; github: GithubStore; lab: LabStore; placement: PlacementStore } {

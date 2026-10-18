@@ -40,7 +40,7 @@ export const DemoReportButton: React.FC<DemoReportButtonProps> = ({
           <button
             type="button"
             onClick={viewDemoReport}
-            className="font-medium text-primary underline-offset-2 hover:underline focus-visible:underline"
+            className="font-medium text-redline underline-offset-2 hover:underline focus-visible:underline"
           >
             Retry
           </button>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { EXPERIENCE_LABEL, PRIORITY_CHOICES, WEEKDAYS, csv } from "@/lib/placement";
 import type {
@@ -10,7 +10,7 @@ import type {
   PlacementProfileResponse,
 } from "@/types/contract";
 
-const field = "w-full rounded-md border border-line-strong bg-white px-3 py-2 text-sm";
+const field = "w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm";
 const LANGS: { id: CodeLanguageId; label: string }[] = [
   { id: "python", label: "Python" },
   { id: "javascript", label: "JavaScript" },

@@ -3,7 +3,9 @@ import { FirebaseTokenVerifier } from "../../src/auth/verifier.js";
 import { loadConfig, parseServiceAccount } from "../../src/config.js";
 
 const prod = {
-  LLM_MODE: "mock",
+  LLM_MODE: "live",
+  GEMINI_MODEL: "gemini-test-model",
+  GEMINI_API_KEY: "test-key-not-real",
   NODE_ENV: "production",
   CORS_ORIGIN: "https://app.example.com",
   FIREBASE_PROJECT_ID: "my-project",
@@ -14,6 +16,20 @@ describe("production storage and auth configuration", () => {
   it("accepts a complete production config", () => {
     const c = loadConfig(prod);
     expect(c).toMatchObject({ STORE: "firestore", FIREBASE_PROJECT_ID: "my-project", ALLOW_EPHEMERAL_STORE: false });
+  });
+
+  it("never serves the canned mock mentor as if it were real in production", () => {
+    const mock = { ...prod, LLM_MODE: "mock" };
+    expect(() => loadConfig(mock)).toThrow(/LLM_MODE=live is required/);
+    expect(loadConfig({ ...mock, ALLOW_MOCK_LLM: "true" }).LLM_MODE).toBe("mock");
+    expect(() => loadConfig({ ...mock, ALLOW_MOCK_LLM: "false" })).toThrow(/LLM_MODE=live is required/);
+    // development and tests keep the deterministic mock without any opt-in
+    expect(loadConfig({ ...mock, NODE_ENV: "development", CORS_ORIGIN: "*" }).LLM_MODE).toBe("mock");
+  });
+
+  it("requires a Gemini key for the live mentor in production", () => {
+    const { GEMINI_API_KEY: _k, ...noKey } = prod;
+    expect(() => loadConfig(noKey)).toThrow(/GEMINI_API_KEY is required/);
   });
 
   it("never silently falls back to in-memory storage in production", () => {

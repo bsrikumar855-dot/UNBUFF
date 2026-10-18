@@ -31,5 +31,10 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "error",
       "no-console": "error",
     },
+  },
+  {
+    // shadcn/ui files export their variant recipes (buttonVariants, badgeVariants) next to the component by design.
+    files: ["src/components/ui/button.tsx", "src/components/ui/badge.tsx"],
+    rules: { "react-refresh/only-export-components": "off" },
   }
 );

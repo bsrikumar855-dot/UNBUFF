@@ -10,9 +10,11 @@ import {
   TodaySection,
   WeekSection,
 } from "@/components/placement/Sections";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
+import { CountUp } from "@/components/motion/CountUp";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { Page, PageHeader } from "@/components/ui/Page";
 import type {
   PlacementDashboard,
   PlacementProfile,
@@ -105,34 +107,35 @@ const PlacementPage: React.FC = () => {
 
   const f = dash?.plan?.feasibility;
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="text-2xl font-bold text-ink-primary">Your placement plan</h1>
-      <p className="mt-1 max-w-3xl text-sm text-ink-secondary">
-        One plan built from your goals, your available time and what your records really
-        show across DSA practice, interviews, the GraphQL Lab and, if you connect it,
-        GitHub. It is a study plan, not a prediction: nothing here estimates your chance
-        of an offer.
-      </p>
+    <Page width="wide">
+      <PageHeader
+        eyebrow="Plan"
+        title="Your placement plan"
+        description="One plan built from your goals, your available time and what your records really show across DSA practice, interviews, the GraphQL Lab and, if you connect it, GitHub. It is a study plan, not a prediction: nothing here estimates your chance of an offer."
+      />
 
       {error !== null && (
         <ErrorState
-          className="mt-6"
+          className="mt-2"
           error={error}
           onRetry={() => setAttempt((a) => a + 1)}
         />
       )}
       {error === null && (dash === null || profile === null) && (
-        <LoadingState className="mt-6" message="Building your plan from your records…" />
+        <LoadingState className="mt-2" message="Building your plan from your records…" />
       )}
 
       {dash && profile && (
-        <div className="mt-8 flex flex-col gap-10">
+        <div className="flex flex-col gap-10">
           {dash.needs_profile || editing ? (
             <section
               aria-labelledby="goals-h"
-              className="rounded-lg border border-line bg-white p-4 sm:p-6"
+              className="max-w-4xl border border-line bg-surface p-5 sm:p-8"
             >
-              <h2 id="goals-h" className="text-lg font-semibold text-ink-primary">
+              <h2
+                id="goals-h"
+                className="serif text-heading font-medium text-ink-primary"
+              >
                 {dash.needs_profile
                   ? "Start with your goals and availability"
                   : "Edit your goals and availability"}
@@ -162,16 +165,44 @@ const PlacementPage: React.FC = () => {
             <>
               <section
                 aria-label="Plan status"
-                className="rounded-lg border border-line bg-white p-4"
+                className="border border-ink-primary bg-surface p-4 sm:p-5"
               >
+                <dl className="mb-5 grid grid-cols-2 gap-x-6 gap-y-4 border-b border-line pb-5 sm:grid-cols-4">
+                  {[
+                    dash.plan?.days_until_placement !== null &&
+                    dash.plan?.days_until_placement !== undefined
+                      ? { label: "Days to placement", value: dash.plan.days_until_placement, accent: true }
+                      : null,
+                    { label: "Due today", value: dash.today_tasks.length, accent: false },
+                    { label: "Open tasks", value: dash.counts.planned + dash.counts.in_progress, accent: false },
+                    { label: "Completed", value: dash.counts.completed, accent: false },
+                  ]
+                    .filter((s): s is { label: string; value: number; accent: boolean } => s !== null)
+                    .map((s) => (
+                      <div key={s.label} className="min-w-0">
+                        <dt className="eyebrow">{s.label}</dt>
+                        <dd
+                          className={`serif num mt-1 text-display font-medium leading-none ${
+                            s.accent ? "text-redline" : "text-ink-primary"
+                          }`}
+                        >
+                          <CountUp value={s.value} />
+                        </dd>
+                      </div>
+                    ))}
+                </dl>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-ink-primary">
                       {dash.plan ? `Plan version ${dash.plan.generation}` : "No plan yet"}
                       {dash.plan?.days_until_placement !== null &&
-                      dash.plan?.days_until_placement !== undefined
-                        ? ` · ${dash.plan.days_until_placement} day(s) to your placement date`
-                        : ""}
+                      dash.plan?.days_until_placement !== undefined ? (
+                        <>
+                          {" · "}
+                          <CountUp value={dash.plan.days_until_placement} className="num" />
+                          {" day(s) to your placement date"}
+                        </>
+                      ) : null}
                     </p>
                     {f && (
                       <p className="mt-1 text-sm text-ink-secondary">
@@ -187,7 +218,7 @@ const PlacementPage: React.FC = () => {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button
-                      variant="secondary"
+                      variant="outline"
                       size="sm"
                       disabled={busy}
                       onClick={() => void run(() => api.refreshPlacement())}
@@ -195,7 +226,7 @@ const PlacementPage: React.FC = () => {
                       {busy ? "Working…" : "Refresh from my results"}
                     </Button>
                     <Button
-                      variant="secondary"
+                      variant="outline"
                       size="sm"
                       disabled={busy}
                       onClick={() => setEditing(true)}
@@ -231,7 +262,7 @@ const PlacementPage: React.FC = () => {
                     </Button>
                     <Button
                       size="sm"
-                      variant="secondary"
+                      variant="outline"
                       disabled={busy}
                       onClick={() =>
                         void run(() => api.generatePlacementPlan({ mode: "reduced" }))
@@ -249,13 +280,19 @@ const PlacementPage: React.FC = () => {
                 )}
               </section>
 
-              <TodaySection d={dash} busy={busy} onAction={onAction} />
-              <WeekSection d={dash} busy={busy} onAction={onAction} />
-              <AssistantPanel onDashboard={setDash} />
+              <div className="grid gap-x-12 gap-y-10 xl:grid-cols-[minmax(0,1fr)_22rem]">
+                <div className="flex min-w-0 flex-col gap-10">
+                  <TodaySection d={dash} busy={busy} onAction={onAction} />
+                  <WeekSection d={dash} busy={busy} onAction={onAction} />
+                </div>
+                <div className="flex min-w-0 flex-col gap-10 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:self-start xl:overflow-y-auto xl:pr-1">
+                  <AssistantPanel onDashboard={setDash} />
+                  <LimitationsSection items={dash.limitations} />
+                </div>
+              </div>
               <SkillsSection d={dash} />
               <ReadinessSection d={dash} />
               <HistorySection d={dash} />
-              <LimitationsSection items={dash.limitations} />
 
               <section className="border-t border-line pt-4">
                 {confirming !== "delete" ? (
@@ -289,7 +326,7 @@ const PlacementPage: React.FC = () => {
           )}
         </div>
       )}
-    </div>
+    </Page>
   );
 };
 

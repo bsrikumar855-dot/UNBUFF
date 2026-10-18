@@ -15,6 +15,8 @@ export interface CodeEditorProps {
   language: CodeLanguageId;
   onChange: (value: string) => void;
   ariaLabel: string;
+  /** CSS height of the editor; the workspace gives it "100%" of a sized pane. */
+  height?: string;
 }
 
 /**
@@ -26,10 +28,12 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   language,
   onChange,
   ariaLabel,
+  height = "420px",
 }) => (
   <Editor
-    height="420px"
+    height={height}
     language={MONACO_LANGUAGE[language]}
+    theme="unbluff"
     value={value}
     onChange={(v) => onChange(v ?? "")}
     loading={<p className="p-4 text-sm text-ink-secondary">Loading editor…</p>}

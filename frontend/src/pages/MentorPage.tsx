@@ -2,18 +2,44 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "@/api/endpoints";
 import { ApiError } from "@/api/types";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { MODES, newClientMessageId, PROVENANCE_LABEL } from "@/lib/mentor";
+import { cn } from "@/lib/cn";
 import { routes } from "@/lib/routes";
 import type {
+  HealthResponse,
   MentorChatResponse,
   MentorConversationSummary,
   MentorMessage,
   MentorMode,
   MentorReference,
 } from "@/types/contract";
+
+/** Renders a message: plain paragraphs, and fenced code blocks as scrollable monospace blocks (text only, never HTML). */
+const MessageBody: React.FC<{ text: string }> = ({ text }) => {
+  const parts = text.split(/```[a-zA-Z0-9+#-]*\n?([\s\S]*?)```/g);
+  return (
+    <div className="space-y-3">
+      {parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <pre
+            key={i}
+            aria-label="Code"
+            className="overflow-x-auto border border-line bg-surface-50 p-3 font-mono text-[13px] leading-relaxed text-ink-primary"
+          >
+            <code>{part.replace(/\n$/, "")}</code>
+          </pre>
+        ) : part.trim() === "" ? null : (
+          <p key={i} className="whitespace-pre-wrap break-words">
+            {part.replace(/^\n+|\n+$/g, "")}
+          </p>
+        )
+      )}
+    </div>
+  );
+};
 
 interface Pending {
   clientMessageId: string;
@@ -38,6 +64,35 @@ const STARTERS: Record<MentorMode, string[]> = {
     "Help me plan my next two weeks of preparation.",
     "What should I revise first?",
   ],
+};
+
+/**
+ * Says which engine this server uses for answers, read from the server's own health report. It is always visible, so a
+ * mock deployment can never be mistaken for the real model. Nothing is shown if the server cannot be asked.
+ */
+const MentorEngineNote: React.FC = () => {
+  const [engine, setEngine] = useState<HealthResponse | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    Promise.resolve(api.getHealth())
+      .then((h) => !cancelled && h && setEngine(h))
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  if (!engine) return null;
+  return engine.llm_mode === "mock" ? (
+    <p role="note" className="mt-3 max-w-2xl border-l-2 border-redline pl-3 text-sm text-ink-primary">
+      <span className="font-semibold">Mock mode.</span> This server answers with a built-in stand-in, not an AI
+      model. Nothing you read here comes from Gemini.
+    </p>
+  ) : (
+    <p role="note" className="mt-3 max-w-2xl border-l-2 border-verified pl-3 text-sm text-ink-secondary">
+      <span className="font-semibold text-ink-primary">Live model.</span> Answers come from{" "}
+      {engine.model ?? "the AI model"} through the UNBLUFF server.
+    </p>
+  );
 };
 
 /** The AI mentor: chat, graduated hints, history, and honest notices about what was (not) remembered. */
@@ -187,15 +242,18 @@ const MentorPage: React.FC = () => {
   const rateLimited = error instanceof ApiError && error.code === "RATE_LIMITED";
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-4 px-4 py-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
-      <aside aria-label="Conversations" className="flex flex-col gap-3">
+    <div className="grid lg:h-screen lg:grid-cols-[18rem_minmax(0,1fr)]">
+      <aside
+        aria-label="Conversations"
+        className="flex min-h-0 flex-col gap-3 border-b border-line bg-surface px-4 py-4 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:py-5"
+      >
         <div className="flex items-center justify-between gap-2">
           <Button size="sm" onClick={startNew}>
             New conversation
           </Button>
           <button
             type="button"
-            className="text-sm text-primary underline lg:hidden"
+            className="min-h-10 text-sm text-redline underline underline-offset-4 lg:hidden"
             aria-expanded={showList}
             aria-controls="conversation-list"
             onClick={() => setShowList((v) => !v)}
@@ -224,14 +282,19 @@ const MentorPage: React.FC = () => {
                     type="button"
                     onClick={() => void openConversation(c.id)}
                     aria-current={active?.id === c.id ? "true" : undefined}
-                    className={`min-w-0 flex-1 truncate rounded-md border px-3 py-2 text-left text-sm ${active?.id === c.id ? "border-primary bg-primary-soft text-primary-dark" : "border-line bg-white text-ink-primary hover:bg-surface-100"}`}
+                    className={cn(
+                      "min-h-10 min-w-0 flex-1 truncate border-l-2 px-3 py-2 text-left text-sm transition-colors",
+                      active?.id === c.id
+                        ? "border-redline bg-surface-100 font-semibold text-ink-primary"
+                        : "border-transparent text-ink-secondary hover:bg-surface-100/70 hover:text-ink-primary"
+                    )}
                   >
                     {c.title}
                   </button>
                   {confirmDelete === c.id ? (
                     <>
                       <Button
-                        variant="secondary"
+                        variant="outline"
                         size="sm"
                         onClick={() => void removeConversation(c.id)}
                       >
@@ -260,64 +323,83 @@ const MentorPage: React.FC = () => {
             </ul>
           )}
         </div>
-        <Link to={routes.mentorMemory} className="text-sm text-primary underline">
+        <Link
+          to={routes.mentorMemory}
+          className="text-sm text-redline underline underline-offset-4"
+        >
           What does the mentor remember? Manage memory
         </Link>
       </aside>
 
-      <section aria-label="Mentor chat" className="flex min-w-0 flex-col gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-ink-primary">AI Mentor</h1>
-          <p className="text-sm text-ink-secondary">
+      <section aria-label="Mentor chat" className="flex min-h-0 min-w-0 flex-col">
+        <div className="border-b border-line px-4 pb-3 pt-5 sm:px-8">
+          <p className="eyebrow mb-1 text-redline">Learn</p>
+          <h1 className="serif text-title font-medium text-ink-primary">AI Mentor</h1>
+          <p className="mt-1 max-w-2xl text-sm text-ink-secondary">
             Ask about DSA, your code, interviews or your preparation plan. The mentor can
             make mistakes, so check important facts.
           </p>
-        </div>
+          <MentorEngineNote />
 
-        <div role="radiogroup" aria-label="Mentor mode" className="flex flex-wrap gap-2">
-          {MODES.map((m) => (
-            <button
-              key={m.value}
-              type="button"
-              role="radio"
-              aria-checked={mode === m.value}
-              title={m.hint}
-              onClick={() => setMode(m.value)}
-              className={`rounded-md border px-3 py-1.5 text-sm font-medium ${mode === m.value ? "border-primary bg-primary-soft text-primary-dark" : "border-line-strong bg-white text-ink-primary hover:bg-surface-100"}`}
-            >
-              {m.label}
-            </button>
-          ))}
+          <div
+            role="radiogroup"
+            aria-label="Mentor mode"
+            className="mt-4 flex flex-wrap gap-2"
+          >
+            {MODES.map((m) => (
+              <button
+                key={m.value}
+                type="button"
+                role="radio"
+                aria-checked={mode === m.value}
+                title={m.hint}
+                onClick={() => setMode(m.value)}
+                className={cn(
+                  "min-h-10 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
+                  mode === m.value
+                    ? "border-ink-primary bg-ink-primary text-surface-50"
+                    : "border-line-strong bg-surface text-ink-primary hover:border-ink-primary"
+                )}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-ink-muted">
+            {MODES.find((m) => m.value === mode)?.hint}
+          </p>
         </div>
-        <p className="text-xs text-ink-muted">
-          {MODES.find((m) => m.value === mode)?.hint}
-        </p>
         {questionId && (
-          <p className="text-sm text-ink-secondary">
+          <p className="border-b border-line bg-surface-100/60 px-4 py-2 text-sm text-ink-secondary sm:px-8">
             Discussing question:{" "}
-            <Link to={routes.dsaQuestion(questionId)} className="text-primary underline">
+            <Link
+              to={routes.dsaQuestion(questionId)}
+              className="text-redline underline underline-offset-4"
+            >
               {questionTitle ?? questionId}
             </Link>
           </p>
         )}
 
-        {loadingConversation && <LoadingState message="Loading conversation…" />}
+        {loadingConversation && (
+          <LoadingState className="px-4 py-3 sm:px-8" message="Loading conversation…" />
+        )}
         <div
           role="log"
           aria-label="Conversation"
           aria-live="polite"
           aria-relevant="additions"
-          className="flex min-h-[16rem] flex-col gap-3 rounded-lg border border-line bg-white p-4"
+          className="flex min-h-[18rem] flex-1 flex-col gap-6 overflow-y-auto px-4 py-6 sm:px-8 lg:min-h-0"
         >
           {messages.length === 0 && !loadingConversation && (
-            <div className="text-sm text-ink-secondary">
-              <p className="mb-2">Start a conversation. For example:</p>
+            <div className="max-w-xl text-sm text-ink-secondary">
+              <p className="eyebrow mb-3">Start a conversation. For example:</p>
               <ul className="flex flex-col gap-1">
                 {STARTERS[mode].map((s) => (
                   <li key={s}>
                     <button
                       type="button"
-                      className="text-left text-primary underline"
+                      className="min-h-10 text-left text-[15px] text-ink-primary underline decoration-line-strong underline-offset-4 hover:decoration-redline"
                       onClick={() => setDraft(s)}
                     >
                       {s}
@@ -330,23 +412,30 @@ const MentorPage: React.FC = () => {
           {messages.map((m) => (
             <div
               key={m.id}
-              className={`max-w-[48rem] rounded-md p-3 text-sm ${m.role === "user" ? "self-end bg-primary-soft text-ink-primary" : "self-start bg-surface-100 text-ink-primary"}`}
+              className={cn(
+                "max-w-[46rem] text-[15.5px] leading-relaxed",
+                m.role === "user"
+                  ? "self-end border-l-2 border-ink-primary bg-surface-100 px-4 py-3"
+                  : "self-start"
+              )}
             >
-              <p className="mb-1 text-xs font-medium text-ink-muted">
-                {m.role === "user" ? "You" : "Mentor"}
-              </p>
-              <p className="whitespace-pre-wrap break-words">{m.content}</p>
+              <p className="eyebrow mb-1">{m.role === "user" ? "You" : "Mentor"}</p>
+              <MessageBody text={m.content} />
             </div>
           ))}
           {sending && <LoadingState message="The mentor is thinking…" />}
         </div>
 
         {error !== null && (
-          <div
-            role="alert"
-            className="rounded-md border border-line bg-white p-3 text-sm"
-          >
-            <ErrorState error={error} />
+          <div className="mx-4 mb-3 border-l-2 border-redline bg-surface-100/60 p-3 text-sm sm:mx-8">
+            <ErrorState
+              error={error}
+              message={
+                error instanceof ApiError && error.code === "LLM_INVALID_OUTPUT"
+                  ? "The mentor could not get an answer from the AI model, so nothing was saved. Retry the same message in a moment."
+                  : undefined
+              }
+            />
             {rateLimited && (
               <p className="mt-1 text-ink-secondary">
                 You are sending messages quickly. Wait a moment, then retry.
@@ -354,7 +443,7 @@ const MentorPage: React.FC = () => {
             )}
             {retry && (
               <Button
-                variant="secondary"
+                variant="outline"
                 size="sm"
                 className="mt-2"
                 disabled={sending}
@@ -366,22 +455,26 @@ const MentorPage: React.FC = () => {
           </div>
         )}
 
-        {notice && <MentorNotices notice={notice} />}
+        {notice && (
+          <div className="px-4 pb-2 sm:px-8">
+            <MentorNotices notice={notice} />
+          </div>
+        )}
 
         <form
           onSubmit={(e) => {
             e.preventDefault();
             submit();
           }}
-          className="flex flex-col gap-2"
+          className="flex flex-col gap-2 border-t border-line bg-surface px-4 py-3 sm:px-8"
         >
-          <label htmlFor="mentor-input" className="text-sm font-medium text-ink-primary">
+          <label htmlFor="mentor-input" className="eyebrow">
             Your message
           </label>
           <textarea
             id="mentor-input"
             ref={input}
-            rows={4}
+            rows={3}
             maxLength={2000}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -391,7 +484,7 @@ const MentorPage: React.FC = () => {
                 submit();
               }
             }}
-            className="w-full rounded-md border border-line-strong bg-white px-3 py-2 text-sm"
+            className="w-full resize-none rounded-md border border-line-strong bg-surface-50 px-3 py-2 text-[15px] leading-relaxed"
           />
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs text-ink-muted">
@@ -400,7 +493,7 @@ const MentorPage: React.FC = () => {
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
-                variant="secondary"
+                variant="outline"
                 size="sm"
                 disabled={sending}
                 onClick={() => submit("hint")}
@@ -409,7 +502,7 @@ const MentorPage: React.FC = () => {
               </Button>
               <Button
                 type="button"
-                variant="secondary"
+                variant="outline"
                 size="sm"
                 disabled={sending}
                 onClick={() => submit("solution")}
@@ -444,18 +537,12 @@ const RELATION_ORDER: MentorReference["relation"][] = [
 const MentorNotices: React.FC<{ notice: MentorChatResponse }> = ({ notice }) => (
   <div className="flex flex-col gap-2 text-sm" aria-label="Notes about this answer">
     {notice.mock && (
-      <p
-        role="note"
-        className="rounded-md border border-line bg-white p-2 text-ink-secondary"
-      >
+      <p role="note" className="border-l-2 border-line-strong pl-3 text-ink-secondary">
         Mock mentor: this answer came from a built-in stand-in, not a live AI model.
       </p>
     )}
     {notice.degraded && (
-      <p
-        role="alert"
-        className="rounded-md border border-verdict-bluff-fg bg-white p-2 text-ink-primary"
-      >
+      <p role="alert" className="border-l-2 border-redline pl-3 text-ink-primary">
         The answer worked, but something could not be saved
         {notice.persistence.conversation === "failed"
           ? ": this exchange is not in your history"
@@ -467,18 +554,12 @@ const MentorNotices: React.FC<{ notice: MentorChatResponse }> = ({ notice }) => 
       </p>
     )}
     {notice.analytics_note && (
-      <p
-        role="note"
-        className="rounded-md border border-line bg-white p-2 text-ink-secondary"
-      >
+      <p role="note" className="border-l-2 border-line-strong pl-3 text-ink-secondary">
         {notice.analytics_note}
       </p>
     )}
     {notice.github_context?.used && (
-      <p
-        role="note"
-        className="rounded-md border border-line bg-white p-2 text-ink-secondary"
-      >
+      <p role="note" className="border-l-2 border-line-strong pl-3 text-ink-secondary">
         This answer used a short summary of your saved public GitHub data (synchronised{" "}
         {new Date(notice.github_context.synced_at ?? "").toLocaleString()}
         {notice.github_context.stale ? ", may be out of date" : ""}). It is partial
@@ -486,7 +567,7 @@ const MentorNotices: React.FC<{ notice: MentorChatResponse }> = ({ notice }) => 
       </p>
     )}
     {notice.memory_saved.length > 0 && (
-      <div className="rounded-md border border-line bg-white p-2">
+      <div className="border-l-2 border-line-strong pl-3">
         <p className="font-medium text-ink-primary">Saved to your mentor memory</p>
         <ul className="mt-1 list-disc pl-5 text-ink-secondary">
           {notice.memory_saved.map((m) => (
@@ -498,13 +579,16 @@ const MentorNotices: React.FC<{ notice: MentorChatResponse }> = ({ notice }) => 
             </li>
           ))}
         </ul>
-        <Link to={routes.mentorMemory} className="text-xs text-primary underline">
+        <Link
+          to={routes.mentorMemory}
+          className="text-xs text-redline underline underline-offset-4"
+        >
           Review or delete
         </Link>
       </div>
     )}
     {notice.references.length > 0 && (
-      <div className="rounded-md border border-line bg-white p-2">
+      <div className="border-l-2 border-line-strong pl-3">
         <p className="font-medium text-ink-primary">Related practice from your records</p>
         <ul className="mt-1 flex flex-col gap-1">
           {[...notice.references]
@@ -516,7 +600,7 @@ const MentorNotices: React.FC<{ notice: MentorChatResponse }> = ({ notice }) => 
               <li key={`${r.question_id}-${r.relation}`}>
                 <Link
                   to={routes.dsaQuestion(r.question_id)}
-                  className="text-primary underline"
+                  className="text-redline underline underline-offset-4"
                 >
                   {r.title ?? r.question_id}
                 </Link>

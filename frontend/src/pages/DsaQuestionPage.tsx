@@ -4,11 +4,14 @@ import { Bookmark, ExternalLink } from "lucide-react";
 import { api } from "@/api/endpoints";
 import type { DsaStatus, QuestionDetailResponse } from "@/types/contract";
 import { DifficultyBadge, SourceBanner, TopicTags } from "@/components/dsa/DsaBits";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
+import { Page } from "@/components/ui/Page";
+import { buttonClasses } from "@/lib/buttonClasses";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useDsaProgress } from "@/hooks/useDsaProgress";
 import { STATUS_LABEL, STATUS_ORDER } from "@/lib/dsa";
+import { cn } from "@/lib/cn";
 import { routes } from "@/lib/routes";
 
 const MAX_NOTES = 5000;
@@ -67,13 +70,16 @@ const DsaQuestionPage: React.FC = () => {
     (location.state as { from?: string } | null)?.from ?? routes.dsaQuestions;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <nav aria-label="Breadcrumb" className="mb-3 text-sm text-ink-muted">
-        <Link to={routes.dsa} className="underline">
+    <Page>
+      <nav aria-label="Breadcrumb" className="mb-4 text-sm text-ink-muted">
+        <Link
+          to={routes.dsa}
+          className="underline underline-offset-4 hover:text-ink-primary"
+        >
           DSA Arena
         </Link>{" "}
         /{" "}
-        <Link to={backTo} className="underline">
+        <Link to={backTo} className="underline underline-offset-4 hover:text-ink-primary">
           Questions
         </Link>
       </nav>
@@ -84,71 +90,78 @@ const DsaQuestionPage: React.FC = () => {
       {error === null && data === null && <LoadingState message="Loading question…" />}
 
       {data && (
-        <>
-          <h1 className="text-2xl font-bold text-ink-primary">{data.question.title}</h1>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <DifficultyBadge difficulty={data.question.difficulty} />
-            <TopicTags topics={data.question.topics} />
-          </div>
+        <div className="grid gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
+          <div>
+            <h1 className="serif text-title font-medium text-ink-primary">
+              {data.question.title}
+            </h1>
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <DifficultyBadge difficulty={data.question.difficulty} />
+              <TopicTags topics={data.question.topics} />
+            </div>
 
-          <p className="mt-4 text-sm text-ink-secondary">
-            Associated companies:{" "}
-            {data.companies.length === 0
-              ? "none recorded"
-              : data.companies.map((c, i) => (
-                  <React.Fragment key={c.id}>
-                    {i > 0 && ", "}
-                    <Link to={routes.dsaCompany(c.id)} className="text-primary underline">
-                      {c.name}
-                    </Link>
-                  </React.Fragment>
-                ))}
-          </p>
+            <p className="mt-6 border-t border-line pt-4 text-sm text-ink-secondary">
+              Associated companies:{" "}
+              {data.companies.length === 0
+                ? "none recorded"
+                : data.companies.map((c, i) => (
+                    <React.Fragment key={c.id}>
+                      {i > 0 && ", "}
+                      <Link
+                        to={routes.dsaCompany(c.id)}
+                        className="text-redline underline"
+                      >
+                        {c.name}
+                      </Link>
+                    </React.Fragment>
+                  ))}
+            </p>
 
-          <p className="mt-4">
-            {data.question.url !== null ? (
-              <a
-                href={data.question.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border border-line-strong bg-white px-4 py-2.5 text-sm font-medium text-ink-primary hover:bg-surface-100"
+            <p className="mt-6">
+              {data.question.url !== null ? (
+                <a
+                  href={data.question.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={buttonClasses("secondary", "md")}
+                >
+                  Open original problem
+                  <ExternalLink size={16} aria-hidden="true" />
+                  <span className="sr-only">(opens in a new tab)</span>
+                </a>
+              ) : (
+                <span className="text-sm text-ink-secondary">
+                  First-party practice problem written for UNBLUFF (not a company
+                  interview question). Its statement is in the coding workspace.
+                </span>
+              )}
+            </p>
+            <p className="mt-3">
+              <Link
+                to={routes.dsaCode(data.question.id)}
+                className={buttonClasses("primary", "md")}
               >
-                Open original problem
-                <ExternalLink size={16} aria-hidden="true" />
-                <span className="sr-only">(opens in a new tab)</span>
-              </a>
-            ) : (
-              <span className="text-sm text-ink-secondary">
-                First-party practice problem written for UNBLUFF (not a company interview
-                question). Its statement is in the coding workspace.
-              </span>
-            )}
-          </p>
-          <p className="mt-3">
-            <Link
-              to={routes.dsaCode(data.question.id)}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-dark"
-            >
-              Open code workspace
-            </Link>
-          </p>
-          <p className="mt-3">
-            <Link
-              to={routes.mentor(data.question.id)}
-              className="text-sm text-primary underline"
-            >
-              Ask the AI mentor about this question
-            </Link>
-          </p>
-          <SourceBanner source={data.source} className="mt-6" />
+                Open code workspace
+              </Link>
+            </p>
+            <p className="mt-3">
+              <Link
+                to={routes.mentor(data.question.id)}
+                className="text-sm text-redline underline underline-offset-4"
+              >
+                Ask the AI mentor about this question
+              </Link>
+            </p>
+            <SourceBanner source={data.source} className="mt-8" />
+          </div>
 
           <section
             aria-labelledby="progress-heading"
-            className="mt-8 rounded-lg border border-line bg-white p-5"
+            className="border-t border-ink-primary pt-4 lg:self-start"
           >
             <h2
               id="progress-heading"
-              className="mb-3 text-lg font-semibold text-ink-primary"
+              className="mb-4 text-heading font-semibold text-ink-primary"
             >
               Your progress
             </h2>
@@ -159,7 +172,7 @@ const DsaQuestionPage: React.FC = () => {
                 <Link
                   to={routes.login}
                   state={{ from: `${location.pathname}${location.search}` }}
-                  className="text-primary underline"
+                  className="text-redline underline"
                 >
                   Sign in
                 </Link>{" "}
@@ -195,11 +208,12 @@ const DsaQuestionPage: React.FC = () => {
                           aria-checked={selected}
                           disabled={progress.saving}
                           onClick={() => void changeStatus(s)}
-                          className={`rounded-md border px-3 py-1.5 text-sm font-medium ${
+                          className={cn(
+                            "min-h-10 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
                             selected
-                              ? "border-primary bg-primary-soft text-primary-dark"
-                              : "border-line-strong bg-white text-ink-primary hover:bg-surface-100"
-                          }`}
+                              ? "border-ink-primary bg-ink-primary text-surface-50"
+                              : "border-line-strong bg-surface text-ink-primary hover:border-ink-primary"
+                          )}
                         >
                           {STATUS_LABEL[s]}
                         </button>
@@ -214,11 +228,11 @@ const DsaQuestionPage: React.FC = () => {
                     aria-pressed={mine?.bookmarked ?? false}
                     disabled={progress.saving}
                     onClick={() => void toggleBookmark()}
-                    className="inline-flex items-center gap-2 rounded-md border border-line-strong bg-white px-3 py-1.5 text-sm font-medium text-ink-primary hover:bg-surface-100"
+                    className={buttonClasses("secondary", "md")}
                   >
                     <Bookmark
                       size={16}
-                      className={mine?.bookmarked ? "fill-current text-primary" : ""}
+                      className={mine?.bookmarked ? "fill-current text-redline" : ""}
                       aria-hidden="true"
                     />
                     {mine?.bookmarked ? "Bookmarked" : "Bookmark"}
@@ -241,7 +255,7 @@ const DsaQuestionPage: React.FC = () => {
                       setNotes(e.target.value);
                       setNotesDirty(true);
                     }}
-                    className="w-full rounded-md border border-line-strong bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm"
                   />
                   <div className="mt-2 flex items-center justify-between gap-3">
                     <span className="text-xs text-ink-muted">
@@ -266,9 +280,9 @@ const DsaQuestionPage: React.FC = () => {
               </div>
             )}
           </section>
-        </>
+        </div>
       )}
-    </div>
+    </Page>
   );
 };
 

@@ -25,7 +25,8 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({ value, onChange }) => 
     clearError();
     setExtracted(false);
 
-    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    const isPdf =
+      file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
     if (!isPdf) {
       setFileTypeError(PDF_TYPE_ERROR);
       return;
@@ -77,7 +78,7 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({ value, onChange }) => 
           />
           <label
             htmlFor="resume-pdf-upload"
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-line-strong bg-white px-3 py-1.5 text-xs font-medium text-ink-primary transition-colors hover:bg-surface-100"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-line-strong bg-surface px-3 py-1.5 text-xs font-medium text-ink-primary transition-colors hover:bg-surface-100"
           >
             <Upload size={14} aria-hidden="true" />
             Upload PDF
@@ -94,7 +95,7 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({ value, onChange }) => 
         onDrop={handleDrop}
         className={cn(
           "rounded-md border transition-colors",
-          isDragging ? "border-primary bg-primary-soft" : "border-line-strong"
+          isDragging ? "border-redline bg-redline-soft" : "border-line-strong"
         )}
       >
         <textarea
@@ -119,7 +120,11 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({ value, onChange }) => 
           )}
           {!isExtracting && extracted && fileName && (
             <span role="status" className="flex items-center gap-1 text-ink-muted">
-              <CheckCircle2 size={13} className="text-verdict-defended-fg" aria-hidden="true" />
+              <CheckCircle2
+                size={13}
+                className="text-verdict-defended-fg"
+                aria-hidden="true"
+              />
               Resume text extracted successfully from
               <span className="inline-flex items-center gap-1 font-medium text-ink-secondary">
                 <FileText size={12} aria-hidden="true" />
@@ -128,7 +133,7 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({ value, onChange }) => 
               <button
                 type="button"
                 onClick={handleClear}
-                className="ml-1 inline-flex items-center gap-0.5 text-primary hover:underline"
+                className="ml-1 inline-flex items-center gap-0.5 text-redline hover:underline"
               >
                 <X size={12} aria-hidden="true" />
                 Replace
@@ -141,7 +146,9 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({ value, onChange }) => 
             </span>
           )}
         </div>
-        <span className="text-ink-subtle">{value.length.toLocaleString()} characters</span>
+        <span className="text-ink-subtle">
+          {value.length.toLocaleString()} characters
+        </span>
       </div>
     </div>
   );

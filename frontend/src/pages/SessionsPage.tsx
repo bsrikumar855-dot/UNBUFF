@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { Page, PageHeader } from "@/components/ui/Page";
 import { Link } from "react-router-dom";
 import { api } from "@/api/endpoints";
 import type { SessionSummary } from "@/types/contract";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { buttonClasses } from "@/lib/buttonClasses";
@@ -42,12 +43,12 @@ const SessionsPage: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="mb-1 text-2xl font-bold text-ink-primary">My sessions</h1>
-      <p className="mb-6 text-sm text-ink-secondary">
-        Deleting a session permanently removes your resume text, answers and report for
-        it.
-      </p>
+    <Page width="narrow">
+      <PageHeader
+        eyebrow="Evidence"
+        title="My sessions"
+        description="Deleting a session permanently removes your resume text, answers and report for it."
+      />
 
       {error !== null && <ErrorState error={error} onRetry={load} />}
       {error === null && sessions === null && (
@@ -58,7 +59,7 @@ const SessionsPage: React.FC = () => {
       {sessions !== null && sessions.length === 0 && (
         <p className="text-sm text-ink-secondary">
           No sessions yet.{" "}
-          <Link to={routes.setup} className="text-primary underline">
+          <Link to={routes.setup} className="text-redline underline">
             Start an audit
           </Link>
           .
@@ -70,7 +71,7 @@ const SessionsPage: React.FC = () => {
           {sessions.map((s) => (
             <li
               key={s.session_id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-line bg-white p-4"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-line bg-surface p-4"
             >
               <div className="text-sm">
                 <p className="font-medium text-ink-primary">
@@ -91,7 +92,7 @@ const SessionsPage: React.FC = () => {
                 {confirmId === s.session_id ? (
                   <>
                     <Button
-                      variant="secondary"
+                      variant="outline"
                       size="sm"
                       disabled={deletingId === s.session_id}
                       onClick={() => void remove(s.session_id)}
@@ -116,7 +117,7 @@ const SessionsPage: React.FC = () => {
           ))}
         </ul>
       )}
-    </div>
+    </Page>
   );
 };
 

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import { HelpPanel } from "@/components/graphqllab/HelpPanel";
 import { QueryWorkbench } from "@/components/graphqllab/QueryWorkbench";
 import { useLabSchema } from "@/hooks/useLabSchema";
+import { Page, PageHeader } from "@/components/ui/Page";
 import { routes } from "@/lib/routes";
 
 const STARTER =
@@ -14,19 +14,16 @@ const GraphqlPlaygroundPage: React.FC = () => {
   const [query, setQuery] = useState(STARTER);
   const [variables, setVariables] = useState("");
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <nav aria-label="Breadcrumb" className="mb-3 text-sm text-ink-muted">
-        <Link to={routes.graphqlLab} className="underline">
-          GraphQL Lab
-        </Link>{" "}
-        / Playground
-      </nav>
-      <h1 className="text-2xl font-bold text-ink-primary">GraphQL playground</h1>
-      <p className="mt-1 mb-6 max-w-2xl text-sm text-ink-secondary">
-        Write any query or mutation for the training schema and run it. Mutations change
-        only your own copy of the training data, and you can reset it any time. Runs here
-        are not graded.
-      </p>
+    <Page width="wide">
+      <PageHeader
+        crumbs={[
+          { label: "GraphQL Lab", to: routes.graphqlLab },
+          { label: "Playground" },
+        ]}
+        eyebrow="Learn"
+        title="GraphQL playground"
+        description="Write any query or mutation for the training schema and run it. Mutations change only your own copy of the training data, and you can reset it any time. Runs here are not graded."
+      />
       <QueryWorkbench
         query={query}
         onQueryChange={setQuery}
@@ -40,7 +37,7 @@ const GraphqlPlaygroundPage: React.FC = () => {
       <div className="mt-6">
         <HelpPanel query={query} variablesText={variables} />
       </div>
-    </div>
+    </Page>
   );
 };
 

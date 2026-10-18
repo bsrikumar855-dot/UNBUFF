@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { api } from "@/api/endpoints";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import type {
@@ -68,23 +68,21 @@ export const AssistantPanel: React.FC<{
   };
 
   return (
-    <section
-      aria-labelledby="assistant-h"
-      className="rounded-lg border border-line bg-white p-4"
-    >
-      <h2 id="assistant-h" className="text-lg font-semibold text-ink-primary">
+    <section aria-labelledby="assistant-h" className="border-t border-ink-primary pt-4">
+      <h2 id="assistant-h" className="text-heading font-semibold text-ink-primary">
         Ask about your plan
       </h2>
       <p className="mt-1 text-sm text-ink-secondary">
         Answers use your stored plan and results. Nothing changes unless you apply a
         proposed change.
       </p>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-col items-start gap-0.5">
         {QUICK.map((q) => (
           <Button
             key={q}
-            variant="secondary"
+            variant="ghost"
             size="sm"
+            className="h-auto min-h-9 justify-start whitespace-normal px-2 text-left font-normal underline decoration-line-strong underline-offset-4 hover:decoration-ink-primary"
             disabled={busy}
             onClick={() => void ask(q)}
           >
@@ -104,7 +102,7 @@ export const AssistantPanel: React.FC<{
         </label>
         <input
           id="assistant-q"
-          className="min-w-[14rem] flex-1 rounded-md border border-line-strong bg-white px-3 py-2 text-sm"
+          className="min-h-10 min-w-[10rem] flex-1 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm"
           maxLength={500}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -125,14 +123,14 @@ export const AssistantPanel: React.FC<{
         <div className="mt-3 flex flex-col gap-3">
           <div
             aria-label="Answer from your plan"
-            className="whitespace-pre-wrap rounded-md border border-line bg-surface-50 p-3 text-sm text-ink-primary"
+            className="whitespace-pre-wrap border-l-2 border-ink-primary bg-surface-100/60 p-3 text-sm text-ink-primary"
           >
             {answer.answer}
           </div>
           {answer.mentor_reply && (
             <div
               aria-label="AI mentor explanation"
-              className="rounded-md border border-line p-3 text-sm"
+              className="border-l-2 border-line-strong p-3 text-sm"
             >
               {answer.mentor.mock && (
                 <p className="mb-1 text-xs font-medium text-ink-muted">

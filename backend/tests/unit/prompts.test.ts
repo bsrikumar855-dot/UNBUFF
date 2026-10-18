@@ -88,7 +88,7 @@ describe("config", () => {
   });
 
   it("production requires explicit non-wildcard CORS origins", () => {
-    const prod = { LLM_MODE: "mock", NODE_ENV: "production", FIREBASE_PROJECT_ID: "my-project", STORE: "firestore" };
+    const prod = { LLM_MODE: "mock", ALLOW_MOCK_LLM: "true", NODE_ENV: "production", FIREBASE_PROJECT_ID: "my-project", STORE: "firestore" };
     expect(() => loadConfig(prod)).toThrow(/CORS_ORIGIN is required/);
     expect(() => loadConfig({ ...prod, CORS_ORIGIN: "*" })).toThrow(/must not be "\*"/);
     expect(() => loadConfig({ ...prod, CORS_ORIGIN: "https://app.example.com, *" })).toThrow(/must not be "\*"/);

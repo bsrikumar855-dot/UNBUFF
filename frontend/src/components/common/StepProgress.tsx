@@ -13,7 +13,10 @@ interface StepProgressProps {
  */
 export const StepProgress: React.FC<StepProgressProps> = ({ current }) => {
   return (
-    <ol className="flex items-center gap-4 font-mono text-xs">
+    <ol
+      aria-label="Progress"
+      className="flex flex-wrap items-center gap-x-5 gap-y-1 font-mono text-xs uppercase tracking-wide"
+    >
       {STEPS.map((step, i) => {
         const stepNumber = i + 1;
         const isCurrent = stepNumber === current;
@@ -24,7 +27,11 @@ export const StepProgress: React.FC<StepProgressProps> = ({ current }) => {
             aria-current={isCurrent ? "step" : undefined}
             className={cn(
               "flex items-center gap-1.5",
-              isCurrent ? "text-primary" : isDone ? "text-ink-secondary" : "text-ink-subtle"
+              isCurrent
+                ? "border-b-2 border-redline pb-0.5 text-ink-primary"
+                : isDone
+                  ? "text-ink-secondary"
+                  : "text-ink-subtle"
             )}
           >
             <span>{String(stepNumber).padStart(2, "0")}</span>

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { api } from "@/api/endpoints";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import {
@@ -31,7 +31,7 @@ export interface ExerciseWorkspaceProps {
   onGoToLesson: (lessonId: string) => void;
 }
 
-const field = "w-full rounded-md border border-line-strong bg-white px-3 py-2 text-sm";
+const field = "w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm";
 
 /** One exercise: the task, an editor or the answer controls, graded hints and the result of the check. */
 export const ExerciseWorkspace: React.FC<ExerciseWorkspaceProps> = ({
@@ -134,7 +134,7 @@ export const ExerciseWorkspace: React.FC<ExerciseWorkspaceProps> = ({
     );
 
   const submitButton = (
-    <Button variant="primary" onClick={() => void submit()} disabled={!canSubmit}>
+    <Button variant="default" onClick={() => void submit()} disabled={!canSubmit}>
       {submitting
         ? "Checking…"
         : error !== null
@@ -148,7 +148,7 @@ export const ExerciseWorkspace: React.FC<ExerciseWorkspaceProps> = ({
   return (
     <section
       aria-labelledby="exercise-title"
-      className="flex flex-col gap-4 rounded-lg border border-line bg-white p-4 sm:p-6"
+      className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-4 sm:p-6"
     >
       <header>
         <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
@@ -311,7 +311,7 @@ export const ExerciseWorkspace: React.FC<ExerciseWorkspaceProps> = ({
           {result.outcome !== "passed" && (
             <button
               type="button"
-              className="self-start text-sm text-primary underline"
+              className="self-start text-sm text-redline underline"
               onClick={() => onGoToLesson(result.lesson.lesson_id)}
             >
               Review the lesson: {result.lesson.title}
@@ -333,7 +333,7 @@ export const ExerciseWorkspace: React.FC<ExerciseWorkspaceProps> = ({
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
-            variant="secondary"
+            variant="outline"
             size="sm"
             onClick={() => void nextHint()}
             disabled={hintBusy || hints.length >= exercise.hints_total}

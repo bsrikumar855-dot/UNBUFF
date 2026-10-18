@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Page, PageHeader } from "@/components/ui/Page";
 import { Link, useSearchParams } from "react-router-dom";
 import { GithubConnectionPanel } from "@/components/github/GithubConnectionPanel";
 import { CALLBACK_REASON_COPY, isCallbackReason } from "@/lib/github";
@@ -31,11 +32,12 @@ const SettingsPage: React.FC = () => {
   }, [params, setParams]);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-2xl font-bold text-ink-primary">Settings</h1>
-      <p className="mt-1 text-sm text-ink-secondary">
-        Connected accounts and the data UNBLUFF keeps about you.
-      </p>
+    <Page width="narrow">
+      <PageHeader
+        eyebrow="Account"
+        title="Settings"
+        description="Connected accounts and the data UNBLUFF keeps about you."
+      />
 
       {returned?.kind === "connected" && (
         <p
@@ -66,7 +68,7 @@ const SettingsPage: React.FC = () => {
           </Link>
         </p>
       </div>
-    </div>
+    </Page>
   );
 };
 

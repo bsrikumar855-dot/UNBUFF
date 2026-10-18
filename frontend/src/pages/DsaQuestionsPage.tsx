@@ -2,10 +2,19 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { api } from "@/api/endpoints";
 import type { CompanyDetailResponse, QuestionsResponse } from "@/types/contract";
-import { DifficultyBadge, Pager, ProgressBadge, SourceBanner, TopicTags } from "@/components/dsa/DsaBits";
+import {
+  DifficultyBadge,
+  Pager,
+  ProgressBadge,
+  SourceBanner,
+  TopicTags,
+} from "@/components/dsa/DsaBits";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { Page, PageHeader } from "@/components/ui/Page";
 import { useDsaProgress } from "@/hooks/useDsaProgress";
+import { buttonClasses } from "@/lib/buttonClasses";
 import { DIFFICULTY_LABEL, PAGE_SIZE, positiveInt } from "@/lib/dsa";
 import { routes } from "@/lib/routes";
 
@@ -16,11 +25,13 @@ const SORTS = [
   { value: "difficulty:desc", label: "Difficulty (hard first)" },
 ];
 
-const field = "rounded-md border border-line-strong bg-white px-3 py-2 text-sm font-normal";
+const field =
+  "min-h-10 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm font-normal";
 
 /**
  * Question explorer. Filters live in the URL, so a reload or a shared link keeps them; the server does
  * the searching, filtering, sorting and paging. Used for /dsa/questions and /dsa/companies/:companyId.
+ * Composition: a filter rail beside a compact ruled list (a list of problems, not a wall of cards).
  */
 const DsaQuestionsPage: React.FC = () => {
   const { companyId: routeCompany } = useParams<{ companyId: string }>();
@@ -51,10 +62,10 @@ const DsaQuestionsPage: React.FC = () => {
           if (resetPage) next.delete("page");
           return next;
         },
-        { replace: true },
+        { replace: true }
       );
     },
-    [setParams],
+    [setParams]
   );
 
   // Debounce the title search into the URL.
@@ -84,7 +95,16 @@ const DsaQuestionsPage: React.FC = () => {
     setError(null);
     const [sort, order] = sortValue.split(":");
     api
-      .getQuestions({ company, search: q, difficulty, topic, sort, order, page, page_size: PAGE_SIZE })
+      .getQuestions({
+        company,
+        search: q,
+        difficulty,
+        topic,
+        sort,
+        order,
+        page,
+        page_size: PAGE_SIZE,
+      })
       .then((r) => !cancelled && setData(r))
       .catch((e: unknown) => !cancelled && setError(e));
     return () => {
@@ -96,135 +116,177 @@ const DsaQuestionsPage: React.FC = () => {
   const title = companyInfo ? companyInfo.company.name : "All questions";
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <nav aria-label="Breadcrumb" className="mb-3 text-sm text-ink-muted">
-        <Link to={routes.dsa} className="underline">
-          DSA Arena
-        </Link>{" "}
-        / {title}
-      </nav>
-      <h1 className="text-2xl font-bold text-ink-primary">{title}</h1>
-      {companyInfo && (
-        <p className="mt-1 text-sm text-ink-secondary">
-          {companyInfo.company.catalogue_available
-            ? `${companyInfo.company.question_count} question${companyInfo.company.question_count === 1 ? "" : "s"} in the catalogue`
-            : "No catalogue is available for this company."}
-        </p>
-      )}
-      {data && <SourceBanner source={data.source} className="my-4" />}
+    <Page width="wide">
+      <PageHeader
+        crumbs={[{ label: "DSA Arena", to: routes.dsa }, { label: title }]}
+        title={title}
+        description={
+          companyInfo
+            ? companyInfo.company.catalogue_available
+              ? `${companyInfo.company.question_count} question${companyInfo.company.question_count === 1 ? "" : "s"} in the catalogue`
+              : "No catalogue is available for this company."
+            : undefined
+        }
+      />
+      {data && <SourceBanner source={data.source} className="mb-8" />}
 
-      <form role="search" aria-label="Filter questions" className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5" onSubmit={(e) => e.preventDefault()}>
-        <label className="flex flex-col gap-1 text-sm font-medium text-ink-primary lg:col-span-2">
-          Search by title
-          <input type="search" className={field} value={searchText} onChange={(e) => setSearchText(e.target.value)} />
-        </label>
-        <label className="flex flex-col gap-1 text-sm font-medium text-ink-primary">
-          Difficulty
-          <select className={field} value={difficulty} onChange={(e) => setParam({ difficulty: e.target.value })}>
-            <option value="">All difficulties</option>
-            {(data?.facets.difficulties ?? []).map((d) => (
-              <option key={d} value={d}>
-                {DIFFICULTY_LABEL[d]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm font-medium text-ink-primary">
-          Topic
-          <select className={field} value={topic} onChange={(e) => setParam({ topic: e.target.value })}>
-            <option value="">All topics</option>
-            {(data?.facets.topics ?? []).map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-sm font-medium text-ink-primary">
-          Sort by
-          <select
-            className={field}
-            value={sortValue}
-            onChange={(e) => {
-              const [sort, order] = e.target.value.split(":");
-              setParam({ sort: sort ?? null, order: order ?? null });
-            }}
-          >
-            {SORTS.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </form>
-      {filtersActive && (
-        <button
-          type="button"
-          className="mb-4 text-sm text-primary underline"
-          onClick={() => {
-            setSearchText("");
-            setParam({ q: null, difficulty: null, topic: null });
-          }}
+      <div className="grid gap-x-12 gap-y-8 lg:grid-cols-[15rem_minmax(0,1fr)]">
+        <form
+          role="search"
+          aria-label="Filter questions"
+          className="flex flex-col gap-4 lg:sticky lg:top-6 lg:self-start"
+          onSubmit={(e) => e.preventDefault()}
         >
-          Clear filters
-        </button>
-      )}
-
-      {error !== null && <ErrorState error={error} onRetry={() => setAttempt((a) => a + 1)} />}
-      {error === null && data === null && <LoadingState message="Loading questions…" />}
-
-      {error === null && data && (
-        <>
-          <p className="mb-2 text-sm text-ink-secondary" aria-live="polite">
-            {data.total} question{data.total === 1 ? "" : "s"}
-            {filtersActive ? " match your filters" : ""}
-          </p>
-          {data.questions.length === 0 ? (
-            <p className="rounded-md border border-line bg-white p-4 text-sm text-ink-secondary">
-              {data.source === null
-                ? "No catalogue is loaded, so there are no questions to show."
-                : filtersActive
-                  ? "No questions match these filters. Try clearing some."
-                  : company
-                    ? "No questions are available for this company in the loaded catalogue."
-                    : "The loaded catalogue contains no questions."}
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {data.questions.map((question) => {
-                const mine = progress.byQuestion.get(question.id);
-                return (
-                  <li key={question.id} className="rounded-lg border border-line bg-white p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <Link to={routes.dsaQuestion(question.id)} className="font-semibold text-ink-primary underline-offset-2 hover:underline">
-                        {question.title}
-                      </Link>
-                      <div className="flex items-center gap-3">
-                        <DifficultyBadge difficulty={question.difficulty} />
-                        {mine && <ProgressBadge status={mine.status} bookmarked={mine.bookmarked} />}
-                      </div>
-                    </div>
-                    <div className="mt-2">
-                      <TopicTags topics={question.topics} />
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-primary">
+            Search by title
+            <input
+              type="search"
+              className={field}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-primary">
+            Difficulty
+            <select
+              className={field}
+              value={difficulty}
+              onChange={(e) => setParam({ difficulty: e.target.value })}
+            >
+              <option value="">All difficulties</option>
+              {(data?.facets.difficulties ?? []).map((d) => (
+                <option key={d} value={d}>
+                  {DIFFICULTY_LABEL[d]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-primary">
+            Topic
+            <select
+              className={field}
+              value={topic}
+              onChange={(e) => setParam({ topic: e.target.value })}
+            >
+              <option value="">All topics</option>
+              {(data?.facets.topics ?? []).map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-primary">
+            Sort by
+            <select
+              className={field}
+              value={sortValue}
+              onChange={(e) => {
+                const [sort, order] = e.target.value.split(":");
+                setParam({ sort: sort ?? null, order: order ?? null });
+              }}
+            >
+              {SORTS.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {filtersActive && (
+            <button
+              type="button"
+              className={buttonClasses("link", "sm", "self-start text-sm")}
+              onClick={() => {
+                setSearchText("");
+                setParam({ q: null, difficulty: null, topic: null });
+              }}
+            >
+              Clear filters
+            </button>
           )}
-          <Pager page={data.page} totalPages={data.total_pages} onPage={(p) => setParam({ page: p === 1 ? null : String(p) }, false)} />
-        </>
-      )}
-      {!progress.signedIn && !progress.authLoading && (
-        <p className="mt-6 text-sm text-ink-muted">
-          <Link to={routes.login} className="text-primary underline">
-            Sign in
-          </Link>{" "}
-          to track progress, bookmarks and notes.
-        </p>
-      )}
-    </div>
+          {!progress.signedIn && !progress.authLoading && (
+            <p className="border-t border-line pt-4 text-sm text-ink-muted">
+              <Link
+                to={routes.login}
+                className="text-redline underline underline-offset-4"
+              >
+                Sign in
+              </Link>{" "}
+              to track progress, bookmarks and notes.
+            </p>
+          )}
+        </form>
+
+        <div className="min-w-0">
+          {error !== null && (
+            <ErrorState error={error} onRetry={() => setAttempt((a) => a + 1)} />
+          )}
+          {error === null && data === null && (
+            <LoadingState message="Loading questions…" />
+          )}
+
+          {error === null && data && (
+            <>
+              <p className="mb-3 text-sm text-ink-secondary" aria-live="polite">
+                <span className="num font-medium text-ink-primary">{data.total}</span>{" "}
+                question{data.total === 1 ? "" : "s"}
+                {filtersActive ? " match your filters" : ""}
+              </p>
+              {data.questions.length === 0 ? (
+                <EmptyState title="Nothing to show">
+                  {data.source === null
+                    ? "No catalogue is loaded, so there are no questions to show."
+                    : filtersActive
+                      ? "No questions match these filters. Try clearing some."
+                      : company
+                        ? "No questions are available for this company in the loaded catalogue."
+                        : "The loaded catalogue contains no questions."}
+                </EmptyState>
+              ) : (
+                <ul className="border-t border-ink-primary">
+                  {data.questions.map((question) => {
+                    const mine = progress.byQuestion.get(question.id);
+                    return (
+                      <li
+                        key={question.id}
+                        className="grid gap-x-6 gap-y-1.5 border-b border-line py-3.5 sm:grid-cols-[minmax(0,1fr)_6rem_9rem] sm:items-baseline"
+                      >
+                        <div className="min-w-0">
+                          <Link
+                            to={routes.dsaQuestion(question.id)}
+                            className="text-[15px] font-semibold text-ink-primary underline-offset-4 hover:text-redline hover:underline"
+                          >
+                            {question.title}
+                          </Link>
+                          <div className="mt-1">
+                            <TopicTags topics={question.topics} />
+                          </div>
+                        </div>
+                        <DifficultyBadge difficulty={question.difficulty} />
+                        <div className="sm:text-right">
+                          {mine ? (
+                            <ProgressBadge
+                              status={mine.status}
+                              bookmarked={mine.bookmarked}
+                            />
+                          ) : null}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              <Pager
+                page={data.page}
+                totalPages={data.total_pages}
+                onPage={(p) => setParam({ page: p === 1 ? null : String(p) }, false)}
+              />
+            </>
+          )}
+        </div>
+      </div>
+    </Page>
   );
 };
 

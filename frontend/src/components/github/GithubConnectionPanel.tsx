@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/api/endpoints";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import {
@@ -113,9 +113,9 @@ export const GithubConnectionPanel: React.FC<GithubConnectionPanelProps> = ({
   return (
     <section
       aria-labelledby="github-conn-heading"
-      className="rounded-lg border border-line bg-white p-5"
+      className="border border-ink-primary bg-surface p-5 sm:p-6"
     >
-      <h2 id="github-conn-heading" className="text-lg font-semibold text-ink-primary">
+      <h2 id="github-conn-heading" className="eyebrow text-ink-primary">
         GitHub
       </h2>
 
@@ -158,7 +158,7 @@ export const GithubConnectionPanel: React.FC<GithubConnectionPanelProps> = ({
               href={conn.profile_url ?? undefined}
               target="_blank"
               rel="noreferrer"
-              className="font-medium underline"
+              className="font-medium underline underline-offset-4 hover:text-redline"
             >
               @{conn.login}
             </a>
@@ -171,7 +171,7 @@ export const GithubConnectionPanel: React.FC<GithubConnectionPanelProps> = ({
           {conn.status === "reauthorization_required" && (
             <div
               role="alert"
-              className="mt-3 rounded-md border border-line bg-surface-50 p-3 text-sm text-ink-primary"
+              className="mt-3 border-l-2 border-redline bg-surface-100/60 p-3 text-sm text-ink-primary"
             >
               GitHub no longer accepts the saved connection (it may have been revoked).
               Your saved data is still shown with its sync time. Connect again to refresh
@@ -199,7 +199,7 @@ export const GithubConnectionPanel: React.FC<GithubConnectionPanelProps> = ({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {conn.status === "connected" && (
               <Button
-                variant="secondary"
+                variant="outline"
                 size="sm"
                 onClick={() => void sync()}
                 disabled={busy !== null || conn.sync_in_progress}

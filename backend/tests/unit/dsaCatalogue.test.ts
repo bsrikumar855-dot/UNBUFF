@@ -150,3 +150,66 @@ describe("Catalogue queries", () => {
     expect(e.companyDetail("acme")).toBeNull();
   });
 });
+
+describe("a larger catalogue is paged on the server, not capped at ten", () => {
+  // Synthetic, generated here for the test only. It is not catalogue data and is never written anywhere.
+  const big = (): Catalogue => {
+    const f = base();
+    f.companies = [{ id: "acme", name: "Acme" }, { id: "globex", name: "Globex" }];
+    f.questions = Array.from({ length: 250 }, (_, i) => ({
+      id: `syn_${String(i).padStart(3, "0")}`,
+      title: `Synthetic ${String(i).padStart(3, "0")}`,
+      url: `https://example.com/syn/${i}`,
+      difficulty: (["easy", "medium", "hard"] as const)[i % 3]!,
+      topics: [i % 2 === 0 ? "Arrays" : "Graphs"],
+    }));
+    f.associations = f.questions.filter((_, i) => i % 5 === 0).map((q) => ({ company_id: "acme", question_id: q.id }));
+    return new Catalogue(parseCatalogueFile(f));
+  };
+
+  it("reports the true total and walks every page exactly once", () => {
+    const c = big();
+    const seen = new Set<string>();
+    let pages = 0;
+    for (let page = 1; ; page++) {
+      const r = c.queryQuestions({ page, page_size: 20, sort: "title" });
+      expect(r.total).toBe(250);
+      expect(r.total_pages).toBe(13);
+      if (r.questions.length === 0) break;
+      pages += 1;
+      for (const q of r.questions) seen.add(q.id);
+    }
+    expect(pages).toBe(13);
+    expect(seen.size).toBe(250);
+    expect(c.queryQuestions({ page: 13, page_size: 20 }).questions).toHaveLength(10);
+  });
+
+  it("honours the largest allowed page size and keeps company counts exact", () => {
+    const c = big();
+    expect(c.queryQuestions({ page_size: 100 }).questions).toHaveLength(100);
+    expect(c.queryQuestions({ company: "acme", page_size: 100 })).toMatchObject({ total: 50, total_pages: 1 });
+    expect(c.queryQuestions({ company: "globex" })).toMatchObject({ total: 0, questions: [] });
+    expect(c.queryQuestions({ difficulty: "hard", topic: "Graphs", page_size: 100 })).toMatchObject({ total: 41 }); // i = 5, 11, ... 245
+    expect(c.listCompanies({}).companies.find((x) => x.id === "acme")?.question_count).toBe(50);
+  });
+});
+
+describe("the production default catalogue is labelled honestly", () => {
+  it("is the first-party practice pack: real count, own_work, no company links, not sample data", () => {
+    const file = parseCatalogueFile(JSON.parse(readFileSync(join(import.meta.dirname, "..", "..", "data", "dsa", "practice-pack.json"), "utf8")));
+    const c = new Catalogue(file);
+    const r = c.queryQuestions({ page_size: 100 });
+    expect(r.total).toBe(file.questions.length);
+    expect(r.questions).toHaveLength(file.questions.length);
+    expect(r.source).toMatchObject({ license_status: "own_work", is_sample_data: false });
+    expect(c.listCompanies({})).toMatchObject({ companies: [], total: 0 });
+    expect(file.associations).toEqual([]);
+  });
+
+  it("the development fixture is flagged as sample data and says its company links are invented", () => {
+    const file = parseCatalogueFile(JSON.parse(readFileSync(join(import.meta.dirname, "..", "..", "data", "dsa", "fixture.json"), "utf8")));
+    const c = new Catalogue(file);
+    expect(c.source).toMatchObject({ license_status: "development_fixture", is_sample_data: true });
+    expect(c.source?.license_note).toMatch(/invented/i);
+  });
+});

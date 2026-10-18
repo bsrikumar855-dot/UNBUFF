@@ -14,7 +14,12 @@ export const LedgerPage: React.FC = () => {
   const { state, dispatch } = useSessionState();
   const navigate = useNavigate();
   const [rows, setRows] = useState<ClaimInput[]>(() =>
-    state.claims.map(({ id, text, resume_line, skill_id }) => ({ id, text, resume_line, skill_id })),
+    state.claims.map(({ id, text, resume_line, skill_id }) => ({
+      id,
+      text,
+      resume_line,
+      skill_id,
+    }))
   );
   const [skills, setSkills] = useState<RoleSkill[]>([]);
   const [busy, setBusy] = useState(false);
@@ -31,8 +36,12 @@ export const LedgerPage: React.FC = () => {
   if (!state.sessionId) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-10">
-        <h1 className="mb-3 text-2xl font-bold">Claim ledger</h1>
-        <p className="mb-4 text-ink-secondary">No session yet. Start by adding your resume.</p>
+        <h1 className="mb-3 serif text-title font-medium text-ink-primary">
+          Claim ledger
+        </h1>
+        <p className="mb-4 text-ink-secondary">
+          No session yet. Start by adding your resume.
+        </p>
         <Link to={routes.setup} className={buttonClasses("primary")}>
           Go to setup
         </Link>
@@ -40,14 +49,22 @@ export const LedgerPage: React.FC = () => {
     );
   }
   const sessionId = state.sessionId;
-  const canStart = rows.length > 0 && rows.every((r) => r.text.trim().length > 0) && !busy;
+  const canStart =
+    rows.length > 0 && rows.every((r) => r.text.trim().length > 0) && !busy;
 
   const confirm = async () => {
     setBusy(true);
     setError(null);
     try {
       const res = await api.confirmClaims({ session_id: sessionId, claims: rows });
-      dispatch({ type: "UPDATE_CLAIMS", payload: { claims: res.claims, blindSpots: res.blind_spots, progress: res.progress } });
+      dispatch({
+        type: "UPDATE_CLAIMS",
+        payload: {
+          claims: res.claims,
+          blindSpots: res.blind_spots,
+          progress: res.progress,
+        },
+      });
       navigate(routes.workspace(sessionId));
     } catch (err) {
       setError(err);
@@ -57,15 +74,16 @@ export const LedgerPage: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="mb-2 text-2xl font-bold text-ink-primary">Claim ledger</h1>
-      <p className="mb-6 text-ink-secondary">
-        Check what we extracted. Edit wording, fix the skill, or delete anything you don&apos;t want probed.
+    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-8 sm:py-14">
+      <h1 className="mb-3 serif text-title font-medium text-ink-primary">Claim ledger</h1>
+      <p className="mb-8 max-w-xl leading-relaxed text-ink-secondary">
+        Check what we extracted. Edit wording, fix the skill, or delete anything you
+        don&apos;t want probed.
       </p>
 
       {state.blindSpots.length > 0 && (
         <section aria-labelledby="blind-heading" className="mb-6">
-          <h2 id="blind-heading" className="mb-2 text-sm font-semibold text-ink-muted">
+          <h2 id="blind-heading" className="eyebrow mb-3">
             Required by the role but never claimed
           </h2>
           <ul className="flex flex-wrap gap-2">
@@ -82,7 +100,7 @@ export const LedgerPage: React.FC = () => {
         </section>
       )}
 
-      <ul className="mb-6 grid gap-3" aria-label="Claims">
+      <ul className="mb-8 grid gap-4" aria-label="Claims">
         {rows.map((row, i) => (
           <ClaimRow
             key={row.id ?? `new-${i}`}
@@ -94,10 +112,18 @@ export const LedgerPage: React.FC = () => {
           />
         ))}
       </ul>
-      {rows.length === 0 && <p className="mb-4 text-ink-muted">Keep at least one claim to continue.</p>}
+      {rows.length === 0 && (
+        <p className="mb-4 text-ink-muted">Keep at least one claim to continue.</p>
+      )}
 
       {error !== null && <ErrorState error={error} onRetry={confirm} className="mb-4" />}
-      <button type="button" onClick={confirm} disabled={!canStart} aria-busy={busy} className={buttonClasses("primary")}>
+      <button
+        type="button"
+        onClick={confirm}
+        disabled={!canStart}
+        aria-busy={busy}
+        className={buttonClasses("primary")}
+      >
         {busy ? "Saving your claims…" : "Start interrogation"}
       </button>
     </div>

@@ -13,7 +13,9 @@ import {
   Stat,
   WeeklyChart,
 } from "@/components/dsa/AnalyticsBits";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
+import { Page, PageHeader } from "@/components/ui/Page";
+import { buttonClasses } from "@/lib/buttonClasses";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { DIFFICULTY_LABEL } from "@/lib/dsa";
@@ -92,38 +94,28 @@ const DsaAnalyticsPage: React.FC = () => {
     : 0;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <nav aria-label="Breadcrumb" className="mb-3 text-sm text-ink-muted">
-        <Link to={routes.dsa} className="underline">
-          DSA Arena
-        </Link>{" "}
-        / Analytics
-      </nav>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-ink-primary">DSA analytics</h1>
-          <p className="mt-1 text-sm text-ink-secondary">
-            Based on your judged submissions only. Runs, sample runs and demonstration
-            exercises are never counted.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link
-            to={routes.dsaRevision}
-            className="inline-flex items-center rounded-md border border-line-strong bg-white px-3 py-1.5 text-sm font-medium text-ink-primary hover:bg-surface-100"
-          >
-            Revision queue
-          </Link>
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={refreshing || data === null}
-            onClick={() => void refresh()}
-          >
-            {refreshing ? "Rebuilding…" : "Rebuild from submissions"}
-          </Button>
-        </div>
-      </div>
+    <Page width="wide">
+      <PageHeader
+        crumbs={[{ label: "DSA Arena", to: routes.dsa }, { label: "Analytics" }]}
+        eyebrow="Practice"
+        title="DSA analytics"
+        description="Based on your judged submissions only. Runs, sample runs and demonstration exercises are never counted."
+        actions={
+          <>
+            <Link to={routes.dsaRevision} className={buttonClasses("secondary", "sm")}>
+              Revision queue
+            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={refreshing || data === null}
+              onClick={() => void refresh()}
+            >
+              {refreshing ? "Rebuilding…" : "Rebuild from submissions"}
+            </Button>
+          </>
+        }
+      />
 
       {error !== null && (
         <ErrorState error={error} onRetry={() => setAttempt((a) => a + 1)} />
@@ -137,7 +129,7 @@ const DsaAnalyticsPage: React.FC = () => {
           {excluded > 0 && ex && (
             <p
               role="note"
-              className="mb-6 rounded-md border border-line bg-white p-3 text-sm text-ink-secondary"
+              className="mb-8 border-l-2 border-line-strong bg-surface-100/60 py-2 pl-4 pr-3 text-sm text-ink-secondary"
             >
               {excluded} of your latest {ex.sampled_submissions} submissions are not
               counted:
@@ -164,12 +156,15 @@ const DsaAnalyticsPage: React.FC = () => {
           {!data.has_eligible_activity ? (
             <section
               aria-labelledby="empty-heading"
-              className="rounded-lg border border-dashed border-line-strong bg-white p-8 text-center"
+              className="border border-dashed border-line-strong p-6 sm:p-8"
             >
-              <h2 id="empty-heading" className="text-lg font-semibold text-ink-primary">
+              <h2
+                id="empty-heading"
+                className="text-heading font-semibold text-ink-primary"
+              >
                 No counted activity yet
               </h2>
-              <p className="mx-auto mt-2 max-w-xl text-sm text-ink-secondary">
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-secondary">
                 Analytics appear after you submit solutions that are judged against a real
                 test suite. Your self-reported marks ({data.self_reported.solved} solved,{" "}
                 {data.self_reported.attempted} attempted) are not judged results, so they
@@ -177,16 +172,16 @@ const DsaAnalyticsPage: React.FC = () => {
               </p>
               <Link
                 to={routes.dsaQuestions}
-                className="mt-4 inline-block rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-dark"
+                className={buttonClasses("primary", "md", "mt-5")}
               >
                 Browse questions
               </Link>
             </section>
           ) : (
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-10">
               <section
                 aria-label="Summary"
-                className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+                className="grid border-y border-ink-primary sm:grid-cols-2 sm:divide-x sm:divide-line lg:grid-cols-4"
               >
                 <Stat
                   label="Solved"
@@ -208,10 +203,13 @@ const DsaAnalyticsPage: React.FC = () => {
                 </Stat>
               </section>
 
-              <section aria-labelledby="trend-heading">
+              <section
+                aria-labelledby="trend-heading"
+                className="border-t border-ink-primary pt-4 [&>h2]:mb-4"
+              >
                 <h2
                   id="trend-heading"
-                  className="mb-3 text-lg font-semibold text-ink-primary"
+                  className="text-heading font-semibold text-ink-primary"
                 >
                   Recent activity and trend
                 </h2>
@@ -224,16 +222,16 @@ const DsaAnalyticsPage: React.FC = () => {
                 {data.recent.length > 0 && (
                   <ul
                     aria-label="Latest submissions"
-                    className="mt-3 divide-y divide-line rounded-md border border-line bg-white text-sm"
+                    className="mt-4 border-t border-line text-sm [&>li]:border-b [&>li]:border-line"
                   >
                     {data.recent.map((r) => (
                       <li
                         key={r.submission_id}
-                        className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
+                        className="flex flex-wrap items-center justify-between gap-2 px-1 py-3"
                       >
                         <Link
                           to={routes.dsaCode(r.question_id)}
-                          className="font-medium text-ink-primary hover:underline"
+                          className="font-medium text-ink-primary underline-offset-4 hover:text-redline hover:underline"
                         >
                           {r.title ?? r.question_id}
                         </Link>
@@ -246,11 +244,14 @@ const DsaAnalyticsPage: React.FC = () => {
                 )}
               </section>
 
-              <div className="grid gap-8 lg:grid-cols-2">
-                <section aria-labelledby="topics-heading">
+              <div className="grid gap-x-12 gap-y-10 lg:grid-cols-2">
+                <section
+                  aria-labelledby="topics-heading"
+                  className="border-t border-ink-primary pt-4 [&>h2]:mb-4"
+                >
                   <h2
                     id="topics-heading"
-                    className="mb-3 text-lg font-semibold text-ink-primary"
+                    className="text-heading font-semibold text-ink-primary"
                   >
                     By topic
                   </h2>
@@ -261,10 +262,13 @@ const DsaAnalyticsPage: React.FC = () => {
                     </p>
                   )}
                 </section>
-                <section aria-labelledby="difficulty-heading">
+                <section
+                  aria-labelledby="difficulty-heading"
+                  className="border-t border-ink-primary pt-4 [&>h2]:mb-4"
+                >
                   <h2
                     id="difficulty-heading"
-                    className="mb-3 text-lg font-semibold text-ink-primary"
+                    className="text-heading font-semibold text-ink-primary"
                   >
                     By difficulty
                   </h2>
@@ -278,10 +282,13 @@ const DsaAnalyticsPage: React.FC = () => {
                 </section>
               </div>
 
-              <section aria-labelledby="weak-heading">
+              <section
+                aria-labelledby="weak-heading"
+                className="border-t border-ink-primary pt-4 [&>h2]:mb-4"
+              >
                 <h2
                   id="weak-heading"
-                  className="mb-1 text-lg font-semibold text-ink-primary"
+                  className="text-heading font-semibold text-ink-primary"
                 >
                   Topics and what the evidence says
                 </h2>
@@ -289,12 +296,9 @@ const DsaAnalyticsPage: React.FC = () => {
                   A topic is only judged once it has enough questions and submissions.
                   Compile and runtime errors are tracked separately from wrong answers.
                 </p>
-                <ul className="flex flex-col gap-3">
+                <ul className="border-t border-line">
                   {data.weaknesses.map((w) => (
-                    <li
-                      key={w.topic}
-                      className="rounded-lg border border-line bg-white p-4"
-                    >
+                    <li key={w.topic} className="border-b border-line py-4">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <h3 className="font-semibold text-ink-primary">{w.topic}</h3>
                         <span className="text-sm font-medium text-ink-secondary">
@@ -313,22 +317,25 @@ const DsaAnalyticsPage: React.FC = () => {
               </section>
 
               {data.repeated_failures.length > 0 && (
-                <section aria-labelledby="repeat-heading">
+                <section
+                  aria-labelledby="repeat-heading"
+                  className="border-t border-ink-primary pt-4 [&>h2]:mb-4"
+                >
                   <h2
                     id="repeat-heading"
-                    className="mb-3 text-lg font-semibold text-ink-primary"
+                    className="text-heading font-semibold text-ink-primary"
                   >
                     Questions failing repeatedly
                   </h2>
-                  <ul className="divide-y divide-line rounded-md border border-line bg-white text-sm">
+                  <ul className="border-t border-line text-sm [&>li]:border-b [&>li]:border-line">
                     {data.repeated_failures.map((r) => (
                       <li
                         key={r.question_id}
-                        className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
+                        className="flex flex-wrap items-center justify-between gap-2 px-1 py-3"
                       >
                         <Link
                           to={routes.dsaCode(r.question_id)}
-                          className="font-medium text-ink-primary hover:underline"
+                          className="font-medium text-ink-primary underline-offset-4 hover:text-redline hover:underline"
                         >
                           {r.title ?? r.question_id}
                         </Link>
@@ -344,15 +351,21 @@ const DsaAnalyticsPage: React.FC = () => {
             </div>
           )}
 
-          <section aria-labelledby="revision-heading" className="mt-8">
-            <div className="mb-3 flex items-center justify-between gap-2">
+          <section
+            aria-labelledby="revision-heading"
+            className="mt-10 border-t border-ink-primary pt-4"
+          >
+            <div className="mb-4 flex items-center justify-between gap-2">
               <h2
                 id="revision-heading"
-                className="text-lg font-semibold text-ink-primary"
+                className="text-heading font-semibold text-ink-primary"
               >
                 Revision due ({queue?.counts.due ?? data.revision_due})
               </h2>
-              <Link to={routes.dsaRevision} className="text-sm text-primary underline">
+              <Link
+                to={routes.dsaRevision}
+                className="text-sm text-redline underline underline-offset-4"
+              >
                 Open the full queue
               </Link>
             </div>
@@ -360,12 +373,12 @@ const DsaAnalyticsPage: React.FC = () => {
               <p className="text-sm text-ink-secondary">Nothing is due for revision.</p>
             )}
             {queue && queue.items.length > 0 && (
-              <ul className="divide-y divide-line rounded-md border border-line bg-white text-sm">
+              <ul className="border-t border-line text-sm [&>li]:border-b [&>li]:border-line">
                 {queue.items.map((i) => (
-                  <li key={i.question_id} className="px-3 py-2">
+                  <li key={i.question_id} className="px-1 py-3">
                     <Link
                       to={routes.dsaQuestion(i.question_id)}
-                      className="font-medium text-ink-primary hover:underline"
+                      className="font-medium text-ink-primary underline-offset-4 hover:text-redline hover:underline"
                     >
                       {i.title ?? i.question_id}
                     </Link>
@@ -377,7 +390,7 @@ const DsaAnalyticsPage: React.FC = () => {
           </section>
         </>
       )}
-    </div>
+    </Page>
   );
 };
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from "react";
 import type { TurnResponse } from "@/types/contract";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 interface QuestionPanelProps {
   turn: TurnResponse;
@@ -37,7 +37,7 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({ turn, busy, onSubm
           </span>
         )}
         {turn.mode === "retest" && (
-          <span className="rounded-sm bg-primary-soft px-2 py-0.5 normal-case text-primary-dark">Retest</span>
+          <span className="rounded-sm bg-redline-soft px-2 py-0.5 normal-case text-redline-dark">Retest</span>
         )}
       </div>
       <h2 ref={headingRef} tabIndex={-1} className="mb-4 text-lg font-semibold text-ink-primary">
@@ -60,7 +60,7 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({ turn, busy, onSubm
           <Button type="submit" disabled={busy || !answer.trim()}>
             Submit answer
           </Button>
-          <Button type="button" variant="secondary" disabled={busy} onClick={() => onSubmit(IDK)}>
+          <Button type="button" variant="outline" disabled={busy} onClick={() => onSubmit(IDK)}>
             I don&apos;t know
           </Button>
         </div>

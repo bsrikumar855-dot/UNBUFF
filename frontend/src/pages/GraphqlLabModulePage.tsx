@@ -5,6 +5,7 @@ import { ExerciseWorkspace } from "@/components/graphqllab/ExerciseWorkspace";
 import { LessonBlocks } from "@/components/graphqllab/LabBits";
 import { QueryWorkbench } from "@/components/graphqllab/QueryWorkbench";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { Page } from "@/components/ui/Page";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useLabSchema } from "@/hooks/useLabSchema";
 import {
@@ -76,9 +77,12 @@ const GraphqlLabModulePage: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <nav aria-label="Breadcrumb" className="mb-3 text-sm text-ink-muted">
-        <Link to={routes.graphqlLab} className="underline">
+    <Page width="wide">
+      <nav aria-label="Breadcrumb" className="mb-4 text-sm text-ink-muted">
+        <Link
+          to={routes.graphqlLab}
+          className="underline underline-offset-4 hover:text-ink-primary"
+        >
           GraphQL Lab
         </Link>{" "}
         / {detail?.module.title ?? "Module"}
@@ -94,19 +98,19 @@ const GraphqlLabModulePage: React.FC = () => {
       {detail && (
         <>
           <header>
-            <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+            <p className="eyebrow text-redline">
               Module {detail.module.order} · {DIFFICULTY_LABEL[detail.module.difficulty]}{" "}
               · {STATUS_LABEL[detail.module.status]}
             </p>
-            <h1 className="mt-1 text-2xl font-bold text-ink-primary">
+            <h1 className="serif mt-2 text-title font-medium text-ink-primary">
               {detail.module.title}
             </h1>
-            <p className="mt-1 text-sm text-ink-secondary">{detail.module.summary}</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <p className="mt-3 max-w-2xl leading-relaxed text-ink-secondary">
+              {detail.module.summary}
+            </p>
+            <div className="mt-6 grid gap-x-12 gap-y-6 border-y border-line py-5 sm:grid-cols-2">
               <div>
-                <h2 className="text-sm font-semibold text-ink-primary">
-                  You will be able to
-                </h2>
+                <h2 className="eyebrow text-ink-primary">You will be able to</h2>
                 <ul className="mt-1 list-disc pl-5 text-sm text-ink-secondary">
                   {detail.objectives.map((o) => (
                     <li key={o}>{o}</li>
@@ -114,7 +118,7 @@ const GraphqlLabModulePage: React.FC = () => {
                 </ul>
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-ink-primary">Completion</h2>
+                <h2 className="eyebrow text-ink-primary">Completion</h2>
                 <p className="mt-1 text-sm text-ink-secondary">
                   {detail.completion_criteria} A module is completed only when every
                   exercise has actually passed its check.
@@ -127,116 +131,134 @@ const GraphqlLabModulePage: React.FC = () => {
             </div>
           </header>
 
-          <section aria-labelledby="lessons-h" className="mt-8">
-            <h2 id="lessons-h" className="mb-3 text-lg font-semibold text-ink-primary">
-              Lessons
-            </h2>
-            <div className="flex flex-col gap-3">
-              {detail.lessons.map((l, i) => (
-                <details
-                  key={l.id}
-                  id={`lesson-${l.id}`}
-                  open={i === 0}
-                  className="rounded-lg border border-line bg-white p-4"
+          <div className="mt-10 grid gap-x-12 gap-y-12 xl:grid-cols-[minmax(0,30rem)_minmax(0,1fr)] xl:items-start">
+            <div className="min-w-0 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto xl:pr-4">
+              <section aria-labelledby="lessons-h">
+                <h2
+                  id="lessons-h"
+                  className="mb-3 border-t border-ink-primary pt-4 text-heading font-semibold text-ink-primary"
                 >
-                  <summary className="cursor-pointer font-semibold text-ink-primary">
-                    {l.title}
-                    {l.completed ? (
-                      <span className="ml-2 text-xs font-normal text-ink-muted">
-                        (completed)
-                      </span>
-                    ) : null}
-                  </summary>
-                  <ul className="mt-2 list-disc pl-5 text-xs text-ink-muted">
-                    {l.objectives.map((o) => (
-                      <li key={o}>{o}</li>
-                    ))}
-                  </ul>
-                  <div className="mt-3">
-                    <LessonBlocks blocks={l.blocks} onTry={tryExample} />
-                  </div>
-                </details>
-              ))}
-            </div>
-          </section>
-
-          {sandbox && (
-            <section
-              id="lab-sandbox"
-              aria-labelledby="sandbox-h"
-              className="mt-8 rounded-lg border border-line bg-white p-4"
-            >
-              <div className="mb-3 flex items-center justify-between">
-                <h2 id="sandbox-h" className="text-lg font-semibold text-ink-primary">
-                  Try it
+                  Lessons
                 </h2>
-                <button
-                  type="button"
-                  className="text-sm text-primary underline"
-                  onClick={() => setSandbox(null)}
-                >
-                  Close
-                </button>
-              </div>
-              <QueryWorkbench
-                query={sandboxQuery}
-                onQueryChange={setSandboxQuery}
-                variablesText={sandboxVars}
-                onVariablesChange={setSandboxVars}
-                starter={sandbox}
-                schema={schema}
-                schemaError={schemaError}
-                onRetrySchema={retrySchema}
-              />
-            </section>
-          )}
+                <div className="flex flex-col">
+                  {detail.lessons.map((l, i) => (
+                    <details
+                      key={l.id}
+                      id={`lesson-${l.id}`}
+                      open={i === 0}
+                      className="border-b border-line py-4"
+                    >
+                      <summary className="cursor-pointer font-semibold text-ink-primary">
+                        {l.title}
+                        {l.completed ? (
+                          <span className="ml-2 text-xs font-normal text-ink-muted">
+                            (completed)
+                          </span>
+                        ) : null}
+                      </summary>
+                      <ul className="mt-2 list-disc pl-5 text-xs text-ink-muted">
+                        {l.objectives.map((o) => (
+                          <li key={o}>{o}</li>
+                        ))}
+                      </ul>
+                      <div className="mt-3">
+                        <LessonBlocks blocks={l.blocks} onTry={tryExample} />
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              </section>
 
-          <section aria-labelledby="exercises-h" className="mt-8">
-            <h2 id="exercises-h" className="mb-3 text-lg font-semibold text-ink-primary">
-              Exercises
-            </h2>
-            <ol className="mb-4 flex flex-wrap gap-2" aria-label="Exercises">
-              {detail.exercises.map((e) => (
-                <li key={e.id}>
-                  <button
-                    type="button"
-                    aria-current={exercise?.id === e.id ? "true" : undefined}
-                    onClick={() => setParams({ exercise: e.id }, { replace: true })}
-                    className={cn(
-                      "rounded-md border px-3 py-1.5 text-left text-sm",
-                      exercise?.id === e.id
-                        ? "border-primary bg-primary-soft text-primary-dark"
-                        : "border-line-strong bg-white text-ink-secondary hover:bg-surface-100"
-                    )}
-                  >
-                    {e.order}. {e.title}
-                    <span className="block text-xs text-ink-muted">
-                      {TYPE_LABEL[e.type]} ·{" "}
-                      {e.student.passed
-                        ? "Passed"
-                        : e.student.attempts > 0
-                          ? "Attempted"
-                          : "Not started"}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ol>
-            {exercise && (
-              <ExerciseWorkspace
-                key={exercise.id}
-                exercise={exercise}
-                schema={schema}
-                schemaError={schemaError}
-                onRetrySchema={retrySchema}
-                onSubmitted={() => void load(true)}
-                onGoToLesson={goToLesson}
-              />
-            )}
-          </section>
+              {sandbox && (
+                <section
+                  id="lab-sandbox"
+                  aria-labelledby="sandbox-h"
+                  className="mt-8 border-t border-ink-primary pt-4"
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <h2
+                      id="sandbox-h"
+                      className="text-heading font-semibold text-ink-primary"
+                    >
+                      Try it
+                    </h2>
+                    <button
+                      type="button"
+                      className="text-sm text-redline underline underline-offset-4"
+                      onClick={() => setSandbox(null)}
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <QueryWorkbench
+                    query={sandboxQuery}
+                    onQueryChange={setSandboxQuery}
+                    variablesText={sandboxVars}
+                    onVariablesChange={setSandboxVars}
+                    starter={sandbox}
+                    schema={schema}
+                    schemaError={schemaError}
+                    onRetrySchema={retrySchema}
+                  />
+                </section>
+              )}
+            </div>
+
+            <section aria-labelledby="exercises-h" className="min-w-0">
+              <h2
+                id="exercises-h"
+                className="mb-3 border-t border-ink-primary pt-4 text-heading font-semibold text-ink-primary"
+              >
+                Exercises
+              </h2>
+              <ol className="mb-4 flex flex-wrap gap-2" aria-label="Exercises">
+                {detail.exercises.map((e) => (
+                  <li key={e.id}>
+                    <button
+                      type="button"
+                      aria-current={exercise?.id === e.id ? "true" : undefined}
+                      onClick={() => setParams({ exercise: e.id }, { replace: true })}
+                      className={cn(
+                        "min-h-12 rounded-md border px-3 py-1.5 text-left text-sm transition-colors",
+                        exercise?.id === e.id
+                          ? "border-ink-primary bg-ink-primary text-surface-50"
+                          : "border-line-strong bg-surface text-ink-secondary hover:border-ink-primary"
+                      )}
+                    >
+                      {e.order}. {e.title}
+                      <span
+                        className={cn(
+                          "block text-xs",
+                          exercise?.id === e.id ? "text-surface-50/80" : "text-ink-muted"
+                        )}
+                      >
+                        {TYPE_LABEL[e.type]} ·{" "}
+                        {e.student.passed
+                          ? "Passed"
+                          : e.student.attempts > 0
+                            ? "Attempted"
+                            : "Not started"}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              {exercise && (
+                <ExerciseWorkspace
+                  key={exercise.id}
+                  exercise={exercise}
+                  schema={schema}
+                  schemaError={schemaError}
+                  onRetrySchema={retrySchema}
+                  onSubmitted={() => void load(true)}
+                  onGoToLesson={goToLesson}
+                />
+              )}
+            </section>
+          </div>
         </>
       )}
-    </div>
+    </Page>
   );
 };
 

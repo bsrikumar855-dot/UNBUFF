@@ -66,6 +66,11 @@ export function githubRedirectProblem(raw: string | undefined, production: boole
 const EnvSchema = z
   .object({
     LLM_MODE: z.enum(["live", "mock"]).default("live"),
+    /** Production refuses LLM_MODE=mock unless this is "true": a deployment must not present canned answers as a real AI mentor. */
+    ALLOW_MOCK_LLM: z
+      .enum(["true", "false", "1", "0"])
+      .default("false")
+      .transform((v) => v === "true" || v === "1"),
     GEMINI_API_KEY: z.string().optional(),
     GEMINI_MODEL: z
       .string()
@@ -164,6 +169,13 @@ const EnvSchema = z
       }
       if (!env.FIREBASE_PROJECT_ID?.trim()) {
         ctx.addIssue({ code: "custom", path: ["FIREBASE_PROJECT_ID"], message: "FIREBASE_PROJECT_ID is required when NODE_ENV=production" });
+      }
+      if (env.LLM_MODE === "mock" && !env.ALLOW_MOCK_LLM) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["LLM_MODE"],
+          message: "LLM_MODE=live is required when NODE_ENV=production (set ALLOW_MOCK_LLM=true only for an explicit demonstration that must not be presented as a real AI mentor)",
+        });
       }
       if (env.STORE === "memory" && !env.ALLOW_EPHEMERAL_STORE) {
         ctx.addIssue({

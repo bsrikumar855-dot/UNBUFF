@@ -14,18 +14,40 @@ interface ResumeHeatmapProps {
  * Resume heatmap: every line with a verdict is a button (left border + tint in the verdict color,
  * plus label + icon). Lines without claims render as plain text. Declared-only sessions list claims.
  */
-export const ResumeHeatmap: React.FC<ResumeHeatmapProps> = ({ lines, claims, onOpen }) => {
+export const ResumeHeatmap: React.FC<ResumeHeatmapProps> = ({
+  lines,
+  claims,
+  onOpen,
+}) => {
   const rows =
     lines.length > 0
-      ? lines.map((l) => ({ key: `line-${l.index}`, text: l.text, verdict: l.verdict, claimIds: l.claim_ids }))
-      : claims.map((c) => ({ key: c.id, text: c.text, verdict: c.verdict, claimIds: [c.id] }));
+      ? lines.map((l) => ({
+          key: `line-${l.index}`,
+          text: l.text,
+          verdict: l.verdict,
+          claimIds: l.claim_ids,
+        }))
+      : claims.map((c) => ({
+          key: c.id,
+          text: c.text,
+          verdict: c.verdict,
+          claimIds: [c.id],
+        }));
 
   return (
-    <section aria-labelledby="heatmap-heading" className="rounded-lg border border-line bg-white p-5">
-      <h2 id="heatmap-heading" className="mb-1 text-lg font-semibold text-ink-primary">
+    <section
+      aria-labelledby="heatmap-heading"
+      className="border-t border-ink-primary pt-4"
+    >
+      <h2
+        id="heatmap-heading"
+        className="mb-1 text-heading font-semibold text-ink-primary"
+      >
         {lines.length > 0 ? "Resume heatmap" : "Claims"}
       </h2>
-      <p className="mb-4 text-sm text-ink-muted">Select a line to see the evidence behind its verdict.</p>
+      <p className="mb-4 text-sm text-ink-muted">
+        Select a line to see the evidence behind its verdict.
+      </p>
       <ul className="grid gap-2">
         {rows.map((row) => {
           if (row.verdict === null) {
@@ -46,7 +68,7 @@ export const ResumeHeatmap: React.FC<ResumeHeatmapProps> = ({ lines, claims, onO
                 style={{ borderLeftColor: cfg.fg, backgroundColor: cfg.bg }}
               >
                 <span className="min-w-0 flex-1 break-words">{row.text}</span>
-                <VerdictBadge verdict={row.verdict} className="bg-white/70" />
+                <VerdictBadge verdict={row.verdict} className="bg-surface/70" />
               </button>
             </li>
           );

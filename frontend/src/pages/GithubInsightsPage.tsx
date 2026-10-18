@@ -10,6 +10,7 @@ import {
 import { GithubConnectionPanel } from "@/components/github/GithubConnectionPanel";
 import { Stat } from "@/components/dsa/AnalyticsBits";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { Page, PageHeader } from "@/components/ui/Page";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { routes } from "@/lib/routes";
 import type {
@@ -88,16 +89,21 @@ const GithubInsightsPage: React.FC = () => {
 
   const c = contributions.data;
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="text-2xl font-bold text-ink-primary">GitHub insights</h1>
-      <p className="mt-1 text-sm text-ink-secondary">
-        What your public GitHub shows about your development work.{" "}
-        <strong>It is partial evidence, not a measure of skill</strong>: private work,
-        other platforms and learning time do not appear, and it does not count as DSA
-        practice.
-      </p>
+    <Page width="wide">
+      <PageHeader
+        eyebrow="Evidence"
+        title="GitHub insights"
+        description={
+          <>
+            What your public GitHub shows about your development work.{" "}
+            <strong>It is partial evidence, not a measure of skill</strong>: private work,
+            other platforms and learning time do not appear, and it does not count as DSA
+            practice.
+          </>
+        }
+      />
 
-      <div className="mt-6">
+      <div>
         <GithubConnectionPanel onSynced={refresh} onDisconnected={refresh} />
       </div>
 
@@ -106,16 +112,25 @@ const GithubInsightsPage: React.FC = () => {
           {conn.status === "not_configured"
             ? "Nothing to show until GitHub is set up on this server."
             : "Connect GitHub above to see your contribution history, repositories and a portfolio checklist."}{" "}
-          <Link to={routes.settings} className="underline">
+          <Link
+            to={routes.settings}
+            className="underline underline-offset-4 hover:text-redline"
+          >
             Settings
           </Link>
         </p>
       )}
 
       {readable && (
-        <div className="mt-8 flex flex-col gap-10">
-          <section aria-labelledby="contrib-h">
-            <h2 id="contrib-h" className="mb-3 text-lg font-semibold text-ink-primary">
+        <div className="mt-12 flex flex-col gap-12">
+          <section
+            aria-labelledby="contrib-h"
+            className="border-t border-ink-primary pt-4"
+          >
+            <h2
+              id="contrib-h"
+              className="mb-4 text-heading font-semibold text-ink-primary"
+            >
               Contribution calendar
             </h2>
             {contributions.error !== null && (
@@ -132,7 +147,7 @@ const GithubInsightsPage: React.FC = () => {
             {c && c.available && (
               <>
                 <SourceNote source={c.source} />
-                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="mt-4 grid grid-cols-2 border-y border-ink-primary sm:grid-cols-4 sm:divide-x sm:divide-line">
                   <Stat label="Contributions" hint="GitHub's own total for this period">
                     {c.total}
                   </Stat>
@@ -163,15 +178,15 @@ const GithubInsightsPage: React.FC = () => {
                     them is read.
                   </p>
                 ) : null}
-                <div className="mt-4 grid gap-6 sm:grid-cols-2">
+                <div className="mt-8 grid gap-x-12 gap-y-8 sm:grid-cols-2">
                   <div>
-                    <h3 className="mb-2 text-sm font-semibold text-ink-primary">
+                    <h3 className="eyebrow mb-3 border-b border-ink-primary pb-2">
                       By month
                     </h3>
                     <PeriodBars rows={c.monthly} label="Contributions per month" month />
                   </div>
                   <div>
-                    <h3 className="mb-2 text-sm font-semibold text-ink-primary">
+                    <h3 className="eyebrow mb-3 border-b border-ink-primary pb-2">
                       Last 12 weeks (week starting)
                     </h3>
                     <PeriodBars rows={c.weekly} label="Contributions per week" />
@@ -182,8 +197,8 @@ const GithubInsightsPage: React.FC = () => {
             )}
           </section>
 
-          <section aria-labelledby="repos-h">
-            <h2 id="repos-h" className="mb-3 text-lg font-semibold text-ink-primary">
+          <section aria-labelledby="repos-h" className="border-t border-ink-primary pt-4">
+            <h2 id="repos-h" className="mb-4 text-heading font-semibold text-ink-primary">
               Public repositories
             </h2>
             {repositories.error !== null && (
@@ -208,17 +223,14 @@ const GithubInsightsPage: React.FC = () => {
                 {repositories.data.repositories.length === 0 && (
                   <Empty>No public repositories found.</Empty>
                 )}
-                <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+                <ul className="mt-4 border-t border-line">
                   {repositories.data.repositories.map((r) => (
-                    <li
-                      key={r.name_with_owner}
-                      className="rounded-md border border-line bg-white p-4"
-                    >
+                    <li key={r.name_with_owner} className="border-b border-line py-4">
                       <a
                         href={r.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="font-medium text-ink-primary underline"
+                        className="font-semibold text-ink-primary underline underline-offset-4 hover:text-redline"
                       >
                         {r.name_with_owner}
                       </a>
@@ -253,8 +265,14 @@ const GithubInsightsPage: React.FC = () => {
             )}
           </section>
 
-          <section aria-labelledby="activity-h">
-            <h2 id="activity-h" className="mb-3 text-lg font-semibold text-ink-primary">
+          <section
+            aria-labelledby="activity-h"
+            className="border-t border-ink-primary pt-4"
+          >
+            <h2
+              id="activity-h"
+              className="mb-4 text-heading font-semibold text-ink-primary"
+            >
               Recent collaboration
             </h2>
             {activity.error !== null && (
@@ -276,7 +294,7 @@ const GithubInsightsPage: React.FC = () => {
                 {activity.data.items.length === 0 ? (
                   <Empty>No recent public activity.</Empty>
                 ) : (
-                  <ul className="mt-2 flex flex-col gap-1.5 text-sm">
+                  <ul className="mt-3 border-t border-line text-sm [&>li]:border-b [&>li]:border-line [&>li]:py-2.5">
                     {activity.data.items.map((i) => (
                       <li key={`${i.kind}-${i.url}-${i.occurred_at}`}>
                         <span className="text-ink-muted">
@@ -287,7 +305,7 @@ const GithubInsightsPage: React.FC = () => {
                           href={i.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="underline"
+                          className="underline underline-offset-4 hover:text-redline"
                         >
                           {i.title}
                         </a>
@@ -300,8 +318,14 @@ const GithubInsightsPage: React.FC = () => {
             )}
           </section>
 
-          <section aria-labelledby="checklist-h">
-            <h2 id="checklist-h" className="mb-1 text-lg font-semibold text-ink-primary">
+          <section
+            aria-labelledby="checklist-h"
+            className="border-t border-ink-primary pt-4"
+          >
+            <h2
+              id="checklist-h"
+              className="mb-1 text-heading font-semibold text-ink-primary"
+            >
               Portfolio checklist
             </h2>
             <p className="mb-3 text-sm text-ink-secondary">
@@ -322,14 +346,17 @@ const GithubInsightsPage: React.FC = () => {
 
           <p className="text-sm text-ink-secondary">
             Want feedback? Ask the{" "}
-            <Link to={routes.mentor()} className="underline">
+            <Link
+              to={routes.mentor()}
+              className="underline underline-offset-4 hover:text-redline"
+            >
               AI mentor
             </Link>{" "}
             about your GitHub projects. It sees only a short summary of this saved data.
           </p>
         </div>
       )}
-    </div>
+    </Page>
   );
 };
 

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { api } from "@/api/endpoints";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { HELP_ACTIONS, PHASE_LABEL, parseVariables } from "@/lib/graphqlLab";
@@ -46,7 +46,7 @@ export const HelpPanel: React.FC<{
   return (
     <section
       aria-labelledby="lab-help-h"
-      className="rounded-lg border border-line bg-white p-4"
+      className="rounded-lg border border-line bg-surface p-4"
     >
       <h3 id="lab-help-h" className="text-sm font-semibold text-ink-primary">
         Ask the AI mentor
@@ -65,7 +65,7 @@ export const HelpPanel: React.FC<{
       <input
         id="lab-help-message"
         maxLength={500}
-        className="mt-1 w-full rounded-md border border-line-strong bg-white px-3 py-2 text-sm"
+        className="mt-1 w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
       />
@@ -73,7 +73,7 @@ export const HelpPanel: React.FC<{
         {HELP_ACTIONS.map((a) => (
           <Button
             key={a.action}
-            variant="secondary"
+            variant="outline"
             size="sm"
             disabled={busy !== null || (a.needsQuery && query.trim() === "")}
             onClick={() => void ask(a.action)}

@@ -4,7 +4,13 @@ import type { Claim, Criterion, QA } from "@/types/contract";
 import { VerdictBadge } from "@/components/ui/StatusBadge";
 import { percent } from "@/lib/format";
 
-const CRITERIA: Criterion[] = ["accuracy", "specificity", "mechanism", "ownership", "tradeoff"];
+const CRITERIA: Criterion[] = [
+  "accuracy",
+  "specificity",
+  "mechanism",
+  "ownership",
+  "tradeoff",
+];
 const CRITERION_LABEL: Record<Criterion, string> = {
   accuracy: "Accuracy",
   specificity: "Specificity",
@@ -16,7 +22,8 @@ const CRITERION_LABEL: Record<Criterion, string> = {
 const Turn: React.FC<{ qa: QA }> = ({ qa }) => (
   <li className="rounded-md border border-line p-3">
     <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-      L{qa.level} · {qa.mode === "retest" ? "Retest" : qa.kind === "clarify" ? "Follow-up" : "Question"}
+      L{qa.level} ·{" "}
+      {qa.mode === "retest" ? "Retest" : qa.kind === "clarify" ? "Follow-up" : "Question"}
     </p>
     <p className="mb-2 font-medium text-ink-primary">{qa.question}</p>
     <p className="mb-2 whitespace-pre-line text-ink-secondary">
@@ -33,16 +40,26 @@ const Turn: React.FC<{ qa: QA }> = ({ qa }) => (
           return (
             <li key={c} className="flex gap-2 text-xs">
               {r.passed ? (
-                <Check size={14} className="mt-0.5 shrink-0 text-verdict-defended-fg" aria-hidden="true" />
+                <Check
+                  size={14}
+                  className="mt-0.5 shrink-0 text-verdict-defended-fg"
+                  aria-hidden="true"
+                />
               ) : (
-                <X size={14} className="mt-0.5 shrink-0 text-verdict-bluff-fg" aria-hidden="true" />
+                <X
+                  size={14}
+                  className="mt-0.5 shrink-0 text-verdict-bluff-fg"
+                  aria-hidden="true"
+                />
               )}
               <span>
                 <span className="font-semibold">
                   {CRITERION_LABEL[c]} {r.passed ? "shown" : "missing"}
                 </span>
                 {r.evidence_quote && <q className="ml-1 italic">{r.evidence_quote}</q>}
-                {!r.passed && r.missing_concept && <span className="ml-1">— {r.missing_concept}</span>}
+                {!r.passed && r.missing_concept && (
+                  <span className="ml-1">— {r.missing_concept}</span>
+                )}
               </span>
             </li>
           );
@@ -58,7 +75,8 @@ export const ClaimEvidence: React.FC<{ claim: Claim }> = ({ claim }) => (
     <div className="mb-2 flex flex-wrap items-center gap-2">
       <VerdictBadge verdict={claim.verdict} />
       <span className="text-ink-muted">
-        {claim.id} · levels passed {claim.levels_passed}/3 · proficiency {percent(claim.proficiency)}
+        {claim.id} · levels passed {claim.levels_passed}/3 · proficiency{" "}
+        {percent(claim.proficiency)}
       </span>
     </div>
     <h3 className="mb-3 font-semibold text-ink-primary">{claim.text}</h3>

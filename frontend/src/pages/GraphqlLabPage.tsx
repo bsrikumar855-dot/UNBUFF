@@ -1,17 +1,21 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/api/endpoints";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { Page, PageHeader } from "@/components/ui/Page";
+import { buttonClasses } from "@/lib/buttonClasses";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { DIFFICULTY_LABEL, STATUS_LABEL, conceptLabel } from "@/lib/graphqlLab";
 import { routes } from "@/lib/routes";
 import type { LabModulesResponse, LabProgressResponse } from "@/types/contract";
 
 const Stat: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="rounded-lg border border-line bg-white p-3">
-    <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">{label}</p>
-    <p className="mt-1 text-xl text-ink-primary">{value}</p>
+  <div className="py-4 pr-4 even:pl-4 sm:px-5 sm:even:pl-5 sm:first:pl-0">
+    <p className="eyebrow">{label}</p>
+    <p className="num mt-2 text-2xl font-medium leading-none tracking-tight text-ink-primary">
+      {value}
+    </p>
   </div>
 );
 
@@ -56,43 +60,43 @@ const GraphqlLabPage: React.FC = () => {
   const title = (id: string) => modules?.modules.find((m) => m.id === id)?.title ?? id;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-ink-primary">GraphQL Learning Lab</h1>
-          <p className="mt-1 max-w-2xl text-sm text-ink-secondary">
-            Learn GraphQL by writing real queries against a small training API (a campus
-            placement hub). Nothing here touches real data or other students: mutations
-            only change your own disposable copy.
-          </p>
-        </div>
-        <Link
-          to={routes.graphqlPlayground}
-          className="inline-flex items-center rounded-md border border-line-strong bg-white px-3 py-1.5 text-sm font-medium text-ink-primary hover:bg-surface-100"
-        >
-          Open the playground
-        </Link>
-      </div>
+    <Page width="wide">
+      <PageHeader
+        eyebrow="Learn"
+        title="GraphQL Learning Lab"
+        description="Learn GraphQL by writing real queries against a small training API (a campus placement hub). Nothing here touches real data or other students: mutations only change your own disposable copy."
+        actions={
+          <Link
+            to={routes.graphqlPlayground}
+            className={buttonClasses("secondary", "sm")}
+          >
+            Open the playground
+          </Link>
+        }
+      />
 
-      {error !== null && <ErrorState className="mt-6" error={error} onRetry={reload} />}
+      {error !== null && <ErrorState className="mt-2" error={error} onRetry={reload} />}
       {error === null && (modules === null || progress === null) && (
-        <LoadingState className="mt-6" message="Loading your learning path…" />
+        <LoadingState className="mt-2" message="Loading your learning path…" />
       )}
 
       {modules && progress && t && (
         <>
-          <section aria-labelledby="lab-progress-h" className="mt-8">
+          <section
+            aria-labelledby="lab-progress-h"
+            className="border-t border-ink-primary pt-4"
+          >
             <h2
               id="lab-progress-h"
-              className="mb-3 text-lg font-semibold text-ink-primary"
+              className="mb-4 text-heading font-semibold text-ink-primary"
             >
               Your progress
             </h2>
             {!progress.has_started ? (
-              <p className="rounded-md border border-dashed border-line-strong p-4 text-sm text-ink-secondary">
+              <p className="border border-dashed border-line-strong p-5 text-sm text-ink-secondary">
                 You have not started yet. Begin with{" "}
                 <Link
-                  className="underline"
+                  className="underline underline-offset-4 hover:text-redline"
                   to={routes.graphqlModule(modules.modules[0]!.id)}
                 >
                   {modules.modules[0]!.title}
@@ -101,7 +105,7 @@ const GraphqlLabPage: React.FC = () => {
               </p>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="grid grid-cols-2 border-y border-ink-primary sm:grid-cols-4 sm:divide-x sm:divide-line">
                   <Stat
                     label="Modules completed"
                     value={`${t.modules_completed} of ${t.modules_total}`}
@@ -119,12 +123,12 @@ const GraphqlLabPage: React.FC = () => {
                     value={String(t.exercises_attempted)}
                   />
                 </div>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="mt-8 grid gap-x-12 gap-y-8 sm:grid-cols-2">
                   <div>
-                    <h3 className="text-sm font-semibold text-ink-primary">
+                    <h3 className="eyebrow border-b border-ink-primary pb-2 text-ink-primary">
                       Recent activity
                     </h3>
-                    <ul className="mt-1 flex flex-col gap-1 text-sm text-ink-secondary">
+                    <ul className="mt-3 flex flex-col gap-2 text-sm text-ink-secondary">
                       {progress.recent_activity.map((a, i) => (
                         <li key={`${a.at}-${i}`}>
                           {a.kind === "passed"
@@ -133,7 +137,7 @@ const GraphqlLabPage: React.FC = () => {
                               ? "Used a hint on"
                               : "Attempted"}{" "}
                           <Link
-                            className="underline"
+                            className="underline underline-offset-4 hover:text-redline"
                             to={routes.graphqlModule(a.module_id, a.exercise_id)}
                           >
                             {a.exercise_title}
@@ -146,15 +150,15 @@ const GraphqlLabPage: React.FC = () => {
                     </ul>
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-ink-primary">
+                    <h3 className="eyebrow border-b border-ink-primary pb-2 text-ink-primary">
                       Concepts that need another attempt
                     </h3>
                     {progress.needs_another_attempt.length === 0 ? (
-                      <p className="mt-1 text-sm text-ink-secondary">
+                      <p className="mt-3 text-sm text-ink-secondary">
                         None right now: every exercise you have tried has been passed.
                       </p>
                     ) : (
-                      <ul className="mt-1 flex flex-col gap-1 text-sm text-ink-secondary">
+                      <ul className="mt-3 flex flex-col gap-2 text-sm text-ink-secondary">
                         {progress.needs_another_attempt.map((n) => (
                           <li key={n.concept}>
                             {conceptLabel(n.concept)}{" "}
@@ -185,8 +189,14 @@ const GraphqlLabPage: React.FC = () => {
             </details>
           </section>
 
-          <section aria-labelledby="lab-path-h" className="mt-10">
-            <h2 id="lab-path-h" className="mb-1 text-lg font-semibold text-ink-primary">
+          <section
+            aria-labelledby="lab-path-h"
+            className="mt-12 border-t border-ink-primary pt-4"
+          >
+            <h2
+              id="lab-path-h"
+              className="mb-1 text-heading font-semibold text-ink-primary"
+            >
               Learning path
             </h2>
             {current && (
@@ -194,17 +204,20 @@ const GraphqlLabPage: React.FC = () => {
                 Suggested next: {current.title}.
               </p>
             )}
-            <ol className="flex flex-col gap-3">
+            <ol className="mt-4 border-t border-line">
               {modules.modules.map((m) => (
-                <li key={m.id} className="rounded-lg border border-line bg-white p-4">
+                <li key={m.id} className="border-b border-line py-5">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                      <p className="eyebrow">
                         Module {m.order} · {DIFFICULTY_LABEL[m.difficulty]} ·{" "}
                         {STATUS_LABEL[m.status]}
                       </p>
-                      <h3 className="mt-1 font-semibold text-ink-primary">
-                        <Link to={routes.graphqlModule(m.id)} className="underline">
+                      <h3 className="serif mt-1 text-heading font-medium text-ink-primary">
+                        <Link
+                          to={routes.graphqlModule(m.id)}
+                          className="underline underline-offset-4 hover:text-redline"
+                        >
                           {m.title}
                         </Link>
                       </h3>
@@ -216,11 +229,11 @@ const GraphqlLabPage: React.FC = () => {
                     </p>
                   </div>
                   <div
-                    className="mt-2 h-2 overflow-hidden rounded bg-surface-100"
+                    className="mt-3 h-1.5 overflow-hidden bg-surface-200"
                     aria-hidden="true"
                   >
                     <div
-                      className="h-full bg-primary"
+                      className="h-full bg-ink-primary"
                       style={{
                         width: `${(m.exercises_passed / Math.max(1, m.exercise_count)) * 100}%`,
                       }}
@@ -237,7 +250,7 @@ const GraphqlLabPage: React.FC = () => {
             </ol>
           </section>
 
-          <section className="mt-10 border-t border-line pt-4">
+          <section className="mt-14 border-t border-line pt-4">
             {!confirming ? (
               <Button variant="ghost" size="sm" onClick={() => setConfirming(true)}>
                 Delete my GraphQL Lab data
@@ -264,7 +277,7 @@ const GraphqlLabPage: React.FC = () => {
           </section>
         </>
       )}
-    </div>
+    </Page>
   );
 };
 

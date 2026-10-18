@@ -296,3 +296,35 @@ describe("Access control in the UI", () => {
     expect(await screen.findByText(/no longer in the catalogue/)).toBeInTheDocument();
   });
 });
+
+describe("Catalogue size and provenance are reported honestly", () => {
+  const practicePack: DsaSource = {
+    name: "UNBLUFF first-party practice pack",
+    license_status: "own_work",
+    license_note: "Written by the UNBLUFF project.",
+    url: null,
+    imported_at: "2026-01-01T00:00:00.000Z",
+    source_updated_at: null,
+    is_sample_data: false,
+  };
+
+  it("a catalogue with questions but no companies says how many questions it holds and why there are no company lists", async () => {
+    mocked.getCompanies.mockResolvedValue({ companies: [], page: 1, page_size: 24, total: 0, total_pages: 1, source: practicePack });
+    mocked.getQuestions.mockResolvedValue(questionsPage([q(1)], { total: 10, source: practicePack }));
+    renderAt("/dsa");
+    expect(await screen.findByText(/It holds 10 questions, none linked to a company/)).toBeInTheDocument();
+    expect(screen.getByText(/only after an approved dataset with company links is imported/)).toBeInTheDocument();
+    expect(screen.queryByText(/not real company interview data/i)).not.toBeInTheDocument(); // not mislabelled as sample data
+    expect(screen.getByRole("note")).toHaveTextContent(/first-party practice pack/i);
+  });
+
+  it("the question explorer shows the true server total and walks pages of twenty", async () => {
+    mocked.getQuestions.mockResolvedValue(questionsPage([q(1), q(2)], { total: 250, total_pages: 13, page_size: 20 }));
+    renderAt("/dsa/questions");
+    expect(await screen.findByText("Page 1 of 13")).toBeInTheDocument();
+    expect(screen.getByText("250")).toBeInTheDocument();
+    expect(mocked.getQuestions).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1, page_size: 20 }));
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    await waitFor(() => expect(mocked.getQuestions).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2, page_size: 20 })));
+  });
+});
