@@ -2,6 +2,7 @@ import { Enter } from "@/components/motion/Enter";
 import { DUR, RISE } from "@/components/motion/tokens";
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Filter, Search } from "lucide-react";
 import { api } from "@/api/endpoints";
 import type { CompanyDetailResponse, QuestionsResponse } from "@/types/contract";
 import {
@@ -14,7 +15,9 @@ import {
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { GLASS, TILE } from "@/components/ui/GlassCard";
 import { Page, PageHeader } from "@/components/ui/Page";
+import { cn } from "@/lib/cn";
 import { useDsaProgress } from "@/hooks/useDsaProgress";
 import { buttonClasses } from "@/lib/buttonClasses";
 import { DIFFICULTY_LABEL, PAGE_SIZE, positiveInt } from "@/lib/dsa";
@@ -28,7 +31,7 @@ const SORTS = [
 ];
 
 const field =
-  "min-h-10 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm font-normal";
+  "min-h-10 rounded-xl border border-line-strong bg-white/70 px-3 py-2 text-sm font-normal text-ink-primary";
 
 /**
  * Question explorer. Filters live in the URL, so a reload or a shared link keeps them; the server does
@@ -118,10 +121,18 @@ const DsaQuestionsPage: React.FC = () => {
   const title = companyInfo ? companyInfo.company.name : "All questions";
 
   return (
-    <Page width="wide">
+    <Page width="fluid" className="sm:px-5 lg:pl-5 lg:pr-6">
       <PageHeader
         crumbs={[{ label: "DSA Arena", to: routes.dsa }, { label: title }]}
-        title={title}
+        title={
+          companyInfo ? (
+            title
+          ) : (
+            <>
+              All <em>questions</em>
+            </>
+          )
+        }
         description={
           companyInfo
             ? companyInfo.company.catalogue_available
@@ -130,25 +141,36 @@ const DsaQuestionsPage: React.FC = () => {
             : undefined
         }
       />
-      {data && <SourceBanner source={data.source} className="mb-8" />}
+      {data && <SourceBanner source={data.source} className="mb-6" />}
 
-      <div className="grid gap-x-12 gap-y-8 lg:grid-cols-[15rem_minmax(0,1fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[19rem_minmax(0,1fr)]">
         <form
           role="search"
           aria-label="Filter questions"
-          className="flex flex-col gap-4 lg:sticky lg:top-6 lg:self-start"
+          className={cn(GLASS, "flex flex-col gap-4 p-5 lg:sticky lg:top-4")}
           onSubmit={(e) => e.preventDefault()}
         >
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-primary">
+          <h2 className="flex items-center gap-2.5 text-lg font-semibold text-ink-primary">
+            <Filter size={20} strokeWidth={1.75} aria-hidden="true" />
+            Filters
+          </h2>
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-primary">
             Search by title
-            <input
-              type="search"
-              className={field}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
+            <span className="relative block">
+              <Search
+                size={15}
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted"
+              />
+              <input
+                type="search"
+                className={cn(field, "w-full pl-9")}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+              />
+            </span>
           </label>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-primary">
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-primary">
             Difficulty
             <select
               className={field}
@@ -163,7 +185,7 @@ const DsaQuestionsPage: React.FC = () => {
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-primary">
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-primary">
             Topic
             <select
               className={field}
@@ -178,7 +200,7 @@ const DsaQuestionsPage: React.FC = () => {
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-ink-primary">
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-primary">
             Sort by
             <select
               className={field}
@@ -208,7 +230,7 @@ const DsaQuestionsPage: React.FC = () => {
             </button>
           )}
           {!progress.signedIn && !progress.authLoading && (
-            <p className="border-t border-line pt-4 text-sm text-ink-muted">
+            <p className="border-t border-black/5 pt-4 text-sm text-ink-muted">
               <Link
                 to={routes.login}
                 className="text-redline underline underline-offset-4"
@@ -220,17 +242,18 @@ const DsaQuestionsPage: React.FC = () => {
           )}
         </form>
 
-        <div className="min-w-0">
+        <section
+          aria-label="Questions"
+          className={cn(GLASS, "min-w-0 p-5 sm:p-6")}
+        >
           {error !== null && (
             <ErrorState error={error} onRetry={() => setAttempt((a) => a + 1)} />
           )}
-          {error === null && data === null && (
-            <LoadingState message="Loading questions…" />
-          )}
+          {error === null && data === null && <LoadingState message="Loading questions…" />}
 
           {error === null && data && (
             <>
-              <p className="mb-3 text-sm text-ink-secondary" aria-live="polite">
+              <p className="mb-4 text-sm text-ink-secondary" aria-live="polite">
                 <span className="num font-medium text-ink-primary">{data.total}</span>{" "}
                 question{data.total === 1 ? "" : "s"}
                 {filtersActive ? " match your filters" : ""}
@@ -247,7 +270,7 @@ const DsaQuestionsPage: React.FC = () => {
                 </EmptyState>
               ) : (
                 <ul
-                  className="border-t border-ink-primary"
+                  className="flex flex-col gap-2.5"
                   key={`${data.page}:${data.total}:${data.questions[0]?.id ?? ""}`}
                 >
                   {data.questions.map((question, qi) => {
@@ -259,7 +282,10 @@ const DsaQuestionsPage: React.FC = () => {
                         y={RISE.sm}
                         duration={DUR.fast}
                         key={question.id}
-                        className="grid gap-x-6 gap-y-1.5 border-b border-line py-3.5 sm:grid-cols-[minmax(0,1fr)_6rem_9rem] sm:items-baseline"
+                        className={cn(
+                          TILE,
+                          "grid gap-x-6 gap-y-1.5 px-4 py-3.5 transition-colors hover:bg-white/90 sm:grid-cols-[minmax(0,1fr)_6rem_9rem] sm:items-center"
+                        )}
                       >
                         <div className="min-w-0">
                           <Link
@@ -293,7 +319,7 @@ const DsaQuestionsPage: React.FC = () => {
               />
             </>
           )}
-        </div>
+        </section>
       </div>
     </Page>
   );

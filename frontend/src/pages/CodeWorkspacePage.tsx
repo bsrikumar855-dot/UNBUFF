@@ -5,6 +5,7 @@ import { api } from "@/api/endpoints";
 import { useAuth } from "@/auth/context";
 import { DifficultyBadge, TopicTags } from "@/components/dsa/DsaBits";
 import { Button } from "@/components/ui/button";
+import { GLASS, TILE } from "@/components/ui/GlassCard";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { SplitPane } from "@/components/ui/SplitPane";
@@ -46,13 +47,13 @@ const VERDICT_LABEL: Record<SubmissionVerdict, string> = {
 };
 
 const field =
-  "w-full rounded-md border border-line-strong bg-surface px-3 py-2 font-mono text-sm";
+  "w-full rounded-xl border border-line-strong bg-white/70 px-3 py-2 font-mono text-sm";
 
 const Output: React.FC<{ title: string; text: string }> = ({ title, text }) =>
   text ? (
     <div className="mt-3">
       <h4 className="eyebrow mb-1">{title}</h4>
-      <pre className="max-h-56 overflow-auto whitespace-pre-wrap wrap-break-word border border-line bg-surface-50 p-3 font-mono text-[13px] leading-relaxed text-ink-primary">
+      <pre className="max-h-56 overflow-auto whitespace-pre-wrap wrap-break-word rounded-xl bg-white/80 p-3 font-mono text-[13px] leading-relaxed text-ink-primary">
         {text}
       </pre>
     </div>
@@ -232,11 +233,11 @@ const CodeWorkspacePage: React.FC = () => {
   return (
     <div
       className={cn(
-        "flex flex-col pb-24 lg:pb-0",
-        signedIn ? "lg:h-[calc(100vh-var(--topbar-h))]" : "lg:h-[calc(100dvh-4rem)]"
+        "flex flex-col gap-4 px-4 pb-28 pt-4 sm:px-5 lg:pb-5 lg:pl-5 lg:pr-6",
+        signedIn ? "lg:h-dvh" : "lg:h-[calc(100dvh-var(--topbar-h))]"
       )}
     >
-      <header className="border-b border-line px-4 py-3 sm:px-6">
+      <header className={cn(GLASS, "px-5 py-4 sm:px-6")}>
         <nav aria-label="Breadcrumb" className="mb-1 text-sm text-ink-muted">
           <Link
             to={routes.dsa}
@@ -293,7 +294,7 @@ const CodeWorkspacePage: React.FC = () => {
               <label className="flex flex-col gap-1 text-xs font-medium text-ink-muted">
                 Language
                 <select
-                  className="min-h-10 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm font-normal text-ink-primary"
+                  className="min-h-10 rounded-xl border border-line-strong bg-white/70 px-3 py-2 text-sm font-normal text-ink-primary"
                   value={languageId}
                   disabled={languages.list.length === 0}
                   onChange={(e) => setLanguageId(e.target.value as CodeLanguageId)}
@@ -317,6 +318,7 @@ const CodeWorkspacePage: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
+                className="rounded-full"
                 disabled={!language}
                 onClick={() => {
                   if (!language) return;
@@ -338,7 +340,7 @@ const CodeWorkspacePage: React.FC = () => {
           min={0.25}
           max={0.6}
           label="Resize problem and editor panes"
-          className="lg:min-h-0"
+          className={cn(GLASS, "overflow-hidden lg:min-h-0")}
           first={
             /* ---- problem side: statement, samples, then this student's submissions ---- */
             <section
@@ -348,7 +350,7 @@ const CodeWorkspacePage: React.FC = () => {
               {exercise.is_demonstration && (
                 <p
                   role="note"
-                  className="border-l-2 border-verdict-shaky-fg bg-surface-100/60 py-2 pl-4 pr-3 text-sm text-ink-primary"
+                  className={cn(TILE, "px-4 py-3 text-sm text-ink-primary")}
                 >
                   Demonstration exercise written for UNBLUFF. It is not a real company
                   interview question.
@@ -366,28 +368,28 @@ const CodeWorkspacePage: React.FC = () => {
               )}
 
               <div>
-                <h2 className="eyebrow border-b border-ink-primary pb-2">Sample tests</h2>
+                <h2 className="eyebrow pb-1">Sample tests</h2>
                 {exercise.samples.length === 0 ? (
                   <p className="pt-3 text-sm text-ink-muted">
                     No visible samples for this question. Use your own input below.
                   </p>
                 ) : (
-                  <ul>
+                  <ul className="mt-3 flex flex-col gap-3">
                     {exercise.samples.map((s, i) => (
-                      <li key={i} className="border-b border-line py-4 text-sm">
+                      <li key={i} className={cn(TILE, "p-4 text-sm")}>
                         <p className="mb-2 font-semibold text-ink-primary">
                           Sample {i + 1}
                         </p>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="min-w-0">
                             <p className="eyebrow mb-1">Input</p>
-                            <pre className="overflow-x-auto border border-line bg-surface-50 p-2 font-mono text-xs leading-relaxed">
+                            <pre className="overflow-x-auto rounded-xl bg-white/80 p-2.5 font-mono text-xs leading-relaxed shadow-[inset_0_0_0_1px_rgba(24,24,27,0.06)]">
                               {s.input}
                             </pre>
                           </div>
                           <div className="min-w-0">
                             <p className="eyebrow mb-1">Expected output</p>
-                            <pre className="overflow-x-auto border border-line bg-surface-50 p-2 font-mono text-xs leading-relaxed">
+                            <pre className="overflow-x-auto rounded-xl bg-white/80 p-2.5 font-mono text-xs leading-relaxed shadow-[inset_0_0_0_1px_rgba(24,24,27,0.06)]">
                               {s.expected_output}
                             </pre>
                           </div>
@@ -396,6 +398,7 @@ const CodeWorkspacePage: React.FC = () => {
                           <Button
                             variant="outline"
                             size="sm"
+                            className="rounded-full bg-white/70"
                             onClick={() => setStdin(s.input)}
                           >
                             Use as custom input
@@ -403,6 +406,7 @@ const CodeWorkspacePage: React.FC = () => {
                           <Button
                             variant="outline"
                             size="sm"
+                            className="rounded-full bg-white/70"
                             disabled={!canRun}
                             onClick={() => void run({ sample_index: i })}
                           >
@@ -415,7 +419,7 @@ const CodeWorkspacePage: React.FC = () => {
                 )}
               </div>
 
-              <p className="border-l-2 border-line-strong pl-4 text-sm leading-relaxed text-ink-secondary">
+              <p className={cn(TILE, "px-4 py-3 text-sm leading-relaxed text-ink-secondary")}>
                 {exercise.gradable
                   ? `Submitting is judged on ${exercise.hidden_test_count} hidden tests (suite ${exercise.test_revision}).`
                   : "Full judging is not available for this question: it has no test suite. You can run your code, but it can't be submitted for a verdict."}
@@ -479,11 +483,12 @@ const CodeWorkspacePage: React.FC = () => {
                 /* ---- console: actions, input and results ---- */
                 <section
                   aria-label="Console"
-                  className="flex h-full min-h-0 flex-col bg-surface"
+                  className="flex h-full min-h-0 flex-col bg-white/30"
                 >
-                  <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-2.5 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-30 max-lg:border-t max-lg:bg-surface max-lg:p-3">
+                  <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-2.5 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-30 max-lg:border-t max-lg:bg-surface-50 max-lg:p-3">
                     <Button
                       variant="outline"
+                      className="rounded-full bg-white/70"
                       disabled={!canRun}
                       aria-busy={busy === "run"}
                       onClick={() => void run({ stdin })}
@@ -491,6 +496,7 @@ const CodeWorkspacePage: React.FC = () => {
                       {busy === "run" ? "Running…" : "Run"}
                     </Button>
                     <Button
+                      className="rounded-full"
                       disabled={!canSubmit}
                       aria-busy={busy === "submit"}
                       onClick={() => void submit()}
@@ -629,10 +635,7 @@ const CodeWorkspacePage: React.FC = () => {
                     )}
                     {/* ---- history: next to the results it relates to ---- */}
                     <section aria-labelledby="history-heading" className="mt-8">
-                      <h2
-                        id="history-heading"
-                        className="eyebrow border-b border-ink-primary pb-2"
-                      >
+                      <h2 id="history-heading" className="eyebrow pb-1">
                         Your submissions
                       </h2>
                       {!signedIn && (
@@ -656,11 +659,14 @@ const CodeWorkspacePage: React.FC = () => {
                         </p>
                       )}
                       {signedIn && history && history.length > 0 && (
-                        <ul>
+                        <ul className="mt-2 flex flex-col gap-2">
                           {history.map((s) => (
                             <li
                               key={s.id}
-                              className="flex flex-wrap items-center justify-between gap-2 border-b border-line py-3 text-sm"
+                              className={cn(
+                                TILE,
+                                "flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 text-sm"
+                              )}
                             >
                               <div>
                                 <span
@@ -682,6 +688,7 @@ const CodeWorkspacePage: React.FC = () => {
                                 <Button
                                   variant="outline"
                                   size="sm"
+                                  className="rounded-full bg-white/70"
                                   onClick={() => void viewSubmission(s.id)}
                                 >
                                   View code
@@ -689,6 +696,7 @@ const CodeWorkspacePage: React.FC = () => {
                                 <Button
                                   variant="ghost"
                                   size="sm"
+                                  className="rounded-full"
                                   onClick={() => void deleteSubmission(s.id)}
                                 >
                                   Delete
@@ -699,7 +707,7 @@ const CodeWorkspacePage: React.FC = () => {
                         </ul>
                       )}
                       {viewing && (
-                        <div className="mt-4 border border-line bg-surface p-4">
+                        <div className={cn(TILE, "mt-4 p-4")}>
                           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                             <p className="text-sm font-semibold text-ink-primary">
                               {VERDICT_LABEL[viewing.verdict]} · {viewing.language}
@@ -708,6 +716,7 @@ const CodeWorkspacePage: React.FC = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
+                                className="rounded-full bg-white/70"
                                 onClick={() => {
                                   if (
                                     languages.list.some((l) => l.id === viewing.language)
@@ -721,13 +730,14 @@ const CodeWorkspacePage: React.FC = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                className="rounded-full"
                                 onClick={() => setViewing(null)}
                               >
                                 Close
                               </Button>
                             </div>
                           </div>
-                          <pre className="max-h-72 overflow-auto whitespace-pre-wrap wrap-break-word border border-line bg-surface-50 p-3 font-mono text-xs">
+                          <pre className="max-h-72 overflow-auto whitespace-pre-wrap wrap-break-word rounded-xl bg-white/80 p-3 font-mono text-xs">
                             {viewing.source}
                           </pre>
                         </div>

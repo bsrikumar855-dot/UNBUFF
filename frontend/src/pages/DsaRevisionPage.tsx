@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { ListChecks, Sparkles } from "lucide-react";
 import { api } from "@/api/endpoints";
 import type {
   RevisionActionRequest,
@@ -8,6 +9,7 @@ import type {
 } from "@/types/contract";
 import { Pager } from "@/components/dsa/DsaBits";
 import { Button } from "@/components/ui/button";
+import { GLASS, GlassCard, TILE } from "@/components/ui/GlassCard";
 import { Page, PageHeader } from "@/components/ui/Page";
 import { buttonClasses } from "@/lib/buttonClasses";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -86,7 +88,7 @@ const DsaRevisionPage: React.FC = () => {
   };
 
   return (
-    <Page>
+    <Page width="fluid" className="sm:px-5 lg:pl-5 lg:pr-6">
       <PageHeader
         crumbs={[
           { label: "DSA Arena", to: routes.dsa },
@@ -94,14 +96,18 @@ const DsaRevisionPage: React.FC = () => {
           { label: "Revision" },
         ]}
         eyebrow="Practice"
-        title="Revision queue"
+        title={
+          <>
+            Revision <em>queue</em>
+          </>
+        }
         description="Questions to come back to, ordered by priority and due date. Solve one again with a judged submission to move it forward."
       />
 
       <div
         role="tablist"
         aria-label="Queue view"
-        className="mb-6 flex gap-6 border-b border-line"
+        className={cn(GLASS, "mb-5 inline-flex max-w-full flex-wrap gap-1 p-1.5")}
       >
         {VIEWS.map((v) => (
           <button
@@ -114,10 +120,10 @@ const DsaRevisionPage: React.FC = () => {
               setPage(1);
             }}
             className={cn(
-              "-mb-px min-h-10 border-b-2 px-0.5 pb-2 pt-1 text-sm font-medium transition-colors",
+              "min-h-10 rounded-full px-4 text-sm font-medium transition-colors",
               view === v.value
-                ? "border-redline font-semibold text-ink-primary"
-                : "border-transparent text-ink-muted hover:text-ink-primary"
+                ? "bg-ink-primary font-semibold text-surface-50"
+                : "text-ink-secondary hover:bg-white/70 hover:text-ink-primary"
             )}
           >
             {v.label}
@@ -136,7 +142,7 @@ const DsaRevisionPage: React.FC = () => {
       )}
 
       {data && data.items.length === 0 && (
-        <p className="border border-dashed border-line-strong p-5 text-sm text-ink-secondary">
+        <p className={cn(GLASS, "p-6 text-sm text-ink-secondary")}>
           {view === "due"
             ? "Nothing is due. Failed judged submissions and solved-after-failure questions appear here automatically."
             : "No items in this view."}
@@ -144,120 +150,140 @@ const DsaRevisionPage: React.FC = () => {
       )}
 
       {data && data.items.length > 0 && (
-        <ul className="border-t border-ink-primary">
-          {data.items.map((i) => (
-            <li key={i.question_id} className="border-b border-line py-5">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
+        <GlassCard
+          id="queue"
+          icon={ListChecks}
+          title={VIEWS.find((v) => v.value === view)?.label ?? "Queue"}
+          sub="Ordered by priority, then due date."
+        >
+          <ul className="flex flex-col gap-2.5">
+            {data.items.map((i) => (
+              <li key={i.question_id} className={cn(TILE, "px-4 py-4")}>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <Link
+                      to={routes.dsaQuestion(i.question_id)}
+                      className="text-[15px] font-semibold text-ink-primary underline-offset-4 hover:text-redline hover:underline"
+                    >
+                      {i.title ?? i.question_id}
+                    </Link>
+                    <p className="text-sm text-ink-secondary">{i.explanation}</p>
+                  </div>
+                  <div className="text-right text-xs text-ink-muted">
+                    <p className="font-medium text-ink-secondary">
+                      {PRIORITY[i.priority]}
+                    </p>
+                    <p>
+                      {STATUS[i.status]} ·{" "}
+                      {i.due
+                        ? "due now"
+                        : `due ${new Date(i.due_at).toLocaleDateString()}`}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
                   <Link
-                    to={routes.dsaQuestion(i.question_id)}
-                    className="text-[15px] font-semibold text-ink-primary underline-offset-4 hover:text-redline hover:underline"
+                    to={routes.dsaCode(i.question_id)}
+                    className={buttonClasses("primary", "sm", "rounded-full")}
                   >
-                    {i.title ?? i.question_id}
+                    Open coding workspace
                   </Link>
-                  <p className="text-sm text-ink-secondary">{i.explanation}</p>
-                </div>
-                <div className="text-right text-xs text-ink-muted">
-                  <p className="font-medium text-ink-secondary">{PRIORITY[i.priority]}</p>
-                  <p>
-                    {STATUS[i.status]} ·{" "}
-                    {i.due ? "due now" : `due ${new Date(i.due_at).toLocaleDateString()}`}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Link
-                  to={routes.dsaCode(i.question_id)}
-                  className={buttonClasses("primary", "sm")}
-                >
-                  Open coding workspace
-                </Link>
-                {(i.status === "pending" ||
-                  i.status === "postponed" ||
-                  i.status === "scheduled") && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={busy === i.question_id}
-                    onClick={() => void act(i.question_id, { action: "start" })}
-                  >
-                    Start review
-                  </Button>
-                )}
-                {(i.status === "pending" || i.status === "in_progress") && (
-                  <>
+                  {(i.status === "pending" ||
+                    i.status === "postponed" ||
+                    i.status === "scheduled") && (
                     <Button
                       variant="outline"
                       size="sm"
+                      className="rounded-full bg-white/70"
                       disabled={busy === i.question_id}
-                      onClick={() =>
-                        void act(i.question_id, {
-                          action: "complete",
-                          outcome: "remembered",
-                        })
-                      }
+                      onClick={() => void act(i.question_id, { action: "start" })}
                     >
-                      Done: remembered it
+                      Start review
                     </Button>
+                  )}
+                  {(i.status === "pending" || i.status === "in_progress") && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full bg-white/70"
+                        disabled={busy === i.question_id}
+                        onClick={() =>
+                          void act(i.question_id, {
+                            action: "complete",
+                            outcome: "remembered",
+                          })
+                        }
+                      >
+                        Done: remembered it
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full bg-white/70"
+                        disabled={busy === i.question_id}
+                        onClick={() =>
+                          void act(i.question_id, {
+                            action: "complete",
+                            outcome: "struggled",
+                          })
+                        }
+                      >
+                        Done: struggled
+                      </Button>
+                    </>
+                  )}
+                  {i.status !== "postponed" && (
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
+                      className="rounded-full"
                       disabled={busy === i.question_id}
-                      onClick={() =>
-                        void act(i.question_id, {
-                          action: "complete",
-                          outcome: "struggled",
-                        })
-                      }
+                      onClick={() => void act(i.question_id, { action: "postpone" })}
                     >
-                      Done: struggled
+                      Postpone 2 days
                     </Button>
-                  </>
-                )}
-                {i.status !== "postponed" && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={busy === i.question_id}
-                    onClick={() => void act(i.question_id, { action: "postpone" })}
-                  >
-                    Postpone 2 days
-                  </Button>
-                )}
-                {(i.status === "scheduled" || i.status === "postponed") && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={busy === i.question_id}
-                    onClick={() => void act(i.question_id, { action: "revisit" })}
-                  >
-                    Revisit now
-                  </Button>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+                  )}
+                  {(i.status === "scheduled" || i.status === "postponed") && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-full"
+                      disabled={busy === i.question_id}
+                      onClick={() => void act(i.question_id, { action: "revisit" })}
+                    >
+                      Revisit now
+                    </Button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+          {data && (
+            <Pager page={data.page} totalPages={data.total_pages} onPage={setPage} />
+          )}
+        </GlassCard>
       )}
-      {data && <Pager page={data.page} totalPages={data.total_pages} onPage={setPage} />}
+      {data && data.items.length === 0 && (
+        <Pager page={data.page} totalPages={data.total_pages} onPage={setPage} />
+      )}
 
       {data && data.suggestions.length > 0 && (
-        <section aria-labelledby="suggest-heading" className="mt-8">
-          <h2
-            id="suggest-heading"
-            className="mb-1 text-lg font-semibold text-ink-primary"
-          >
-            Suggested practice
-          </h2>
-          <p className="mb-3 text-sm text-ink-secondary">
-            Unsolved questions from topics where your recent judged submissions show a
-            real pattern. Nothing is added unless you choose to.
-          </p>
-          <ul className="flex flex-col gap-2">
+        <GlassCard
+          id="suggest"
+          icon={Sparkles}
+          title="Suggested practice"
+          sub="Unsolved questions from topics where your recent judged submissions show a real pattern. Nothing is added unless you choose to."
+          className="mt-5"
+        >
+          <ul className="flex flex-col gap-2.5">
             {data.suggestions.map((s) => (
               <li
                 key={s.question_id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-line bg-surface p-3 text-sm"
+                className={cn(
+                  TILE,
+                  "flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
+                )}
               >
                 <div>
                   <Link
@@ -271,6 +297,7 @@ const DsaRevisionPage: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
+                  className="rounded-full bg-white/70"
                   disabled={busy === s.question_id}
                   onClick={() => void add(s.question_id)}
                 >
@@ -279,7 +306,7 @@ const DsaRevisionPage: React.FC = () => {
               </li>
             ))}
           </ul>
-        </section>
+        </GlassCard>
       )}
     </Page>
   );

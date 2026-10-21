@@ -1,5 +1,20 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  AlertTriangle,
+  BarChart3,
+  CheckCircle2,
+  Code2,
+  Gauge,
+  Layers,
+  Lightbulb,
+  PieChart,
+  RefreshCw,
+  Repeat,
+  SquareCode,
+  Target,
+  Zap,
+} from "lucide-react";
 import { api } from "@/api/endpoints";
 import type {
   DsaAnalyticsResponse,
@@ -10,16 +25,18 @@ import type {
 import {
   BreakdownBars,
   RateText,
-  Stat,
+  StatTile,
   WeeklyChart,
 } from "@/components/dsa/AnalyticsBits";
 import { ExternalProgressNote } from "@/components/leetcode/ExternalProgressNote";
 import { Button } from "@/components/ui/button";
+import { GlassCard, TILE } from "@/components/ui/GlassCard";
 import { Page, PageHeader } from "@/components/ui/Page";
 import { buttonClasses } from "@/lib/buttonClasses";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { DIFFICULTY_LABEL } from "@/lib/dsa";
+import { cn } from "@/lib/cn";
 import { routes } from "@/lib/routes";
 
 const VERDICT: Record<SubmissionVerdict, string> = {
@@ -94,24 +111,37 @@ const DsaAnalyticsPage: React.FC = () => {
       ex.unknown_provenance
     : 0;
 
+  const pill = "rounded-full";
+  const row = cn(TILE, "flex flex-wrap items-center justify-between gap-2 px-4 py-3");
+
   return (
-    <Page width="wide">
+    <Page width="fluid" className="sm:px-5 lg:pl-5 lg:pr-6">
       <PageHeader
         crumbs={[{ label: "DSA Arena", to: routes.dsa }, { label: "Analytics" }]}
         eyebrow="Practice"
-        title="DSA analytics"
+        title={
+          <>
+            DSA <em>analytics</em>
+          </>
+        }
         description="Based on your judged submissions only. Runs, sample runs and demonstration exercises are never counted."
         actions={
           <>
-            <Link to={routes.dsaRevision} className={buttonClasses("secondary", "sm")}>
+            <Link
+              to={routes.dsaRevision}
+              className={buttonClasses("secondary", "md", `${pill} bg-white/70`)}
+            >
+              <Repeat aria-hidden="true" />
               Revision queue
             </Link>
             <Button
               variant="outline"
-              size="sm"
+              size="default"
+              className={cn(pill, "bg-white/70")}
               disabled={refreshing || data === null}
               onClick={() => void refresh()}
             >
+              <RefreshCw aria-hidden="true" />
               {refreshing ? "Rebuilding…" : "Rebuild from submissions"}
             </Button>
           </>
@@ -130,7 +160,7 @@ const DsaAnalyticsPage: React.FC = () => {
           {excluded > 0 && ex && (
             <p
               role="note"
-              className="mb-8 border-l-2 border-line-strong bg-surface-100/60 py-2 pl-4 pr-3 text-sm text-ink-secondary"
+              className={cn(TILE, "mb-5 px-4 py-3 text-sm text-ink-secondary")}
             >
               {excluded} of your latest {ex.sampled_submissions} submissions are not
               counted:
@@ -149,23 +179,19 @@ const DsaAnalyticsPage: React.FC = () => {
             </p>
           )}
           {ex && !ex.available && (
-            <p className="mb-6 text-sm text-ink-muted">
+            <p className="mb-5 text-sm text-ink-muted">
               Counts of excluded submissions are temporarily unavailable.
             </p>
           )}
 
           {!data.has_eligible_activity ? (
-            <section
-              aria-labelledby="empty-heading"
-              className="border border-dashed border-line-strong p-6 sm:p-8"
+            <GlassCard
+              id="empty"
+              icon={PieChart}
+              title="No counted activity yet"
+              sub="Analytics appear once a real test suite has judged your solutions."
             >
-              <h2
-                id="empty-heading"
-                className="text-heading font-semibold text-ink-primary"
-              >
-                No counted activity yet
-              </h2>
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-secondary">
+              <p className="max-w-xl text-sm leading-relaxed text-ink-secondary">
                 Analytics appear after you submit solutions that are judged against a real
                 test suite. Your self-reported marks ({data.self_reported.solved} solved,{" "}
                 {data.self_reported.attempted} attempted) are not judged results, so they
@@ -173,47 +199,54 @@ const DsaAnalyticsPage: React.FC = () => {
               </p>
               <Link
                 to={routes.dsaQuestions}
-                className={buttonClasses("primary", "md", "mt-5")}
+                className={buttonClasses("primary", "md", `${pill} mt-5`)}
               >
+                <SquareCode aria-hidden="true" />
                 Browse questions
               </Link>
-            </section>
+            </GlassCard>
           ) : (
-            <div className="flex flex-col gap-10">
+            <div className="flex flex-col gap-5">
               <section
                 aria-label="Summary"
-                className="grid border-y border-ink-primary sm:grid-cols-2 sm:divide-x sm:divide-line lg:grid-cols-4"
+                className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 lg:grid-cols-4"
               >
-                <Stat
+                <StatTile
+                  icon={CheckCircle2}
                   label="Solved"
                   hint="distinct questions with an accepted submission"
                 >
                   {data.totals.solved_unique}
-                </Stat>
-                <Stat label="Attempted" hint="distinct questions you have submitted for">
+                </StatTile>
+                <StatTile
+                  icon={Target}
+                  label="Attempted"
+                  hint="distinct questions you have submitted for"
+                >
                   {data.totals.attempted_unique}
-                </Stat>
-                <Stat label="Submission success" hint="accepted / judged submissions">
+                </StatTile>
+                <StatTile
+                  icon={Gauge}
+                  label="Submission success"
+                  hint="accepted / judged submissions"
+                >
                   <RateText metric={data.submission_success} />
-                </Stat>
-                <Stat
+                </StatTile>
+                <StatTile
+                  icon={Zap}
                   label="First-attempt success"
                   hint="questions solved by the first recorded submission"
                 >
                   <RateText metric={data.first_attempt_success} />
-                </Stat>
+                </StatTile>
               </section>
 
-              <section
-                aria-labelledby="trend-heading"
-                className="border-t border-ink-primary pt-4 [&>h2]:mb-4"
+              <GlassCard
+                id="trend"
+                icon={BarChart3}
+                title="Recent activity and trend"
+                sub="Counted submissions per week."
               >
-                <h2
-                  id="trend-heading"
-                  className="text-heading font-semibold text-ink-primary"
-                >
-                  Recent activity and trend
-                </h2>
                 <WeeklyChart weeks={data.weekly} />
                 <p className="mt-3 text-sm text-ink-secondary">
                   {data.comparison.available
@@ -221,15 +254,9 @@ const DsaAnalyticsPage: React.FC = () => {
                     : data.comparison.note}
                 </p>
                 {data.recent.length > 0 && (
-                  <ul
-                    aria-label="Latest submissions"
-                    className="mt-4 border-t border-line text-sm [&>li]:border-b [&>li]:border-line"
-                  >
+                  <ul aria-label="Latest submissions" className="mt-4 flex flex-col gap-2 text-sm">
                     {data.recent.map((r) => (
-                      <li
-                        key={r.submission_id}
-                        className="flex flex-wrap items-center justify-between gap-2 px-1 py-3"
-                      >
+                      <li key={r.submission_id} className={row}>
                         <Link
                           to={routes.dsaCode(r.question_id)}
                           className="font-medium text-ink-primary underline-offset-4 hover:text-redline hover:underline"
@@ -243,36 +270,28 @@ const DsaAnalyticsPage: React.FC = () => {
                     ))}
                   </ul>
                 )}
-              </section>
+              </GlassCard>
 
-              <div className="grid gap-x-12 gap-y-10 lg:grid-cols-2">
-                <section
-                  aria-labelledby="topics-heading"
-                  className="border-t border-ink-primary pt-4 [&>h2]:mb-4"
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-2">
+                <GlassCard
+                  id="topics"
+                  icon={Code2}
+                  title="By topic"
+                  sub="Judged submissions grouped by topic."
                 >
-                  <h2
-                    id="topics-heading"
-                    className="text-heading font-semibold text-ink-primary"
-                  >
-                    By topic
-                  </h2>
                   <BreakdownBars rows={data.topics} label="Performance by topic" />
                   {data.untouched_topics.length > 0 && (
-                    <p className="mt-3 text-xs text-ink-muted">
+                    <p className="mt-4 text-xs text-ink-muted">
                       Not practised yet: {data.untouched_topics.join(", ")}.
                     </p>
                   )}
-                </section>
-                <section
-                  aria-labelledby="difficulty-heading"
-                  className="border-t border-ink-primary pt-4 [&>h2]:mb-4"
+                </GlassCard>
+                <GlassCard
+                  id="difficulty"
+                  icon={Layers}
+                  title="By difficulty"
+                  sub="Judged submissions grouped by difficulty."
                 >
-                  <h2
-                    id="difficulty-heading"
-                    className="text-heading font-semibold text-ink-primary"
-                  >
-                    By difficulty
-                  </h2>
                   <BreakdownBars
                     rows={data.difficulties}
                     label="Performance by difficulty"
@@ -280,26 +299,18 @@ const DsaAnalyticsPage: React.FC = () => {
                       DIFFICULTY_LABEL[k as keyof typeof DIFFICULTY_LABEL] ?? k
                     }
                   />
-                </section>
+                </GlassCard>
               </div>
 
-              <section
-                aria-labelledby="weak-heading"
-                className="border-t border-ink-primary pt-4 [&>h2]:mb-4"
+              <GlassCard
+                id="weak"
+                icon={Lightbulb}
+                title="Topics and what the evidence says"
+                sub="A topic is only judged once it has enough questions and submissions. Compile and runtime errors are tracked separately from wrong answers."
               >
-                <h2
-                  id="weak-heading"
-                  className="text-heading font-semibold text-ink-primary"
-                >
-                  Topics and what the evidence says
-                </h2>
-                <p className="mb-3 text-sm text-ink-secondary">
-                  A topic is only judged once it has enough questions and submissions.
-                  Compile and runtime errors are tracked separately from wrong answers.
-                </p>
-                <ul className="border-t border-line">
+                <ul className="flex flex-col gap-2.5">
                   {data.weaknesses.map((w) => (
-                    <li key={w.topic} className="border-b border-line py-4">
+                    <li key={w.topic} className={cn(TILE, "px-4 py-3.5")}>
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <h3 className="font-semibold text-ink-primary">{w.topic}</h3>
                         <span className="text-sm font-medium text-ink-secondary">
@@ -315,25 +326,18 @@ const DsaAnalyticsPage: React.FC = () => {
                     </li>
                   ))}
                 </ul>
-              </section>
+              </GlassCard>
 
               {data.repeated_failures.length > 0 && (
-                <section
-                  aria-labelledby="repeat-heading"
-                  className="border-t border-ink-primary pt-4 [&>h2]:mb-4"
+                <GlassCard
+                  id="repeat"
+                  icon={AlertTriangle}
+                  title="Questions failing repeatedly"
+                  sub="Worth another look, ideally after reviewing the approach."
                 >
-                  <h2
-                    id="repeat-heading"
-                    className="text-heading font-semibold text-ink-primary"
-                  >
-                    Questions failing repeatedly
-                  </h2>
-                  <ul className="border-t border-line text-sm [&>li]:border-b [&>li]:border-line">
+                  <ul className="flex flex-col gap-2 text-sm">
                     {data.repeated_failures.map((r) => (
-                      <li
-                        key={r.question_id}
-                        className="flex flex-wrap items-center justify-between gap-2 px-1 py-3"
-                      >
+                      <li key={r.question_id} className={row}>
                         <Link
                           to={routes.dsaCode(r.question_id)}
                           className="font-medium text-ink-primary underline-offset-4 hover:text-redline hover:underline"
@@ -347,36 +351,33 @@ const DsaAnalyticsPage: React.FC = () => {
                       </li>
                     ))}
                   </ul>
-                </section>
+                </GlassCard>
               )}
             </div>
           )}
 
-          <section
-            aria-labelledby="revision-heading"
-            className="mt-10 border-t border-ink-primary pt-4"
-          >
-            <div className="mb-4 flex items-center justify-between gap-2">
-              <h2
-                id="revision-heading"
-                className="text-heading font-semibold text-ink-primary"
-              >
-                Revision due ({queue?.counts.due ?? data.revision_due})
-              </h2>
+          <GlassCard
+            id="revision"
+            icon={Repeat}
+            title={`Revision due (${queue?.counts.due ?? data.revision_due})`}
+            sub="The next questions to come back to."
+            className="mt-5"
+            actions={
               <Link
                 to={routes.dsaRevision}
-                className="text-sm text-redline underline underline-offset-4"
+                className={buttonClasses("secondary", "sm", `${pill} bg-white/70`)}
               >
                 Open the full queue
               </Link>
-            </div>
+            }
+          >
             {queue && queue.items.length === 0 && (
               <p className="text-sm text-ink-secondary">Nothing is due for revision.</p>
             )}
             {queue && queue.items.length > 0 && (
-              <ul className="border-t border-line text-sm [&>li]:border-b [&>li]:border-line">
+              <ul className="flex flex-col gap-2 text-sm">
                 {queue.items.map((i) => (
-                  <li key={i.question_id} className="px-1 py-3">
+                  <li key={i.question_id} className={cn(TILE, "px-4 py-3")}>
                     <Link
                       to={routes.dsaQuestion(i.question_id)}
                       className="font-medium text-ink-primary underline-offset-4 hover:text-redline hover:underline"
@@ -388,7 +389,7 @@ const DsaAnalyticsPage: React.FC = () => {
                 ))}
               </ul>
             )}
-          </section>
+          </GlassCard>
         </>
       )}
       <ExternalProgressNote />

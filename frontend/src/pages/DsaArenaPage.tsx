@@ -1,16 +1,39 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpRight } from "lucide-react";
+import {
+  BarChart3,
+  Bookmark,
+  Building2,
+  ChevronRight,
+  Code2,
+  FileText,
+  PieChart,
+  Search,
+  SquareCode,
+} from "lucide-react";
 import { api } from "@/api/endpoints";
 import type { CompaniesResponse } from "@/types/contract";
 import { Pager, SourceBanner } from "@/components/dsa/DsaBits";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { GlassCard } from "@/components/ui/GlassCard";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { Page, PageHeader, Section } from "@/components/ui/Page";
+import { Page, PageHeader } from "@/components/ui/Page";
 import { buttonClasses } from "@/lib/buttonClasses";
 import { routes } from "@/lib/routes";
 import { useAuth } from "@/auth/context";
+
+const ROW =
+  "group flex items-center gap-3.5 rounded-2xl px-3 py-2.5 transition-colors hover:bg-white/70 focus-visible:bg-white/70";
+/** The round arrow at the end of a row. It lights up when the row is pointed at. */
+const Go: React.FC = () => (
+  <span
+    aria-hidden="true"
+    className="grid size-8 shrink-0 place-items-center rounded-full bg-white/80 text-ink-muted shadow-[inset_0_0_0_1px_rgba(24,24,27,0.07)] transition-colors group-hover:bg-ink-primary group-hover:text-surface-50 group-focus-visible:bg-ink-primary group-focus-visible:text-surface-50"
+  >
+    <ChevronRight size={15} />
+  </span>
+);
 
 /**
  * Company-wise DSA Arena landing: searchable companies beside a topic index. Counts come only from loaded
@@ -62,35 +85,47 @@ export const DsaArenaPage: React.FC = () => {
     };
   }, []);
 
+  const pill = "rounded-full";
   return (
-    <Page width="wide">
+    <Page width="fluid" className="sm:px-5 lg:pl-5 lg:pr-6">
       <PageHeader
         eyebrow="Practice"
-        title="DSA Arena"
+        title={
+          <>
+            DSA <em>Arena</em>
+          </>
+        }
         description="Browse practice problems by company, track what you have solved, and keep notes."
         actions={
           <>
-            <Link to={routes.dsaQuestions} className={buttonClasses("primary", "sm")}>
+            <Link
+              to={routes.dsaQuestions}
+              className={buttonClasses("primary", "md", pill)}
+            >
+              <SquareCode aria-hidden="true" />
               Browse all questions
             </Link>
             {status === "signedIn" && (
               <>
                 <Link
                   to={routes.dsaProgress}
-                  className={buttonClasses("secondary", "sm")}
+                  className={buttonClasses("secondary", "md", `${pill} bg-white/70`)}
                 >
+                  <BarChart3 aria-hidden="true" />
                   My progress
                 </Link>
                 <Link
                   to={routes.dsaAnalytics}
-                  className={buttonClasses("secondary", "sm")}
+                  className={buttonClasses("secondary", "md", `${pill} bg-white/70`)}
                 >
+                  <PieChart aria-hidden="true" />
                   Analytics
                 </Link>
                 <Link
                   to={routes.dsaRevision}
-                  className={buttonClasses("secondary", "sm")}
+                  className={buttonClasses("secondary", "md", `${pill} bg-white/70`)}
                 >
+                  <Bookmark aria-hidden="true" />
                   Revision
                 </Link>
               </>
@@ -99,19 +134,31 @@ export const DsaArenaPage: React.FC = () => {
         }
       />
 
-      {data && <SourceBanner source={data.source} className="mb-8" />}
+      {data && <SourceBanner source={data.source} className="mb-6" />}
 
-      <div className="grid gap-x-14 gap-y-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <Section id="companies" title="Companies" index="01">
-          <label className="mb-4 flex max-w-md flex-col gap-1.5 text-sm font-medium text-ink-primary">
-            Search companies
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="e.g. Acme"
-              className="min-h-10 rounded-md border border-line-strong bg-surface px-3 py-2 font-normal"
-            />
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 xl:grid-cols-[minmax(0,1fr)_27rem]">
+        <GlassCard
+          id="companies"
+          icon={Building2}
+          title="Companies"
+          sub="Search and browse companies to find practice questions."
+        >
+          <label className="mb-4 block text-sm font-medium text-ink-primary">
+            <span className="sr-only">Search companies</span>
+            <span className="relative block">
+              <Search
+                size={16}
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted"
+              />
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="e.g. Acme"
+                className="min-h-11 w-full rounded-2xl border border-line-strong bg-white/70 py-2 pl-10 pr-3 font-normal"
+              />
+            </span>
           </label>
 
           {error !== null && (
@@ -139,15 +186,18 @@ export const DsaArenaPage: React.FC = () => {
           )}
 
           {data && data.companies.length > 0 && (
-            <ul className="border-t border-line">
+            <ul className="divide-y divide-line">
               {data.companies.map((c) => (
-                <li key={c.id} className="border-b border-line">
-                  <Link
-                    to={routes.dsaCompany(c.id)}
-                    className="group flex items-baseline justify-between gap-4 py-3.5 transition-colors hover:bg-surface"
-                  >
-                    <span>
-                      <span className="block font-semibold text-ink-primary group-hover:text-redline">
+                <li key={c.id}>
+                  <Link to={routes.dsaCompany(c.id)} className={ROW}>
+                    <span
+                      aria-hidden="true"
+                      className="grid size-11 shrink-0 place-items-center rounded-xl bg-white font-serif text-lg font-semibold uppercase text-ink-primary shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08)]"
+                    >
+                      {c.name.trim().slice(0, 1) || "·"}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold text-ink-primary">
                         {c.name}
                       </span>
                       <span className="block text-sm text-ink-secondary">
@@ -156,11 +206,7 @@ export const DsaArenaPage: React.FC = () => {
                           : "No catalogue available for this company"}
                       </span>
                     </span>
-                    <ArrowUpRight
-                      size={16}
-                      aria-hidden="true"
-                      className="shrink-0 text-ink-muted group-hover:text-redline"
-                    />
+                    <Go />
                   </Link>
                 </li>
               ))}
@@ -169,39 +215,38 @@ export const DsaArenaPage: React.FC = () => {
           {data && (
             <Pager page={data.page} totalPages={data.total_pages} onPage={setPage} />
           )}
-        </Section>
+        </GlassCard>
 
         {topics.length > 0 && (
-          <Section
+          <GlassCard
             id="topics"
+            icon={Code2}
             title="Topics"
-            index="02"
-            description="Every topic that has questions in the loaded catalogue."
+            sub="Every topic that has questions in the loaded catalogue."
+            className="xl:sticky xl:top-4"
           >
-            <ul className="border-t border-line">
+            <ul className="max-h-[calc(100vh-13rem)] divide-y divide-line overflow-y-auto pr-1">
               {topics.map((t) => (
-                <li key={t} className="border-b border-line">
+                <li key={t}>
                   <Link
                     to={`${routes.dsaQuestions}?topic=${encodeURIComponent(t)}`}
-                    className="group relative isolate flex min-h-11 items-center justify-between gap-3 overflow-hidden px-2 py-2 text-[15px] text-ink-primary transition-colors duration-300 hover:text-background focus-visible:text-background"
+                    className={ROW}
                   >
-                    <span
+                    <FileText
+                      size={17}
+                      strokeWidth={1.6}
                       aria-hidden="true"
-                      className="absolute inset-0 -z-10 translate-y-full bg-foreground transition-transform duration-300 ease-out group-hover:translate-y-0 group-focus-visible:translate-y-0 motion-reduce:transition-none"
+                      className="shrink-0 text-ink-muted"
                     />
-                    <span className="transition-transform duration-300 group-hover:translate-x-1.5 motion-reduce:transition-none">
+                    <span className="min-w-0 flex-1 truncate text-[15px] text-ink-primary">
                       {t}
                     </span>
-                    <ArrowUpRight
-                      size={14}
-                      aria-hidden="true"
-                      className="text-ink-muted transition-colors group-hover:text-background group-focus-visible:text-background"
-                    />
+                    <Go />
                   </Link>
                 </li>
               ))}
             </ul>
-          </Section>
+          </GlassCard>
         )}
       </div>
     </Page>

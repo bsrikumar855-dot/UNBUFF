@@ -1,8 +1,10 @@
 import React from "react";
 import {
+  AlertCircle,
   Bookmark,
   CheckCircle2,
   CircleDashed,
+  Info,
   RotateCcw,
   Timer,
   type LucideIcon,
@@ -11,6 +13,7 @@ import type { DsaDifficulty, DsaSource, DsaStatus } from "@/types/contract";
 import { DIFFICULTY_LABEL, STATUS_LABEL } from "@/lib/dsa";
 import { cn } from "@/lib/cn";
 import { buttonClasses } from "@/lib/buttonClasses";
+import { TILE } from "@/components/ui/GlassCard";
 
 /** Provenance and licence status of the loaded catalogue, or an honest empty message. Sample data is loudly labelled. */
 export const SourceBanner: React.FC<{ source: DsaSource | null; className?: string }> = ({
@@ -22,12 +25,21 @@ export const SourceBanner: React.FC<{ source: DsaSource | null; className?: stri
       <p
         role="note"
         className={cn(
-          "border-l-2 border-line-strong bg-surface-100/60 py-2 pl-4 pr-3 text-sm text-ink-secondary",
+          TILE,
+          "flex items-start gap-3 p-4 text-sm text-ink-secondary",
           className
         )}
       >
-        No question catalogue is loaded on this server yet, so there are no companies or
-        questions to show.
+        <Info
+          size={18}
+          strokeWidth={1.75}
+          aria-hidden="true"
+          className="mt-0.5 shrink-0 text-ink-muted"
+        />
+        <span>
+          No question catalogue is loaded on this server yet, so there are no companies or
+          questions to show.
+        </span>
       </p>
     );
   }
@@ -35,35 +47,52 @@ export const SourceBanner: React.FC<{ source: DsaSource | null; className?: stri
   const updated = source.source_updated_at
     ? ` · source updated ${source.source_updated_at}`
     : "";
+  const warn = source.is_sample_data || source.license_status === "unlicensed_local_use";
   return (
     <div
       role="note"
       className={cn(
-        "border-l-2 py-2 pl-4 pr-3 text-sm",
-        source.is_sample_data || source.license_status === "unlicensed_local_use"
-          ? "border-verdict-shaky-fg bg-surface text-ink-primary"
-          : "border-line-strong bg-surface-100/60 text-ink-secondary",
+        TILE,
+        "flex items-start gap-3 p-4 text-sm",
+        warn ? "text-ink-primary" : "text-ink-secondary",
         className
       )}
     >
-      {source.is_sample_data && (
-        <p className="mb-1 font-semibold">
-          Sample data for development: not real company interview data. Companies and
-          links below are invented.
-        </p>
+      {warn ? (
+        <AlertCircle
+          size={20}
+          strokeWidth={1.75}
+          aria-hidden="true"
+          className="mt-0.5 shrink-0 text-redline"
+        />
+      ) : (
+        <Info
+          size={20}
+          strokeWidth={1.75}
+          aria-hidden="true"
+          className="mt-0.5 shrink-0 text-ink-muted"
+        />
       )}
-      {source.license_status === "unlicensed_local_use" && (
-        <p className="mb-1 font-semibold">
-          The source of this data declares no licence. It is loaded for local evaluation only and
-          must not be deployed or redistributed.
+      <div className="min-w-0">
+        {source.is_sample_data && (
+          <p className="mb-1 font-semibold">
+            Sample data for development: not real company interview data. Companies and
+            links below are invented.
+          </p>
+        )}
+        {source.license_status === "unlicensed_local_use" && (
+          <p className="mb-1 font-semibold">
+            The source of this data declares no licence. It is loaded for local evaluation
+            only and must not be deployed or redistributed.
+          </p>
+        )}
+        <p>
+          Source: {source.name} · {source.license_status.replace(/_/g, " ")} · imported{" "}
+          {imported}
+          {updated}
         </p>
-      )}
-      <p>
-        Source: {source.name} · {source.license_status.replace(/_/g, " ")} · imported{" "}
-        {imported}
-        {updated}
-      </p>
-      <p className="mt-1 text-xs text-ink-muted">{source.license_note}</p>
+        <p className="mt-1 text-xs text-ink-muted">{source.license_note}</p>
+      </div>
     </div>
   );
 };
