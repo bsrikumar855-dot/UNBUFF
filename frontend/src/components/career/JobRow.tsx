@@ -4,6 +4,7 @@ import { DUR, RISE } from "@/components/motion/tokens";
 import React, { useId, useState } from "react";
 import { Bookmark, BookmarkCheck, ChevronDown, ExternalLink } from "lucide-react";
 import { api } from "@/api/endpoints";
+import { TILE } from "@/components/ui/GlassCard";
 import { Tag } from "@/components/ui/Tag";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { cn } from "@/lib/cn";
@@ -31,7 +32,7 @@ const STATE_TEXT: Record<string, string> = {
 
 /** The score as a plain number with its confidence in words: never a probability, never colour alone. */
 export const MatchFigure: React.FC<{ match: CareerMatch }> = ({ match }) => (
-  <div className="w-18 shrink-0 text-right sm:w-24">
+  <div className="w-18 shrink-0 text-right sm:w-24 sm:text-center">
     <p
       className={cn(
         "serif num text-[1.75rem] font-medium leading-none",
@@ -179,11 +180,16 @@ export const JobRow: React.FC<{
       index={Math.min(index, 6)}
       y={RISE.sm}
       duration={DUR.fast}
-      className="border-b border-line"
+      className={cn(TILE, "p-4 sm:p-5")}
       data-slug={job.slug}
     >
-      <div className="flex flex-wrap items-start gap-x-3 gap-y-3 py-4 sm:flex-nowrap sm:gap-5">
-        <MatchFigure match={match} />
+      <div className="flex flex-wrap items-start gap-x-4 gap-y-3 sm:flex-nowrap sm:gap-5">
+        <span
+          aria-hidden="true"
+          className="hidden size-14 shrink-0 place-items-center rounded-2xl bg-white font-serif text-xl font-semibold uppercase text-ink-primary shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08),0_6px_14px_-8px_rgba(24,24,27,0.3)] sm:grid"
+        >
+          {(job.company ?? job.title).trim().slice(0, 1) || "·"}
+        </span>
         <div className="min-w-0 flex-1 basis-[calc(100%-5.5rem)] sm:basis-0">
           <h3 className="text-[15px] font-semibold leading-snug text-ink-primary">
             <button
@@ -232,13 +238,14 @@ export const JobRow: React.FC<{
               .join(" · ") || "No posting date given"}
           </p>
         </div>
+        <MatchFigure match={match} />
         <div className="flex w-full shrink-0 flex-wrap items-stretch gap-2 sm:w-auto sm:flex-nowrap sm:items-center *:flex-1 sm:*:flex-none">
           <button
             type="button"
             onClick={() => void toggleSave()}
             disabled={busy}
             aria-pressed={saved}
-            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm font-medium text-ink-primary hover:border-ink-primary disabled:opacity-50"
+            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border border-line-strong bg-white/80 px-4 py-2 text-sm font-medium text-ink-primary hover:border-ink-primary disabled:opacity-50"
           >
             <Swap state={saved ? "saved" : "unsaved"}>
               {saved ? (
@@ -255,7 +262,7 @@ export const JobRow: React.FC<{
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
               Apply on employer site
               <ExternalLink size={14} aria-hidden="true" />
@@ -266,7 +273,7 @@ export const JobRow: React.FC<{
               href={job.freehire_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-md border border-line-strong px-3 py-2 text-sm font-medium text-ink-primary hover:border-ink-primary"
+              className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border border-line-strong bg-white/80 px-4 py-2 text-sm font-medium text-ink-primary hover:border-ink-primary"
             >
               View on Freehire
               <ExternalLink size={14} aria-hidden="true" />
@@ -275,7 +282,7 @@ export const JobRow: React.FC<{
           )}
         </div>
       </div>
-      {error !== null && <ErrorState className="mb-3" error={error} />}
+      {error !== null && <ErrorState className="mt-3" error={error} />}
       {open && (
         <Enter
           id={panel}
@@ -283,7 +290,7 @@ export const JobRow: React.FC<{
           aria-label={`Details for ${job.title}`}
           y={RISE.sm}
           duration={DUR.fast}
-          className="mb-5 flex flex-col gap-6 border-l-2 border-line-strong bg-surface-100/50 p-4 sm:ml-26 sm:p-5"
+          className="mt-4 flex flex-col gap-6 rounded-2xl border-l-2 border-line-strong bg-white/60 p-4 sm:p-5"
         >
           {(job.summary || job.preview) && (
             <div>

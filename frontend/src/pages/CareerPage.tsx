@@ -1,4 +1,24 @@
 import { m } from "motion/react";
+import {
+  ArrowUpDown,
+  BarChart3,
+  Bookmark,
+  Briefcase,
+  Building2,
+  Compass,
+  Database,
+  FileText,
+  Filter,
+  Info,
+  Settings2,
+  Sparkles,
+  Target,
+  type LucideIcon,
+} from "lucide-react";
+import { Enter } from "@/components/motion/Enter";
+import { RISE } from "@/components/motion/tokens";
+import { GLASS, TILE } from "@/components/ui/GlassCard";
+import { cn } from "@/lib/cn";
 import { SPRING_GLIDE } from "@/components/motion/ease";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -11,7 +31,7 @@ import { Pager } from "@/components/dsa/DsaBits";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
-import { Page, PageHeader } from "@/components/ui/Page";
+import { Page } from "@/components/ui/Page";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tag } from "@/components/ui/Tag";
@@ -64,10 +84,57 @@ const toParams = (
   limit: PAGE_SIZE,
 });
 
+const TAB_ICON: Record<CareerTabValue, LucideIcon> = {
+  for_you: Sparkles,
+  internships: Briefcase,
+  jobs: Building2,
+  explore: Compass,
+  saved: Bookmark,
+  applications: FileText,
+};
+
+/** One fact about the student's career profile: a round icon, a title and what is known. */
+const Fact: React.FC<{ icon: LucideIcon; title: string; children: React.ReactNode }> = ({
+  icon: Icon,
+  title,
+  children,
+}) => (
+  <div className="flex min-w-0 items-start gap-3.5">
+    <span
+      aria-hidden="true"
+      className="grid size-12 shrink-0 place-items-center rounded-full bg-white text-redline shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08),0_6px_14px_-8px_rgba(24,24,27,0.35)]"
+    >
+      <Icon size={20} strokeWidth={1.75} />
+    </span>
+    <div className="min-w-0">
+      <p className="font-semibold text-ink-primary">{title}</p>
+      {children}
+    </div>
+  </div>
+);
+
+const PrefsLink: React.FC<{
+  children: React.ReactNode;
+  onClick?: () => void;
+  to?: string;
+}> = ({ children, onClick, to }) => {
+  const cls =
+    "mt-0.5 inline-flex items-center gap-1 text-sm text-redline underline underline-offset-4";
+  return to ? (
+    <Link to={to} className={cls}>
+      {children} <span aria-hidden="true">→</span>
+    </Link>
+  ) : (
+    <button type="button" onClick={onClick} className={cls}>
+      {children} <span aria-hidden="true">→</span>
+    </button>
+  );
+};
+
 const SkeletonRows: React.FC = () => (
-  <div role="status" aria-label="Loading listings" className="border-t border-line">
+  <div role="status" aria-label="Loading listings" className="flex flex-col gap-3">
     {Array.from({ length: 5 }, (_v, i) => (
-      <div key={i} className="flex items-start gap-5 border-b border-line py-4">
+      <div key={i} className={cn(TILE, "flex items-start gap-5 p-4")}>
         <Skeleton className="h-10 w-16" />
         <div className="flex-1 space-y-2">
           <Skeleton className="h-4 w-2/3" />
@@ -222,166 +289,185 @@ const CareerPage: React.FC = () => {
   const pr = prefs?.preferences;
 
   return (
-    <Page width="wide">
-      <PageHeader
-        eyebrow="Plan"
-        title="Career"
-        description="Jobs and internships from Freehire's public listings, compared with your own goals, skills and preferences. You apply on the employer's own page; UNBLUFF never applies for you."
-        actions={
-          <>
-            <Button variant="outline" size="sm" onClick={() => setPrefsOpen(true)}>
-              Career preferences
-            </Button>
-            <Link
-              to={`${routes.mentor()}?career=1`}
-              className="inline-flex min-h-9 items-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Ask the AI mentor
-            </Link>
-          </>
-        }
-      />
-
-      <section
-        aria-label="Your career profile"
-        className="mb-8 grid gap-x-10 gap-y-3 border-b border-line pb-6 text-sm sm:grid-cols-4"
-      >
-        {prefsError !== null ? (
-          <ErrorState className="sm:col-span-4" error={prefsError} />
-        ) : !prefs ? (
-          <p className="text-ink-secondary sm:col-span-4">Reading your profile…</p>
-        ) : (
-          <>
-            <div>
-              <p className="eyebrow">Target</p>
-              <p className="mt-1 text-ink-primary">
-                {prefs.profile.role_names.length
-                  ? prefs.profile.role_names.join(", ")
-                  : "No target role yet"}
-              </p>
-              <p className="text-ink-secondary">
-                {prefs.profile.experience_level
-                  ? `${prefs.profile.experience_level} level`
-                  : "Experience level not set"}
-              </p>
+    <Page width="fluid" className="sm:px-5 lg:pl-5 lg:pr-6">
+      <header className="mb-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_37rem]">
+        <div className="min-w-0">
+          <Enter y={RISE.sm}>
+            <p className="eyebrow mb-2 text-redline">Plan</p>
+          </Enter>
+          <Enter index={1} y={RISE.sm}>
+            <h1 className="serif text-title font-medium text-ink-primary">
+              Career <em>Opportunities</em>
+            </h1>
+          </Enter>
+          <Enter index={2} y={RISE.sm}>
+            <p className="mt-3 max-w-2xl leading-relaxed text-ink-secondary">
+              Jobs and internships from Freehire's public listings, compared with your own
+              goals, skills and preferences. You apply on the employer's own page; UNBLUFF
+              never applies for you.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                className="rounded-full bg-white/70"
+                onClick={() => setPrefsOpen(true)}
+              >
+                <Settings2 aria-hidden="true" />
+                Career preferences
+              </Button>
+              <Link
+                to={`${routes.mentor()}?career=1`}
+                className="inline-flex min-h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                <Sparkles size={16} aria-hidden="true" />
+                Ask the AI mentor
+              </Link>
             </div>
-            <div>
-              <p className="eyebrow">Skills</p>
-              <p className="mt-1 flex flex-wrap gap-1">
-                {prefs.profile.verified_skills.slice(0, 4).map((s) => (
-                  <Tag key={s} tone="verified">
-                    {s}
-                  </Tag>
-                ))}
-                {prefs.profile.resume_skills.slice(0, 4).map((s) => (
-                  <Tag key={`r-${s}`} tone="self">
-                    {s}
-                  </Tag>
-                ))}
-                {prefs.profile.self_reported_skills.slice(0, 4).map((s) => (
-                  <Tag key={s} tone="self">
-                    {s}
-                  </Tag>
-                ))}
-                {prefs.profile.verified_skills.length +
-                  prefs.profile.resume_skills.length +
-                  prefs.profile.self_reported_skills.length ===
-                  0 && <span className="text-ink-secondary">None to compare yet</span>}
-              </p>
-              <p className="mt-1 text-xs text-ink-muted">
-                {prefs.profile.verified_skills.length} verified,{" "}
-                {prefs.profile.resume_skills.length > 0
-                  ? `${prefs.profile.resume_skills.length} from resume, `
-                  : ""}
-                {prefs.profile.self_reported_skills.length} stated
+          </Enter>
+        </div>
+
+        <section
+          aria-label="Your career profile"
+          className={cn(GLASS, "grid gap-x-6 gap-y-5 p-5 text-sm sm:grid-cols-2 sm:p-6")}
+        >
+          {prefsError !== null ? (
+            <ErrorState className="sm:col-span-2" error={prefsError} />
+          ) : !prefs ? (
+            <p className="text-ink-secondary sm:col-span-2">Reading your profile…</p>
+          ) : (
+            <>
+              <Fact icon={Target} title="Target role">
+                <p className="text-ink-secondary">
+                  {prefs.profile.role_names.length
+                    ? prefs.profile.role_names.join(", ")
+                    : "Not set"}
+                </p>
+                <p className="text-xs text-ink-muted">
+                  {prefs.profile.experience_level
+                    ? `${prefs.profile.experience_level} level`
+                    : "Experience level not set"}
+                </p>
+                {!prefs.profile.role_names.length && (
+                  <PrefsLink onClick={() => setPrefsOpen(true)}>
+                    Set preferences
+                  </PrefsLink>
+                )}
+              </Fact>
+              <Fact icon={BarChart3} title="Skills">
+                <p className="mt-0.5 flex flex-wrap gap-1">
+                  {prefs.profile.verified_skills.slice(0, 4).map((s) => (
+                    <Tag key={s} tone="verified">
+                      {s}
+                    </Tag>
+                  ))}
+                  {prefs.profile.resume_skills.slice(0, 4).map((s) => (
+                    <Tag key={`r-${s}`} tone="self">
+                      {s}
+                    </Tag>
+                  ))}
+                  {prefs.profile.self_reported_skills.slice(0, 4).map((s) => (
+                    <Tag key={s} tone="self">
+                      {s}
+                    </Tag>
+                  ))}
+                  {prefs.profile.verified_skills.length +
+                    prefs.profile.resume_skills.length +
+                    prefs.profile.self_reported_skills.length ===
+                    0 && <span className="text-ink-secondary">None to compare yet</span>}
+                </p>
+                <p className="mt-1 text-xs text-ink-muted">
+                  {prefs.profile.verified_skills.length} verified,{" "}
+                  {prefs.profile.resume_skills.length > 0
+                    ? `${prefs.profile.resume_skills.length} from resume, `
+                    : ""}
+                  {prefs.profile.self_reported_skills.length} stated
+                </p>
                 {prefs.profile.resume_skills.length === 0 && (
+                  <PrefsLink to="/mentor/memory">Add skills from your resume</PrefsLink>
+                )}
+              </Fact>
+              <Fact icon={Filter} title="Preferences">
+                {pr ? (
                   <>
-                    {" · "}
-                    <Link
-                      to="/mentor/memory"
-                      className="text-redline underline underline-offset-4"
-                    >
-                      Add skills from your resume
-                    </Link>
+                    <p className="text-ink-secondary">
+                      {[
+                        pr.countries.length
+                          ? pr.countries.map((c) => c.toUpperCase()).join(", ")
+                          : null,
+                        pr.cities.join(", ") || null,
+                        pr.work_modes.join(" or ") || null,
+                        pr.employment_types
+                          .map((e) => e.replace("_", "-"))
+                          .join(" or ") || null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") || "Open to anything"}
+                    </p>
+                    {pr.categories.length > 0 && (
+                      <p className="text-xs text-ink-muted">
+                        {pr.categories.map(words).join(", ")}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-ink-secondary">Not set</p>
+                    <PrefsLink onClick={() => setPrefsOpen(true)}>
+                      Set preferences
+                    </PrefsLink>
                   </>
                 )}
-              </p>
-            </div>
-            <div>
-              <p className="eyebrow">Preferences</p>
-              {pr ? (
-                <p className="mt-1 text-ink-primary">
-                  {[
-                    pr.countries.length
-                      ? pr.countries.map((c) => c.toUpperCase()).join(", ")
-                      : null,
-                    pr.cities.join(", ") || null,
-                    pr.work_modes.join(" or ") || null,
-                    pr.employment_types.map((e) => e.replace("_", "-")).join(" or ") ||
-                      null,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ") || "Open to anything"}
+              </Fact>
+              <Fact icon={Database} title="Source">
+                <p className="text-ink-secondary">Freehire public API</p>
+                <p className="text-xs text-ink-muted">
+                  Listings are read live. UNBLUFF does not store job descriptions.
                 </p>
-              ) : (
-                <p className="mt-1 text-ink-secondary">
-                  Not set.{" "}
-                  <button
-                    type="button"
-                    onClick={() => setPrefsOpen(true)}
-                    className="text-redline underline underline-offset-4"
-                  >
-                    Set preferences
-                  </button>
-                </p>
-              )}
-              {pr && pr.categories.length > 0 && (
-                <p className="text-ink-secondary">
-                  {pr.categories.map(words).join(", ")}
-                </p>
-              )}
-            </div>
-            <div>
-              <p className="eyebrow">Source</p>
-              <p className="mt-1 text-ink-primary">Freehire public API</p>
-              <p className="text-xs text-ink-muted">
-                Listings are read live. UNBLUFF does not store job descriptions.
-              </p>
-            </div>
-          </>
-        )}
-      </section>
+              </Fact>
+            </>
+          )}
+        </section>
+      </header>
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList
           aria-label="Career sections"
-          className="mb-6 h-auto w-full flex-wrap justify-start gap-1 rounded-none border-b border-line bg-transparent p-0"
+          className={cn(
+            GLASS,
+            "mb-5 flex h-auto w-full flex-wrap justify-start gap-1 p-2 text-ink-secondary"
+          )}
         >
-          {ALL_TABS.map((t) => (
-            <TabsTrigger
-              key={t.value}
-              value={t.value}
-              className="relative min-h-11 rounded-none px-4 text-sm data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none"
-            >
-              {t.label}
-              {tab === t.value && (
-                <m.span
+          {ALL_TABS.map((t) => {
+            const Icon = TAB_ICON[t.value];
+            return (
+              <TabsTrigger
+                key={t.value}
+                value={t.value}
+                className="relative isolate min-h-11 gap-2 rounded-full px-5 text-sm data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:text-ink-primary data-[state=active]:shadow-none"
+              >
+                {tab === t.value && (
+                  <m.span
+                    aria-hidden="true"
+                    layoutId="career-tab-pill"
+                    transition={SPRING_GLIDE}
+                    className="absolute inset-0 -z-10 rounded-full bg-white shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08),0_6px_14px_-8px_rgba(24,24,27,0.35)]"
+                  />
+                )}
+                <Icon
+                  size={17}
+                  strokeWidth={1.75}
                   aria-hidden="true"
-                  layoutId="career-tab-rule"
-                  transition={SPRING_GLIDE}
-                  className="absolute inset-x-2 -bottom-px h-0.5 bg-redline"
+                  className={tab === t.value ? "text-redline" : "text-ink-muted"}
                 />
-              )}
-            </TabsTrigger>
-          ))}
+                {t.label}
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
 
         <TabsContent value={tab} className="mt-0 focus-visible:outline-hidden">
           {feedTab && (
-            <section aria-label={FEED_TABS.find((t) => t.value === feedTab)?.label}>
-              <p className="mb-4 text-sm text-ink-secondary">
-                {FEED_TABS.find((t) => t.value === feedTab)?.blurb}
-              </p>
+            <div className="grid items-start gap-5 lg:grid-cols-[19.5rem_minmax(0,1fr)]">
               <FilterBar
                 tab={feedTab}
                 filters={current}
@@ -390,174 +476,260 @@ const CareerPage: React.FC = () => {
                 onReset={reset}
                 onOpenFacets={loadFacets}
                 busy={loading}
+                className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto"
               />
-
-              {chips.length > 0 && (
-                <ul
-                  aria-label="Active filters"
-                  className="mt-3 flex flex-wrap items-center gap-2"
-                >
-                  {chips.map((c) => (
-                    <li key={c.key}>
-                      <button
-                        type="button"
-                        onClick={() => applyFilters(c.clear(current))}
-                        className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-line-strong bg-surface px-2.5 text-xs text-ink-primary hover:border-ink-primary"
-                      >
-                        {c.label}
-                        <span aria-hidden="true">×</span>
-                        <span className="sr-only"> remove filter</span>
-                      </button>
-                    </li>
-                  ))}
-                  <li>
-                    <button
-                      type="button"
-                      onClick={reset}
-                      className="text-xs text-redline underline underline-offset-4"
-                    >
-                      Reset all filters
-                    </button>
-                  </li>
-                </ul>
-              )}
-
-              {!online && (
-                <p
-                  role="alert"
-                  className="mt-4 border-l-2 border-redline pl-3 text-sm text-ink-primary"
-                >
-                  You appear to be offline. Listings will load when you reconnect.
+              <section
+                aria-label={FEED_TABS.find((t) => t.value === feedTab)?.label}
+                className={cn(GLASS, "min-w-0 p-5 sm:p-6")}
+              >
+                <p className="mb-4 text-sm text-ink-secondary">
+                  {FEED_TABS.find((t) => t.value === feedTab)?.blurb}
                 </p>
-              )}
 
-              <div className="mt-5" aria-busy={loading}>
-                {feed && (
-                  <div className="mb-3 flex flex-col gap-1 text-sm text-ink-secondary">
-                    <p aria-live="polite">
-                      {feed.jobs.length === 0
-                        ? "No postings in this view."
-                        : feed.total !== null
-                          ? `Showing ${from.toLocaleString("en-US")} to ${to.toLocaleString("en-US")} of ${feed.total.toLocaleString("en-US")} ${feed.tab === "for_you" ? "matching postings" : "postings"} on Freehire.`
-                          : `Showing ${from} to ${to}. Freehire did not report a total.`}
-                      {feed.ranked_window !== null && feed.ranked_window > 0
-                        ? ` Ranked from the ${feed.ranked_window} most recent candidates, best match first.${feed.tab !== "for_you" ? " Choose newest first in Filters to page through every posting." : ""} A posting that states more about itself ranks above one that states little at a similar score.`
-                        : ""}
-                    </p>
-                    {feed.personalization.level !== "full" && (
-                      <p role="note" className="border-l-2 border-line-strong pl-3">
-                        {feed.personalization.level === "none"
-                          ? "Not personalised: "
-                          : "Limited personalisation: "}
-                        {feed.personalization.notes.join(" ") ||
-                          "add more to your profile for better ranking."}{" "}
+                {chips.length > 0 && (
+                  <ul
+                    aria-label="Active filters"
+                    className="mb-4 flex flex-wrap items-center gap-2"
+                  >
+                    {chips.map((c) => (
+                      <li key={c.key}>
                         <button
                           type="button"
-                          onClick={() => setPrefsOpen(true)}
-                          className="text-redline underline underline-offset-4"
+                          onClick={() => applyFilters(c.clear(current))}
+                          className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-line-strong bg-white/80 px-3 text-xs text-ink-primary hover:border-ink-primary"
                         >
-                          Improve this
+                          {c.label}
+                          <span aria-hidden="true">×</span>
+                          <span className="sr-only"> remove filter</span>
                         </button>
-                      </p>
-                    )}
-                    {feed.relaxed.length > 0 && (
-                      <p role="note" className="border-l-2 border-line-strong pl-3">
-                        Nothing matched your {feed.relaxed.join(" and ")} filter, so it
-                        was dropped to show general opportunities.
-                      </p>
-                    )}
-                    {feed.ignored_params.length > 0 && (
-                      <p
-                        role="alert"
-                        className="border-l-2 border-redline pl-3 text-ink-primary"
-                      >
-                        Freehire ignored{" "}
-                        {feed.ignored_params
-                          .map(
-                            (p) =>
-                              p.param +
-                              (p.did_you_mean ? ` (did you mean ${p.did_you_mean}?)` : "")
-                          )
-                          .join(", ")}
-                        , so these results may be broader than you asked for.
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {loading && !feed && <SkeletonRows />}
-                {feedError !== null && !loading && (
-                  <ErrorState
-                    error={feedError}
-                    onRetry={() => setAttempt((a) => a + 1)}
-                  />
-                )}
-                {feed && !feedError && feed.jobs.length === 0 && !loading && (
-                  <EmptyState
-                    live
-                    title="Nothing matched"
-                    action={
-                      <div className="flex flex-wrap gap-2">
-                        {chips.length > 0 && (
-                          <Button variant="outline" size="sm" onClick={reset}>
-                            Reset filters
-                          </Button>
-                        )}
-                        {feedTab === "jobs" && !current.broaden && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => applyFilters({ ...current, broaden: true })}
-                          >
-                            Include mid-level roles
-                          </Button>
-                        )}
-                        {!current.include_stale && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              applyFilters({ ...current, include_stale: true })
-                            }
-                          >
-                            Include older postings
-                          </Button>
-                        )}
-                      </div>
-                    }
-                  >
-                    No open postings on Freehire fit this view right now. Widening the
-                    search is usually the quickest fix. UNBLUFF never fills a gap with
-                    listings it did not fetch.
-                  </EmptyState>
-                )}
-                {feed && feed.jobs.length > 0 && (
-                  <ul
-                    key={`${feed.tab}:${feed.offset}:${feed.jobs[0]?.job.id ?? ""}`}
-                    className="border-t border-line transition-opacity duration-200"
-                    aria-label="Listings"
-                    style={loading ? { opacity: 0.6 } : undefined}
-                  >
-                    {feed.jobs.map((c, ci) => (
-                      <JobRow key={c.job.id} card={c} index={ci} onTracker={onTracker} />
+                      </li>
                     ))}
+                    <li>
+                      <button
+                        type="button"
+                        onClick={reset}
+                        className="text-xs text-redline underline underline-offset-4"
+                      >
+                        Reset all filters
+                      </button>
+                    </li>
                   </ul>
                 )}
-                {feed && feed.jobs.length > 0 && (
-                  <Pager page={page} totalPages={totalPages} onPage={(p) => setPage(p)} />
-                )}
-                {feed && totalPages >= MAX_PAGES && (
-                  <p className="mt-2 text-xs text-ink-muted">
-                    Freehire does not serve results past page {MAX_PAGES}: narrow the
-                    search with filters to see more.
+
+                {!online && (
+                  <p
+                    role="alert"
+                    className="mb-4 border-l-2 border-redline pl-3 text-sm text-ink-primary"
+                  >
+                    You appear to be offline. Listings will load when you reconnect.
                   </p>
                 )}
-              </div>
-            </section>
+
+                <div aria-busy={loading}>
+                  {feed && (
+                    <div className="mb-4 flex flex-col gap-3 text-sm text-ink-secondary">
+                      <div
+                        className={cn(
+                          "grid items-start gap-3",
+                          feed.personalization.level !== "full" &&
+                            "xl:grid-cols-[minmax(0,1fr)_19rem]"
+                        )}
+                      >
+                        <div className={cn(TILE, "flex items-start gap-3 p-4")}>
+                          <Info
+                            size={18}
+                            strokeWidth={1.75}
+                            aria-hidden="true"
+                            className="mt-0.5 shrink-0 text-redline"
+                          />
+                          <p aria-live="polite">
+                            {feed.jobs.length === 0
+                              ? "No postings in this view."
+                              : feed.total !== null
+                                ? `Showing ${from.toLocaleString("en-US")} to ${to.toLocaleString("en-US")} of ${feed.total.toLocaleString("en-US")} ${feed.tab === "for_you" ? "matching postings" : "postings"} on Freehire.`
+                                : `Showing ${from} to ${to}. Freehire did not report a total.`}
+                            {feed.ranked_window !== null && feed.ranked_window > 0
+                              ? ` Ranked from the ${feed.ranked_window} most recent candidates, best match first.${feed.tab !== "for_you" ? " Choose newest first under Sort by to page through every posting." : ""} A posting that states more about itself ranks above one that states little at a similar score.`
+                              : ""}
+                          </p>
+                        </div>
+                        {feed.personalization.level !== "full" && (
+                          <div
+                            role="note"
+                            className={cn(TILE, "flex items-start gap-3 p-4 text-xs")}
+                          >
+                            <Info
+                              size={16}
+                              strokeWidth={1.75}
+                              aria-hidden="true"
+                              className="mt-0.5 shrink-0 text-redline"
+                            />
+                            <p>
+                              {feed.personalization.level === "none"
+                                ? "Not personalised: "
+                                : "Limited personalisation: "}
+                              {feed.personalization.notes.join(" ") ||
+                                "add more to your profile for better ranking."}{" "}
+                              <button
+                                type="button"
+                                onClick={() => setPrefsOpen(true)}
+                                className="text-redline underline underline-offset-4"
+                              >
+                                Improve this
+                              </button>
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      {feed.relaxed.length > 0 && (
+                        <p role="note" className={cn(TILE, "p-3.5")}>
+                          Nothing matched your {feed.relaxed.join(" and ")} filter, so it
+                          was dropped to show general opportunities.
+                        </p>
+                      )}
+                      {feed.ignored_params.length > 0 && (
+                        <p
+                          role="alert"
+                          className={cn(
+                            TILE,
+                            "border-l-2 border-redline p-3.5 text-ink-primary"
+                          )}
+                        >
+                          Freehire ignored{" "}
+                          {feed.ignored_params
+                            .map(
+                              (p) =>
+                                p.param +
+                                (p.did_you_mean
+                                  ? ` (did you mean ${p.did_you_mean}?)`
+                                  : "")
+                            )
+                            .join(", ")}
+                          , so these results may be broader than you asked for.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {feedTab !== "for_you" && (
+                    <div className="mb-3 flex items-center justify-end gap-2">
+                      <label
+                        htmlFor="career-sort"
+                        className="flex items-center gap-1.5 text-sm text-ink-secondary"
+                      >
+                        <ArrowUpDown size={14} aria-hidden="true" />
+                        Sort by
+                      </label>
+                      <select
+                        id="career-sort"
+                        className="min-h-10 rounded-xl border border-line-strong bg-white/70 px-3 py-2 text-sm text-ink-primary"
+                        value={current.sort ?? ""}
+                        onChange={(e) =>
+                          applyFilters({
+                            ...current,
+                            sort: (e.target.value || null) as CareerFilters["sort"],
+                          })
+                        }
+                      >
+                        <option value="">
+                          {feedTab === "explore" ? "Freehire's order" : "Best match"}
+                        </option>
+                        {feedTab !== "explore" && (
+                          <option value="newest">Newest first</option>
+                        )}
+                        {feedTab === "explore" && (
+                          <option value="best_match">Best match</option>
+                        )}
+                      </select>
+                    </div>
+                  )}
+
+                  {loading && !feed && <SkeletonRows />}
+                  {feedError !== null && !loading && (
+                    <ErrorState
+                      error={feedError}
+                      onRetry={() => setAttempt((a) => a + 1)}
+                    />
+                  )}
+                  {feed && !feedError && feed.jobs.length === 0 && !loading && (
+                    <EmptyState
+                      live
+                      title="Nothing matched"
+                      action={
+                        <div className="flex flex-wrap gap-2">
+                          {chips.length > 0 && (
+                            <Button variant="outline" size="sm" onClick={reset}>
+                              Reset filters
+                            </Button>
+                          )}
+                          {feedTab === "jobs" && !current.broaden && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => applyFilters({ ...current, broaden: true })}
+                            >
+                              Include mid-level roles
+                            </Button>
+                          )}
+                          {!current.include_stale && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                applyFilters({ ...current, include_stale: true })
+                              }
+                            >
+                              Include older postings
+                            </Button>
+                          )}
+                        </div>
+                      }
+                    >
+                      No open postings on Freehire fit this view right now. Widening the
+                      search is usually the quickest fix. UNBLUFF never fills a gap with
+                      listings it did not fetch.
+                    </EmptyState>
+                  )}
+                  {feed && feed.jobs.length > 0 && (
+                    <ul
+                      key={`${feed.tab}:${feed.offset}:${feed.jobs[0]?.job.id ?? ""}`}
+                      className="flex flex-col gap-3 transition-opacity duration-200"
+                      aria-label="Listings"
+                      style={loading ? { opacity: 0.6 } : undefined}
+                    >
+                      {feed.jobs.map((c, ci) => (
+                        <JobRow
+                          key={c.job.id}
+                          card={c}
+                          index={ci}
+                          onTracker={onTracker}
+                        />
+                      ))}
+                    </ul>
+                  )}
+                  {feed && feed.jobs.length > 0 && (
+                    <Pager
+                      page={page}
+                      totalPages={totalPages}
+                      onPage={(p) => setPage(p)}
+                    />
+                  )}
+                  {feed && totalPages >= MAX_PAGES && (
+                    <p className="mt-2 text-xs text-ink-muted">
+                      Freehire does not serve results past page {MAX_PAGES}: narrow the
+                      search with filters to see more.
+                    </p>
+                  )}
+                </div>
+              </section>
+            </div>
           )}
 
           {(tab === "saved" || tab === "applications") && (
-            <section aria-label={tab === "saved" ? "Saved jobs" : "Application tracker"}>
+            <section
+              aria-label={tab === "saved" ? "Saved jobs" : "Application tracker"}
+              className={cn(GLASS, "p-5 sm:p-7")}
+            >
               <p className="mb-4 max-w-3xl text-sm text-ink-secondary">
                 {tab === "saved"
                   ? "Listings you bookmarked. Open the employer's page to apply; nothing is submitted from here."

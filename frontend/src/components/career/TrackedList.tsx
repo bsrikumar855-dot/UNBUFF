@@ -5,7 +5,9 @@ import { ExternalLink } from "lucide-react";
 import { api } from "@/api/endpoints";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { TILE } from "@/components/ui/GlassCard";
 import { Tag } from "@/components/ui/Tag";
+import { cn } from "@/lib/cn";
 import { safeHref, statusLabel } from "@/lib/career";
 import type { CareerTrackedItem } from "@/types/contract";
 import { TrackerControls } from "./TrackerControls";
@@ -69,7 +71,7 @@ const Row: React.FC<{
       index={index}
       y={RISE.sm}
       duration={DUR.fast}
-      className="border-b border-line py-4"
+      className={cn(TILE, "p-4 sm:p-5")}
       data-slug={item.slug}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -113,7 +115,7 @@ const Row: React.FC<{
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-line-strong px-3 text-sm font-medium text-ink-primary hover:border-ink-primary"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-line-strong bg-white/80 px-3.5 text-sm font-medium text-ink-primary hover:border-ink-primary"
             >
               Employer page <ExternalLink size={14} aria-hidden="true" />
               <span className="sr-only"> (opens in a new tab): {item.title}</span>
@@ -123,7 +125,7 @@ const Row: React.FC<{
             href={item.freehire_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-line-strong px-3 text-sm font-medium text-ink-primary hover:border-ink-primary"
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-line-strong bg-white/80 px-3.5 text-sm font-medium text-ink-primary hover:border-ink-primary"
           >
             On Freehire <ExternalLink size={14} aria-hidden="true" />
             <span className="sr-only"> (opens in a new tab): {item.title}</span>
@@ -146,7 +148,7 @@ const Row: React.FC<{
       )}
       {error !== null && <ErrorState className="mt-3" error={error} />}
       {open && (
-        <div className="mt-4 border-l-2 border-line-strong bg-surface-100/50 p-4">
+        <div className="mt-4 rounded-2xl border-l-2 border-line-strong bg-white/60 p-4">
           <TrackerControls slug={item.slug} tracker={t} onChange={() => onChanged()} />
           <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-3">
             {t.saved && (
@@ -198,7 +200,7 @@ export const TrackedList: React.FC<{
   onChanged: () => void;
 }> = ({ items, mode, onChanged }) => (
   <ul
-    className="border-t border-line"
+    className="flex flex-col gap-3"
     aria-label={mode === "saved" ? "Saved jobs" : "Applications"}
   >
     {items.map((i, ri) => (

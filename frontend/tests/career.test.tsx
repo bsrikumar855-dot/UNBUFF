@@ -137,7 +137,7 @@ const lastParams = () => mocked.getCareerJobs.mock.calls.at(-1)![0];
 describe("Career page", () => {
   it("shows the profile summary, the sections and genuine listings with attribution and an original-posting link", async () => {
     renderAt("/career");
-    expect(await screen.findByRole("heading", { name: "Career" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Career Opportunities" })).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "React Intern" })).toBeInTheDocument();
     expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["For you", "Internships", "Jobs", "Explore", "Saved", "Applications"]);
     expect(screen.getByText("Frontend Developer")).toBeInTheDocument();
@@ -224,7 +224,6 @@ describe("search, filters and paging", () => {
     await screen.findByRole("heading", { name: "React Intern" });
     fireEvent.change(screen.getByLabelText("Search"), { target: { value: "react" } });
     expect(mocked.getCareerJobs).toHaveBeenCalledTimes(1); // typing alone sends nothing
-    fireEvent.click(screen.getByRole("button", { name: "Filters" }));
     await waitFor(() => expect(mocked.getCareerFacets).toHaveBeenCalled());
     fireEvent.click(screen.getByLabelText("remote"));
     fireEvent.change(await screen.findByLabelText("Country"), { target: { value: "in" } });
@@ -256,7 +255,6 @@ describe("search, filters and paging", () => {
     renderAt("/career?tab=jobs");
     await screen.findByRole("heading", { name: "React Intern" });
     expect(lastParams()).toMatchObject({ include_stale: undefined, broaden: undefined });
-    fireEvent.click(screen.getByRole("button", { name: "Filters" }));
     fireEvent.click(screen.getByLabelText(/Include mid-level roles/));
     fireEvent.click(screen.getByLabelText(/Include older postings/));
     fireEvent.click(screen.getByRole("button", { name: "Apply filters" }));
@@ -283,10 +281,9 @@ describe("search, filters and paging", () => {
     mocked.getCareerJobs.mockResolvedValue(feed([card()], { tab: "internships", total: 5436, has_more: true, ranked_window: 100 }));
     renderAt("/career?tab=internships");
     expect(await screen.findByText("Page 1 of 5")).toBeInTheDocument(); // 100 ranked candidates, not 5,436 / 20
-    expect(screen.getByText(/Ranked from the 100 most recent candidates, best match first\. Choose newest first in Filters/)).toBeInTheDocument();
+    expect(screen.getByText(/Ranked from the 100 most recent candidates, best match first\. Choose newest first under Sort by/)).toBeInTheDocument();
     expect(lastParams().sort).toBeUndefined();
-    fireEvent.click(screen.getByRole("button", { name: "Filters" }));
-    fireEvent.change(await screen.findByLabelText("Order"), { target: { value: "newest" } });
+    fireEvent.change(await screen.findByLabelText("Sort by"), { target: { value: "newest" } });
     fireEvent.click(screen.getByRole("button", { name: "Apply filters" }));
     await waitFor(() => expect(lastParams()).toMatchObject({ tab: "internships", sort: "newest" }));
     expect(await screen.findByText(/Order: newest first/)).toBeInTheDocument();
@@ -296,8 +293,7 @@ describe("search, filters and paging", () => {
     renderAt("/career?tab=explore");
     await screen.findByRole("heading", { name: "React Intern" });
     expect(lastParams().sort).toBeUndefined();
-    fireEvent.click(screen.getByRole("button", { name: "Filters" }));
-    const order = (await screen.findByLabelText("Order")) as HTMLSelectElement;
+    const order = (await screen.findByLabelText("Sort by")) as HTMLSelectElement;
     expect([...order.options].map((o) => o.value)).toEqual(["", "best_match"]);
     fireEvent.change(order, { target: { value: "best_match" } });
     fireEvent.click(screen.getByRole("button", { name: "Apply filters" }));
