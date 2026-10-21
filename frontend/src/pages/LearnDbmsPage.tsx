@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Clock, HelpCircle, Terminal } from "lucide-react";
 import type { DbmsTopicsResponse } from "@/types/contract";
 import { api } from "@/api/endpoints";
 import { useLearnProgress } from "@/hooks/useLearnProgress";
+import { LearnCard, LearnProgress, Pill } from "@/components/learn/LearnBits";
+import { dbmsIcon } from "@/components/learn/learnIcons";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { TILE } from "@/components/ui/GlassCard";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { Page, PageHeader, Section } from "@/components/ui/Page";
-import { Tag } from "@/components/ui/Tag";
-import { Meter } from "@/components/ui/Meter";
-import SpotlightCard from "@/components/reactbits/SpotlightCard";
+import { Page, PageHeader } from "@/components/ui/Page";
+import { cn } from "@/lib/cn";
 import { routes } from "@/lib/routes";
 
 /** /learn/dbms: the DBMS topics in teaching order, with the student's quiz results when signed in. */
@@ -33,7 +35,7 @@ const LearnDbmsPage: React.FC = () => {
   const mine = progress.data?.progress.dbms ?? {};
 
   return (
-    <Page>
+    <Page width="fluid" className="sm:px-5 lg:pl-5 lg:pr-6">
       <PageHeader
         eyebrow="Learn"
         title="DBMS"
@@ -44,9 +46,9 @@ const LearnDbmsPage: React.FC = () => {
       )}
       {!data && error === null && <LoadingState message="Loading topics…" />}
       {data && (
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-10">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-8">
           {progress.data && (
-            <Meter
+            <LearnProgress
               value={progress.data.dbms_passed}
               max={progress.data.dbms_total}
               label="DBMS quizzes passed"
@@ -54,54 +56,69 @@ const LearnDbmsPage: React.FC = () => {
             />
           )}
           {!progress.signedIn && (
-            <p className="text-sm text-ink-muted">
-              <Link to={routes.login} className="underline underline-offset-4">
+            <p className={cn(TILE, "px-4 py-3 text-sm text-ink-secondary")}>
+              <Link to={routes.login} className="text-redline underline underline-offset-4">
                 Sign in
               </Link>{" "}
               to take the quizzes and keep your results.
             </p>
           )}
-          {data.groups.map((group) => (
-            <Section key={group} title={group}>
-              <ul className="grid gap-3 sm:grid-cols-2">
-                {data.topics
-                  .filter((t) => t.group === group)
-                  .map((t) => {
-                    const p = mine[t.id];
-                    return (
-                      <li key={t.id}>
-                        <SpotlightCard
-                          theme="light"
-                          spotlightColor="#b3291a"
-                          className="h-full rounded-2xl! p-4!"
-                        >
-                          <div className="mb-1 flex flex-wrap items-center gap-2">
-                            <Link
-                              to={routes.learnDbmsTopic(t.id)}
-                              className="font-semibold text-ink-primary underline-offset-4 hover:underline"
-                            >
-                              {t.name}
-                            </Link>
-                            {p?.passed_at ? (
-                              <Tag tone="verified">Quiz passed</Tag>
+          {data.groups.map((group) => {
+            const id = `group-${group.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+            return (
+              <section key={group} aria-labelledby={`${id}-title`} id={id}>
+                <h2
+                  id={`${id}-title`}
+                  className="serif mb-4 text-title font-medium text-ink-primary"
+                >
+                  {group}
+                </h2>
+                <ul className="grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-2">
+                  {data.topics
+                    .filter((t) => t.group === group)
+                    .map((t) => {
+                      const p = mine[t.id];
+                      return (
+                        <LearnCard
+                          key={t.id}
+                          icon={dbmsIcon(t.id, t.name)}
+                          title={t.name}
+                          to={routes.learnDbmsTopic(t.id)}
+                          status={
+                            p?.passed_at ? (
+                              <Pill tone="verified">Quiz passed</Pill>
                             ) : p ? (
-                              <Tag tone="alert">
+                              <Pill tone="alert">
                                 Best {p.best_score}/{p.total}
-                              </Tag>
-                            ) : null}
-                          </div>
-                          <p className="text-sm text-ink-secondary">{t.summary}</p>
-                          <p className="mt-2 text-xs text-ink-muted">
-                            {t.minutes} min · {t.quiz_questions} quiz questions
-                            {t.has_example ? " · SQL example" : ""}
-                          </p>
-                        </SpotlightCard>
-                      </li>
-                    );
-                  })}
-              </ul>
-            </Section>
-          ))}
+                              </Pill>
+                            ) : null
+                          }
+                          summary={t.summary}
+                          meta={
+                            <>
+                              <span className="inline-flex items-center gap-1.5">
+                                <Clock size={14} aria-hidden="true" />
+                                {t.minutes} min
+                              </span>
+                              <span className="inline-flex items-center gap-1.5">
+                                <HelpCircle size={14} aria-hidden="true" />
+                                {t.quiz_questions} quiz questions
+                              </span>
+                              {t.has_example && (
+                                <span className="inline-flex items-center gap-1.5">
+                                  <Terminal size={14} aria-hidden="true" />
+                                  SQL example
+                                </span>
+                              )}
+                            </>
+                          }
+                        />
+                      );
+                    })}
+                </ul>
+              </section>
+            );
+          })}
         </div>
       )}
     </Page>

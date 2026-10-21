@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { CheckCircle2, FileText } from "lucide-react";
 import type { PatternLevel, PatternsResponse } from "@/types/contract";
 import { api } from "@/api/endpoints";
 import { useLearnProgress } from "@/hooks/useLearnProgress";
+import { LearnCard, LearnProgress, Pill } from "@/components/learn/LearnBits";
+import { patternIcon } from "@/components/learn/learnIcons";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { TILE } from "@/components/ui/GlassCard";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { Page, PageHeader, Section } from "@/components/ui/Page";
-import { Tag } from "@/components/ui/Tag";
-import { Meter } from "@/components/ui/Meter";
-import SpotlightCard from "@/components/reactbits/SpotlightCard";
+import { Page, PageHeader } from "@/components/ui/Page";
+import { cn } from "@/lib/cn";
 import { routes } from "@/lib/routes";
 
 const LEVEL: Record<PatternLevel, string> = {
@@ -16,6 +18,7 @@ const LEVEL: Record<PatternLevel, string> = {
   intermediate: "Intermediate",
   advanced: "Advanced",
 };
+const LEVEL_TONE = { core: "core", intermediate: "plain", advanced: "ink" } as const;
 
 /** /learn/patterns: the DSA patterns grouped by family, each with the cues that point to it. */
 const LearnPatternsPage: React.FC = () => {
@@ -39,10 +42,14 @@ const LearnPatternsPage: React.FC = () => {
   const done = progress.data?.progress.patterns ?? {};
 
   return (
-    <Page>
+    <Page width="fluid" className="sm:px-5 lg:pl-5 lg:pr-6">
       <PageHeader
         eyebrow="Learn"
-        title="DSA patterns"
+        title={
+          <>
+            DSA <em>patterns</em>
+          </>
+        }
         description="Learn to recognise the pattern from the wording of a problem, then reuse its template. Each pattern has the cues to look for, a tested Python template, the usual mistakes and practice problems."
       />
       {error !== null && !data && (
@@ -50,17 +57,17 @@ const LearnPatternsPage: React.FC = () => {
       )}
       {!data && error === null && <LoadingState message="Loading patterns…" />}
       {data && (
-        <div className="grid grid-cols-[minmax(0,1fr)] gap-10">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-8">
           {progress.signedIn && progress.data && (
-            <Meter
+            <LearnProgress
               value={progress.data.patterns_done}
               max={progress.data.patterns_total}
               label="Patterns you marked as learned"
             />
           )}
           {!progress.signedIn && (
-            <p className="text-sm text-ink-muted">
-              <Link to={routes.login} className="underline underline-offset-4">
+            <p className={cn(TILE, "px-4 py-3 text-sm text-ink-secondary")}>
+              <Link to={routes.login} className="text-redline underline underline-offset-4">
                 Sign in
               </Link>{" "}
               to mark patterns and problems as done. These marks are self-reported.
@@ -69,51 +76,45 @@ const LearnPatternsPage: React.FC = () => {
           {data.topics.map((topic) => {
             const items = data.patterns.filter((p) => p.topic === topic);
             if (items.length === 0) return null;
+            const id = `topic-${topic.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
             return (
-              <Section
-                key={topic}
-                title={topic}
-                id={`topic-${topic.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
-              >
-                <ul className="grid gap-3 sm:grid-cols-2">
+              <section key={topic} aria-labelledby={`${id}-title`} id={id}>
+                <h2
+                  id={`${id}-title`}
+                  className="serif mb-4 text-title font-medium text-ink-primary"
+                >
+                  {topic}
+                </h2>
+                <ul className="grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-2">
                   {items.map((p) => (
-                    <li key={p.id}>
-                      <SpotlightCard
-                        theme="light"
-                        spotlightColor="#b3291a"
-                        className="h-full rounded-2xl! p-4!"
-                      >
-                        <div className="mb-1 flex flex-wrap items-center gap-2">
-                          <Link
-                            to={routes.learnPattern(p.id)}
-                            className="font-semibold text-ink-primary underline-offset-4 hover:underline"
-                          >
-                            {p.name}
-                          </Link>
-                          <Tag>{LEVEL[p.level]}</Tag>
-                          {done[p.id]?.done && <Tag tone="self">Marked learned</Tag>}
-                        </div>
-                        <p className="text-sm text-ink-secondary">{p.summary}</p>
-                        <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Cues">
-                          {p.cues.slice(0, 3).map((c) => (
-                            <li
-                              key={c}
-                              className="rounded-sm bg-surface-100 px-2 py-0.5 text-xs text-ink-secondary"
-                            >
-                              “{c}”
-                            </li>
-                          ))}
-                        </ul>
-                        <p className="mt-2 text-xs text-ink-muted">
-                          {p.problem_count} problems
-                          {progress.data &&
-                            ` · ${done[p.id]?.problems_done.length ?? 0} marked solved`}
-                        </p>
-                      </SpotlightCard>
-                    </li>
+                    <LearnCard
+                      key={p.id}
+                      icon={patternIcon(p.id, p.name)}
+                      title={p.name}
+                      to={routes.learnPattern(p.id)}
+                      badge={<Pill tone={LEVEL_TONE[p.level]}>{LEVEL[p.level]}</Pill>}
+                      status={done[p.id]?.done ? <Pill tone="verified">Marked learned</Pill> : null}
+                      summary={p.summary}
+                      chips={p.cues.slice(0, 4).map((c) => `“${c}”`)}
+                      chipsLabel="Cues"
+                      meta={
+                        <>
+                          <span className="inline-flex items-center gap-1.5">
+                            <FileText size={14} aria-hidden="true" />
+                            {p.problem_count} problems
+                          </span>
+                          {progress.data && (
+                            <span className="inline-flex items-center gap-1.5">
+                              <CheckCircle2 size={14} aria-hidden="true" className="text-redline" />
+                              {done[p.id]?.problems_done.length ?? 0} marked solved
+                            </span>
+                          )}
+                        </>
+                      }
+                    />
                   ))}
                 </ul>
-              </Section>
+              </section>
             );
           })}
         </div>
