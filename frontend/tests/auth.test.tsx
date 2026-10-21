@@ -160,6 +160,8 @@ describe("App navigation", () => {
 
     const client = fakeClient({ uid: "u1", email: "a@b.co" });
     render(<App authClient={client} />);
+    // Sign out and My sessions now live in the menu panel.
+    fireEvent.click(await screen.findByRole("button", { name: "Menu" }));
     expect(await screen.findByRole("button", { name: "Sign out" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "My sessions" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));

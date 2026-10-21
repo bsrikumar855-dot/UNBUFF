@@ -38,11 +38,13 @@ describe("Landing — demo report flow", () => {
   });
 
   afterEach(() => {
+    window.history.pushState({}, "", "/"); // the app uses a real BrowserRouter: start every test on the landing page
     global.fetch = originalFetch;
   });
 
   it("shows the loading state, then routes to the report with real data on success", async () => {
-    global.fetch = vi.fn().mockResolvedValue(jsonResponse(mockReport));
+    // A short delay, so the loading state can be observed before the report arrives.
+    global.fetch = vi.fn().mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(jsonResponse(mockReport)), 60)));
     render(<App />);
 
     const demoButtons = screen.getAllByRole("button", { name: "View Demo Report" });

@@ -1,6 +1,7 @@
 import React from "react";
 import { m, useScroll, useSpring } from "motion/react";
 import { HeroSection } from "@/components/landing/HeroSection";
+import { ProofSection } from "@/components/landing/ProofSection";
 import { Interrogation } from "@/components/landing/Interrogation";
 import { CountsSection } from "@/components/landing/CountsSection";
 import { IndexSection } from "@/components/landing/IndexSection";
@@ -27,6 +28,7 @@ export const LandingPage: React.FC = () => {
     <>
       <ReadingProgress />
       <HeroSection />
+      <ProofSection />
       <Thread label="01 · The test" />
       <Interrogation />
       <CountsSection />

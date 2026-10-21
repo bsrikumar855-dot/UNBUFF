@@ -6,14 +6,32 @@ import { m } from "motion/react";
 import { cn } from "@/lib/cn";
 import GlassSurface from "@/components/reactbits/GlassSurface";
 import { routes } from "@/lib/routes";
+import { useAuth } from "@/auth/context";
 import { useSessionState } from "@/state/useSession";
 import { AccountMenu } from "./AccountMenu";
 import { navGroups, type NavItem } from "./nav";
 
 const CURVE = [0.22, 1, 0.36, 1] as const;
 
+/** What a visitor who is not signed in can open. */
+const FEATURED_PUBLIC: { label: string; to: string; match: NavItem["match"] }[] = [
+  {
+    label: "DSA Arena",
+    to: routes.dsa,
+    match: (p) => p === "/dsa" || p.startsWith("/dsa/"),
+  },
+  {
+    label: "DSA patterns",
+    to: routes.learnPatterns,
+    match: (p) => p.startsWith("/learn/patterns"),
+  },
+  { label: "DBMS", to: routes.learnDbms, match: (p) => p.startsWith("/learn/dbms") },
+  { label: "Roadmap", to: routes.roadmap(), match: (p) => p === "/roadmap" },
+  { label: "Sign in", to: routes.login, match: (p) => p === "/login" },
+];
+
 /** The five places most visits start from, set large. Everything else is listed smaller underneath. */
-const FEATURED: { label: string; to: string; match: NavItem["match"] }[] = [
+const FEATURED_APP: { label: string; to: string; match: NavItem["match"] }[] = [
   { label: "Placement plan", to: routes.placement, match: (p) => p === "/placement" },
   {
     label: "DSA Arena",
@@ -41,9 +59,12 @@ export const MenuPanel: React.FC<{
 }> = ({ open, onOpenChange }) => {
   const { pathname } = useLocation();
   const { state } = useSessionState();
+  const auth = useAuth();
+  const signedIn = auth.status === "signedIn";
+  const FEATURED = signedIn ? FEATURED_APP : FEATURED_PUBLIC;
   const close = () => onOpenChange(false);
   const featured = new Set(FEATURED.map((f) => f.to));
-  const groups = navGroups(state.sessionId)
+  const groups = (signedIn ? navGroups(state.sessionId) : [])
     .map((g) => ({ ...g, items: g.items.filter((i) => !featured.has(i.to)) }))
     .filter((g) => g.items.length > 0);
 
@@ -118,17 +139,19 @@ export const MenuPanel: React.FC<{
                     blur={14}
                     brightness={95}
                     opacity={0.85}
-                    backgroundOpacity={0.3}
+                    backgroundOpacity={0.5}
                     distortionScale={-90}
                     mixBlendMode="normal"
                     className="min-h-28"
                   >
                     <span className="flex w-full flex-col gap-1 p-5 text-left text-ink-primary">
                       <span className="font-mono text-xs uppercase tracking-wide text-ink-secondary">
-                        Stuck on a problem?
+                        {signedIn ? "Stuck on a problem?" : "Resume says you are ready?"}
                       </span>
                       <span className="flex items-start gap-2 text-xl font-semibold leading-snug">
-                        Paste it. Get hints, not spoilers.
+                        {signedIn
+                          ? "Paste it. Get hints, not spoilers."
+                          : "Let's prove it. Audit my readiness."}
                         <ArrowUpRight
                           size={20}
                           aria-hidden="true"
@@ -181,7 +204,7 @@ export const MenuPanel: React.FC<{
           </div>
 
           <div className="border-t border-line px-4 py-3">
-            <AccountMenu />
+            {signedIn && <AccountMenu />}
             <p className="mt-2 px-1 font-mono text-xs text-ink-muted">
               UNBLUFF · evidence, not claims
             </p>
