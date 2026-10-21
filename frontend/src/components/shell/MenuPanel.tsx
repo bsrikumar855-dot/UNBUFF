@@ -1,57 +1,64 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowUpRight, X } from "lucide-react";
+import { X } from "lucide-react";
 import { m } from "motion/react";
-import { cn } from "@/lib/cn";
-import GlassSurface from "@/components/reactbits/GlassSurface";
-import { routes } from "@/lib/routes";
 import { useAuth } from "@/auth/context";
+import { cn } from "@/lib/cn";
+import { routes } from "@/lib/routes";
 import { useSessionState } from "@/state/useSession";
 import { AccountMenu } from "./AccountMenu";
-import { navGroups, type NavItem } from "./nav";
+import { navGroups } from "./nav";
 
 const CURVE = [0.22, 1, 0.36, 1] as const;
 
-/** What a visitor who is not signed in can open. */
-const FEATURED_PUBLIC: { label: string; to: string; match: NavItem["match"] }[] = [
-  {
-    label: "DSA Arena",
-    to: routes.dsa,
-    match: (p) => p === "/dsa" || p.startsWith("/dsa/"),
-  },
-  {
-    label: "DSA patterns",
-    to: routes.learnPatterns,
-    match: (p) => p.startsWith("/learn/patterns"),
-  },
-  { label: "DBMS", to: routes.learnDbms, match: (p) => p.startsWith("/learn/dbms") },
-  { label: "Roadmap", to: routes.roadmap(), match: (p) => p === "/roadmap" },
-  { label: "Sign in", to: routes.login, match: (p) => p === "/login" },
-];
-
-/** The five places most visits start from, set large. Everything else is listed smaller underneath. */
-const FEATURED_APP: { label: string; to: string; match: NavItem["match"] }[] = [
-  { label: "Placement plan", to: routes.placement, match: (p) => p === "/placement" },
-  {
-    label: "DSA Arena",
-    to: routes.dsa,
-    match: (p) =>
-      p === "/dsa" || p.startsWith("/dsa/questions") || p.startsWith("/dsa/companies"),
-  },
-  { label: "AI Mentor", to: routes.mentor(), match: (p) => p === "/mentor" },
-  {
-    label: "DSA patterns",
-    to: routes.learnPatterns,
-    match: (p) => p.startsWith("/learn/patterns"),
-  },
-  { label: "DBMS", to: routes.learnDbms, match: (p) => p.startsWith("/learn/dbms") },
-];
+interface Entry {
+  label: string;
+  to: string;
+  active: boolean;
+}
+interface Group {
+  id: string;
+  label: string;
+  items: Entry[];
+}
 
 /**
- * The navigation as a floating panel: a Close pill, the main places in large type, a card that leads into the mentor,
- * the remaining routes grouped and small, and the account at the foot. It is a modal dialog, so focus is trapped
- * while it is open and Escape or the Close pill returns to the page.
+ * One pill, in the same language as the header's pill navigation: a glass chip whose red fill rises through it on
+ * hover or keyboard focus, with a dot where the current page is.
+ */
+const Pill: React.FC<{ entry: Entry; onNavigate: () => void }> = ({
+  entry,
+  onNavigate,
+}) => (
+  <Link
+    to={entry.to}
+    onClick={onNavigate}
+    aria-current={entry.active ? "page" : undefined}
+    className={cn(
+      "group relative isolate inline-flex min-h-10 items-center gap-2 overflow-hidden rounded-full px-4 text-[14px] font-medium leading-none",
+      "bg-white/75 text-ink-primary shadow-[inset_0_0_0_1px_rgba(24,24,27,0.07),inset_0_1px_0_rgba(255,255,255,0.95),0_6px_14px_-8px_rgba(24,24,27,0.25)]",
+      "transition-colors duration-300 hover:text-white focus-visible:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-primary"
+    )}
+  >
+    <span
+      aria-hidden="true"
+      className="absolute inset-0 -z-10 translate-y-full rounded-[inherit] bg-redline transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-y-0 group-focus-visible:translate-y-0"
+    />
+    {entry.label}
+    {entry.active && (
+      <span
+        aria-hidden="true"
+        className="size-1.5 rounded-full bg-redline transition-colors group-hover:bg-white group-focus-visible:bg-white"
+      />
+    )}
+  </Link>
+);
+
+/**
+ * The full navigation, opened by the header's More pill. It drops down from the header as a glass sheet and is made of
+ * the same pills as the header, grouped by purpose, with the account at the foot. It is a modal dialog: focus is
+ * trapped while it is open, and Escape, the close button or choosing a page returns to the page.
  */
 export const MenuPanel: React.FC<{
   open: boolean;
@@ -61,151 +68,104 @@ export const MenuPanel: React.FC<{
   const { state } = useSessionState();
   const auth = useAuth();
   const signedIn = auth.status === "signedIn";
-  const FEATURED = signedIn ? FEATURED_APP : FEATURED_PUBLIC;
   const close = () => onOpenChange(false);
-  const featured = new Set(FEATURED.map((f) => f.to));
-  const groups = (signedIn ? navGroups(state.sessionId) : [])
-    .map((g) => ({ ...g, items: g.items.filter((i) => !featured.has(i.to)) }))
-    .filter((g) => g.items.length > 0);
+
+  const groups: Group[] = signedIn
+    ? navGroups(state.sessionId).map((g) => ({
+        id: g.id,
+        label: g.label,
+        items: g.items.map((i) => ({
+          label: i.label,
+          to: i.to,
+          active: i.match(pathname),
+        })),
+      }))
+    : [
+        {
+          id: "explore",
+          label: "Explore",
+          items: [
+            {
+              label: "DSA Arena",
+              to: routes.dsa,
+              active: pathname === "/dsa" || pathname.startsWith("/dsa/"),
+            },
+            {
+              label: "DSA patterns",
+              to: routes.learnPatterns,
+              active: pathname.startsWith("/learn/patterns"),
+            },
+            {
+              label: "DBMS",
+              to: routes.learnDbms,
+              active: pathname.startsWith("/learn/dbms"),
+            },
+            { label: "Roadmap", to: routes.roadmap(), active: pathname === "/roadmap" },
+          ],
+        },
+        {
+          id: "start",
+          label: "Start",
+          items: [
+            { label: "Sign in", to: routes.login, active: pathname === "/login" },
+            {
+              label: "Audit My Readiness",
+              to: routes.setup,
+              active: pathname === "/setup",
+            },
+          ],
+        },
+      ];
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-foreground/10 data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed bottom-3 left-3 top-3 z-50 flex w-[min(23rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-[2rem] border border-white/60 bg-surface-50/60 shadow-[0_30px_80px_-20px_rgba(20,16,10,0.45),inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-2xl backdrop-saturate-150 focus:outline-hidden data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-left-6 data-[state=open]:slide-in-from-left-6 data-[state=open]:duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+          className="fixed left-3 right-3 top-[calc(var(--topbar-h)-0.25rem)] z-50 flex max-h-[calc(100dvh-var(--topbar-h)-1rem)] flex-col overflow-hidden rounded-[1.75rem] bg-[rgba(246,243,236,0.93)] shadow-[0_22px_44px_-22px_rgba(24,24,27,0.3),0_6px_16px_-10px_rgba(24,24,27,0.16),inset_0_0_0_1px_rgba(24,24,27,0.07),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-xl backdrop-saturate-150 focus:outline-hidden data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-top-3 data-[state=open]:slide-in-from-top-3 data-[state=open]:duration-500 sm:left-5 sm:right-auto sm:w-[min(34rem,calc(100vw-2.5rem))]"
         >
-          <Dialog.Title className="sr-only">Navigation</Dialog.Title>
-          <div className="px-4 pt-4">
-            <Dialog.Close className="inline-flex min-h-10 items-center gap-2 rounded-full bg-redline px-4 font-mono text-sm font-semibold uppercase tracking-wide text-surface-50 transition-colors hover:bg-redline-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-primary">
-              Close <X size={14} aria-hidden="true" />
+          <div className="flex items-center justify-between px-5 pb-1 pt-4">
+            <Dialog.Title className="eyebrow">All pages</Dialog.Title>
+            <Dialog.Close
+              aria-label="Close"
+              className="inline-grid size-10 place-items-center rounded-full bg-white/75 text-ink-primary shadow-[inset_0_0_0_1px_rgba(24,24,27,0.07),inset_0_1px_0_rgba(255,255,255,0.95)] transition-colors hover:bg-redline hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-primary"
+            >
+              <X size={16} aria-hidden="true" />
             </Dialog.Close>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-4 pt-4">
-            <nav aria-label="Primary">
-              <ul className="flex flex-col">
-                {FEATURED.map((f, i) => {
-                  const active = f.match(pathname);
-                  return (
-                    <m.li
-                      key={f.to}
-                      initial={{ opacity: 0, x: -24, filter: "blur(6px)" }}
-                      animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-                      transition={{ duration: 0.6, delay: 0.12 + i * 0.06, ease: CURVE }}
-                    >
-                      <Link
-                        to={f.to}
-                        onClick={close}
-                        aria-current={active ? "page" : undefined}
-                        className={cn(
-                          "block py-1 font-mono text-[1.75rem] font-medium uppercase leading-tight tracking-tight transition-colors sm:text-3xl",
-                          active
-                            ? "text-redline underline decoration-2 underline-offset-8"
-                            : "text-ink-primary hover:text-redline"
-                        )}
-                      >
-                        {f.label}
-                      </Link>
-                    </m.li>
-                  );
-                })}
-              </ul>
-
-              <m.div
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.5, ease: CURVE }}
-                className="relative mt-6"
-              >
-                <span
-                  aria-hidden="true"
-                  className="absolute -right-3 -top-3 size-20 rounded-full bg-redline/80 blur-[2px]"
-                />
-                <span
-                  aria-hidden="true"
-                  className="absolute -bottom-3 left-8 size-14 rounded-full bg-ink-primary/70"
-                />
-                <Link
-                  to={routes.mentor()}
-                  onClick={close}
-                  className="relative block rounded-3xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-redline"
+          <nav
+            aria-label="All pages"
+            className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2"
+          >
+            <div className="flex flex-col gap-5">
+              {groups.map((g, gi) => (
+                <m.section
+                  key={g.id}
+                  aria-labelledby={`menu-${g.id}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.08 + gi * 0.06, ease: CURVE }}
                 >
-                  <GlassSurface
-                    width="100%"
-                    height="auto"
-                    borderRadius={24}
-                    blur={14}
-                    brightness={95}
-                    opacity={0.85}
-                    backgroundOpacity={0.5}
-                    distortionScale={-90}
-                    mixBlendMode="normal"
-                    className="min-h-28"
-                  >
-                    <span className="flex w-full flex-col gap-1 p-5 text-left text-ink-primary">
-                      <span className="font-mono text-xs uppercase tracking-wide text-ink-secondary">
-                        {signedIn ? "Stuck on a problem?" : "Resume says you are ready?"}
-                      </span>
-                      <span className="flex items-start gap-2 text-xl font-semibold leading-snug">
-                        {signedIn
-                          ? "Paste it. Get hints, not spoilers."
-                          : "Let's prove it. Audit my readiness."}
-                        <ArrowUpRight
-                          size={20}
-                          aria-hidden="true"
-                          className="mt-1 shrink-0"
-                        />
-                      </span>
-                    </span>
-                  </GlassSurface>
-                </Link>
-              </m.div>
+                  <h2 id={`menu-${g.id}`} className="eyebrow pb-2">
+                    {g.label}
+                  </h2>
+                  <ul className="flex flex-wrap gap-2">
+                    {g.items.map((item) => (
+                      <li key={item.label}>
+                        <Pill entry={item} onNavigate={close} />
+                      </li>
+                    ))}
+                  </ul>
+                </m.section>
+              ))}
+            </div>
+          </nav>
 
-              <div className="mt-8 flex flex-col gap-5">
-                {groups.map((g) => (
-                  <div key={g.id}>
-                    <h2 className="eyebrow pb-1" id={`menu-${g.id}`}>
-                      {g.label}
-                    </h2>
-                    <ul aria-labelledby={`menu-${g.id}`} className="flex flex-col">
-                      {g.items.map((item) => {
-                        const active = item.match(pathname);
-                        return (
-                          <li key={item.label}>
-                            <Link
-                              to={item.to}
-                              onClick={close}
-                              aria-current={active ? "page" : undefined}
-                              className={cn(
-                                "flex min-h-10 items-center gap-2.5 rounded-md px-2 text-[15px] transition-colors hover:bg-accent",
-                                active
-                                  ? "font-semibold text-redline"
-                                  : "font-medium text-ink-secondary hover:text-foreground"
-                              )}
-                            >
-                              <item.icon
-                                size={16}
-                                strokeWidth={1.75}
-                                aria-hidden="true"
-                                className={active ? "text-redline" : "text-ink-muted"}
-                              />
-                              {item.label}
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </nav>
-          </div>
-
-          <div className="border-t border-line px-4 py-3">
+          <div className="border-t border-black/5 px-5 py-3">
             {signedIn && <AccountMenu />}
-            <p className="mt-2 px-1 font-mono text-xs text-ink-muted">
+            <p className="px-1 pt-1 font-mono text-xs text-ink-muted">
               UNBLUFF · evidence, not claims
             </p>
           </div>
