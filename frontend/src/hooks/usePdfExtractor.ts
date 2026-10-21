@@ -1,9 +1,8 @@
 import { useCallback, useState } from "react";
+import { loadPdfjs } from "@/lib/pdfjs";
 
 const UNREADABLE_PDF_MESSAGE =
   "We couldn't read that PDF. Try another file or paste your resume instead.";
-
-let workerConfigured = false;
 
 /**
  * Browser-side PDF text extraction (pdf.js) per the setup contract: the
@@ -21,14 +20,7 @@ export function usePdfExtractor() {
     setIsExtracting(true);
     setError(null);
     try {
-      const pdfjsLib = await import("pdfjs-dist");
-      if (!workerConfigured) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-          "pdfjs-dist/build/pdf.worker.min.mjs",
-          import.meta.url
-        ).toString();
-        workerConfigured = true;
-      }
+      const pdfjsLib = await loadPdfjs();
 
       const buffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;

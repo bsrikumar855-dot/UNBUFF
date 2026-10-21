@@ -10,8 +10,8 @@ const BODY = String.raw`\begin{document}
 
 \begin{center}
   {\LARGE \textbf{Your Name}}\\[4pt]
-  City, Country \,|\, +00 00000 00000 \,|\, \href{mailto:you@example.com}{you@example.com}\\
-  \href{https://github.com/yourname}{github.com/yourname} \,|\, \href{https://www.linkedin.com/in/yourname}{linkedin.com/in/yourname}
+  City, Country \,\textbar\, +00 00000 00000 \,\textbar\, \href{mailto:you@example.com}{you@example.com}\\
+  \href{https://github.com/yourname}{github.com/yourname} \,\textbar\, \href{https://www.linkedin.com/in/yourname}{linkedin.com/in/yourname}
 \end{center}
 
 \section{Education}
@@ -23,7 +23,7 @@ CGPA: 8.5/10. Relevant coursework: Data Structures, Algorithms, Databases, Opera
 \textbf{Frameworks and tools:} React, Node.js, REST APIs, Git, Docker, Testing Library
 
 \section{Projects}
-\textbf{Project Name} \,|\, React, Node.js, PostgreSQL \hfill \href{https://github.com/yourname/project}{github.com/yourname/project}
+\textbf{Project Name} \,\textbar\, React, Node.js, PostgreSQL \hfill \href{https://github.com/yourname/project}{github.com/yourname/project}
 \begin{itemize}
   \item Built a dashboard with React and a REST API that serves 2,000 monthly users.
   \item Reduced page load time by 40\% by lazy loading routes and memoizing components.
@@ -41,7 +41,8 @@ CGPA: 8.5/10. Relevant coursework: Data Structures, Algorithms, Databases, Opera
 \end{document}
 `;
 
-const CLASSIC = String.raw`\documentclass[11pt,a4paper]{article}
+/** The document class, packages and styling of the classic template, shared with résumés converted from uploaded text. */
+export const CLASSIC_PREAMBLE = String.raw`\documentclass[11pt,a4paper]{article}
 \usepackage[margin=0.8in]{geometry}
 \usepackage{enumitem}
 \usepackage[hidelinks]{hyperref}
@@ -52,7 +53,9 @@ const CLASSIC = String.raw`\documentclass[11pt,a4paper]{article}
 \titlespacing*{\section}{0pt}{10pt}{5pt}
 \setlist[itemize]{leftmargin=1.2em, itemsep=1pt, topsep=3pt}
 
-${BODY}`;
+`;
+
+const CLASSIC = CLASSIC_PREAMBLE + BODY;
 
 const COMPACT = String.raw`\documentclass[10pt,a4paper]{article}
 \usepackage[margin=0.6in]{geometry}

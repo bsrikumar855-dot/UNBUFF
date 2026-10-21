@@ -1785,6 +1785,15 @@ export interface ResumeTemplate {
 export interface ResumeTemplatesResponse {
   templates: ResumeTemplate[];
 }
+/** POST /api/resume/import. Converts the plain text of an existing résumé (read from a PDF in the browser, or pasted) into editable LaTeX. Nothing is stored. */
+export interface ResumeImportRequest {
+  text: string;
+}
+export interface ResumeImportResponse {
+  latex: string; // the converted document, in the classic template
+  warnings: string[]; // what could not be read, and what to check
+  sections: string[]; // the section headings that were recognised
+}
 export interface LeetCodeHistoryResponse {
   snapshots: LeetCodeSnapshotSummary[]; // newest capture first
   total: number;
@@ -2023,6 +2032,7 @@ All routes need a verified student; the owner is always the token's uid. Details
 | `PUT /api/resume` | `ResumeSaveRequest` (strict) gives `ResumeResponse`. `400 BAD_REQUEST` (empty, over 60 KB, job description over 8,000 characters), `404 ROLE_NOT_FOUND`. |
 | `DELETE /api/resume` | 204. |
 | `GET /api/resume/templates` | `ResumeTemplatesResponse`: ATS-friendly single-column LaTeX starting points. |
+| `POST /api/resume/import` | `ResumeImportRequest` (`{ text }`: the text of an existing résumé, read from a PDF in the browser) gives `ResumeImportResponse`: editable LaTeX in the classic template, what was recognised, and warnings. Nothing is stored. |
 | `POST /api/resume/ats` | `AtsRequest` gives `AtsResult`. Scores without saving. A heuristic, never an employer's verdict. |
 | `POST /api/resume/compile` | `ResumeCompileRequest` gives `ResumeCompileResponse`. A failed build is `200` with `ok: false` and the compiler's messages. `503 LATEX_UNAVAILABLE` when no compiler is configured. |
 

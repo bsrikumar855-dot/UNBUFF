@@ -18,6 +18,8 @@ import type {
   AtsRequest,
   AtsResult,
   ResumeCompileRequest,
+  ResumeImportRequest,
+  ResumeImportResponse,
   ResumeCompileResponse,
   ResumeResponse,
   ResumeSaveRequest,
@@ -177,6 +179,10 @@ export const api = {
   /** POST /api/resume/ats: scores the text without saving it (a heuristic estimate, not an employer's verdict). */
   scoreResume(body: AtsRequest): Promise<AtsResult> {
     return apiClient<AtsResult>("/resume/ats", { method: "POST", body: JSON.stringify(body) });
+  },
+  /** POST /api/resume/import: converts the text of an existing résumé (read from a PDF in the browser) into editable LaTeX. Nothing is stored. */
+  importResume(body: ResumeImportRequest): Promise<ResumeImportResponse> {
+    return apiClient<ResumeImportResponse>("/resume/import", { method: "POST", body: JSON.stringify(body) });
   },
   /** POST /api/resume/compile: builds the PDF in an isolated LaTeX container. A failed build is a normal result with the log. */
   compileResume(body: ResumeCompileRequest): Promise<ResumeCompileResponse> {

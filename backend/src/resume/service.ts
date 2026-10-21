@@ -1,7 +1,8 @@
 import { ApiError } from "../errors.js";
 import type { Logger } from "../logger.js";
-import type { AtsResult, ResumeCompileResponse, ResumeDocument, ResumeResponse, ResumeSaveRequest, ResumeTemplatesResponse, Role } from "../types.js";
+import type { AtsResult, ResumeCompileResponse, ResumeDocument, ResumeImportResponse, ResumeResponse, ResumeSaveRequest, ResumeTemplatesResponse, Role } from "../types.js";
 import { resumePlainText, scoreResume } from "./ats.js";
+import { MAX_IMPORT_CHARS, textToLatex } from "./fromText.js";
 import { LatexUnavailableError, MAX_LATEX_BYTES, type LatexCompiler } from "./latex.js";
 import type { ResumeStore } from "./store.js";
 import { RESUME_TEMPLATES } from "./templates.js";
@@ -67,6 +68,15 @@ export class ResumeService {
 
   async remove(uid: string): Promise<void> {
     await this.deps.store.delete(uid);
+  }
+
+  /** Converts the text of an existing résumé into editable LaTeX. Nothing is saved: the student reviews it first. */
+  importText(text: string): ResumeImportResponse {
+    if (typeof text !== "string" || text.trim().length === 0) throw new ApiError("BAD_REQUEST", "There is no text to convert.");
+    if (text.length > MAX_IMPORT_CHARS) throw new ApiError("BAD_REQUEST", `The text is longer than ${MAX_IMPORT_CHARS.toLocaleString("en-US")} characters. A résumé should fit on one or two pages.`);
+    const r = textToLatex(text);
+    if (Buffer.byteLength(r.latex, "utf8") > MAX_LATEX_BYTES) throw new ApiError("BAD_REQUEST", "The converted résumé would be too large to save.");
+    return r;
   }
 
   templates(): ResumeTemplatesResponse {

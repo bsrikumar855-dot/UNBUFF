@@ -1690,6 +1690,15 @@ export interface ResumeTemplate {
 export interface ResumeTemplatesResponse {
   templates: ResumeTemplate[];
 }
+/** POST /api/resume/import. Converts the plain text of an existing résumé (read from a PDF in the browser, or pasted) into editable LaTeX. Nothing is stored. */
+export interface ResumeImportRequest {
+  text: string;
+}
+export interface ResumeImportResponse {
+  latex: string; // the converted document, in the classic template
+  warnings: string[]; // what could not be read, and what to check
+  sections: string[]; // the section headings that were recognised
+}
 export interface LeetCodeHistoryResponse {
   snapshots: LeetCodeSnapshotSummary[]; // newest capture first
   total: number;

@@ -13,6 +13,7 @@ const Latex = z.string().max(100_000, "The résumé is too large.");
 const Role = z.string().regex(/^[a-z0-9_-]{1,60}$/i, "invalid role id").nullable().optional();
 const Jd = z.string().max(MAX_JD_CHARS, "The job description is too long.").nullable().optional();
 const SaveBody = z.strictObject({ latex: Latex, role_id: Role, job_description: Jd });
+const ImportBody = z.strictObject({ text: z.string().max(40_000, "The text is too long.") });
 const CompileBody = z.strictObject({ latex: Latex });
 
 function parse<T extends z.ZodType>(schema: T, value: unknown): z.output<T> {
@@ -43,6 +44,9 @@ export function resumeRouter(resume: ResumeService, limiters: { read: RequestHan
   router.post("/resume/ats", limiters.write, (req, res) => {
     const b = parse(SaveBody, req.body ?? {});
     res.set(noStore).json(resume.score(b.latex, b.role_id, b.job_description));
+  });
+  router.post("/resume/import", limiters.write, (req, res) => {
+    res.set(noStore).json(resume.importText(parse(ImportBody, req.body ?? {}).text));
   });
   router.post("/resume/compile", limiters.compile, async (req, res) => {
     res.set(noStore).json(await resume.compile(parse(CompileBody, req.body ?? {}).latex));

@@ -79,9 +79,9 @@ export function createLeetcodeLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIM
   return { read: userLimiter(opts.leetcodeReadPerMinute ?? 90), write: userLimiter(opts.leetcodeWritePerMinute ?? 30) };
 }
 
-/** Résumé builder: saving and scoring are cheap, compiling runs TeX in a container so it is limited more tightly. Per student. */
+/** Résumé builder: saving and scoring are cheap, compiling runs TeX in a container so it is limited more tightly than saving. Per student; the page also builds automatically after edits. */
 export function createResumeLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
-  return { read: userLimiter(opts.resumeReadPerMinute ?? 90), write: userLimiter(opts.resumeWritePerMinute ?? 40), compile: userLimiter(opts.resumeCompilePerMinute ?? 8) };
+  return { read: userLimiter(opts.resumeReadPerMinute ?? 90), write: userLimiter(opts.resumeWritePerMinute ?? 40), compile: userLimiter(opts.resumeCompilePerMinute ?? 20) };
 }
 
 /** GraphQL Learning Lab: running queries, grading submissions and mentor help, each per student. Mount after requireAuth. */

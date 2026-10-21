@@ -22,6 +22,16 @@ Keywords from a job description come from a curated list of technical terms firs
 
 The score is **computed on every read, never stored**, so it cannot go stale. `backend/src/resume/latexText.ts` reads the LaTeX the way a parser would (sections, bullets, links, escapes) and detects the layout features that break parsers.
 
+## 1b. Uploading an existing résumé
+
+The page's **Upload existing résumé** button accepts a PDF, a `.tex` file or a `.txt` file, so a student can start from what they already have and then edit it.
+
+* **PDF:** the text is read **in the browser** (pdf.js), and only that text is sent to `POST /api/resume/import`. The PDF itself is never uploaded or stored. A scanned PDF has no text; the page says so and suggests pasting it.
+* **`.tex`:** opened exactly as it is, with no conversion. **`.txt`:** converted like a PDF's text.
+* **Conversion** (`backend/src/resume/fromText.ts`) is best-effort and deterministic. It recognises standard headings (Education, Skills, Projects, Experience, Summary, Achievements, Certifications and a few more, in any case), turns `•`/`-`/`*` lines into `\item` lists, merges wrapped lines, splits trailing date ranges to the right (`\hfill`), labels `Languages:`-style skill lines, turns links and emails into `\href`, escapes every TeX special character, repairs a small-capitals name and stray spaces before punctuation, and replaces characters the compiler cannot set. It never invents content, and it reports what it could not read (no headings found, almost no text, replaced characters). It always reminds the student to check the result, because PDF text can come out in the wrong order for multi-column or table layouts.
+* **Nothing is saved by an upload.** The converted LaTeX appears in the editor; the student edits it and presses Save. Replacing text the student has typed (or an unsaved earlier conversion) asks first.
+* Limits: PDF 5 MB; `.tex`/`.txt` 100 KB; at most 40,000 characters of text.
+
 ## 2. The LaTeX compiler
 
 `POST /api/resume/compile` builds the PDF. TeX runs on untrusted input, so it never runs in the API process: each build gets a throwaway Docker container with **no network, a read-only root, memory (640 MB) and process (96) caps, all capabilities dropped, shell escape off, TeX's "paranoid" file mode (it cannot read or write outside the work folder), and a 25 second hard limit**. Output is capped at 5 MB.
@@ -29,6 +39,8 @@ The score is **computed on every read, never stored**, so it cannot go stale. `b
 * `LATEX_COMPILER=none` (default): the builder still edits, saves and scores. Building returns `503 LATEX_UNAVAILABLE` and the page explains it.
 * `LATEX_COMPILER=docker`: **development only, refused when `NODE_ENV=production`** (a web server with Docker-socket access is not an acceptable production sandbox). Build the image once: `docker build -t unbluff-latex:1 backend/scripts/latex` (about 1 GB). `CODE_WORK_DIR` must be a folder the Docker daemon can see, as for the code runner.
 * A production deployment needs its own sandboxed compiler service behind the same `LatexCompiler` interface.
+
+**The preview is only the PDF.** Right after the page loads, and 2.2 seconds after each pause in typing, the page builds the PDF automatically, so the preview is always the current résumé (a **Rebuild** link is there too). The pages are drawn by pdf.js edge to edge, with no viewer toolbar, thumbnail pane or gray gutters; the column is as wide as an A4 page at the pane's height, so a one-page résumé fills it exactly and a longer one fits the width and scrolls. If drawing ever fails, the browser's own viewer is used instead. A failed rebuild keeps the last good PDF on screen and lists the compiler's messages beneath it.
 
 A failed build is a normal `200` result with `ok: false` and the compiler's own error lines (file, line and message), so the student can fix the source.
 

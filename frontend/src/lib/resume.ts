@@ -26,6 +26,24 @@ export const mentorResumeUrl = (prompt?: string): string => {
   return `/mentor?${q.toString()}`;
 };
 
+/** Shows just the page: no toolbar, thumbnail pane or scrollbar, scaled to the width of the frame. */
+export const PDF_ONLY = "#toolbar=0&navpanes=0&scrollbar=0&view=FitH";
+
+/** The most the upload accepts: a PDF is only read in the browser (text out, never uploaded as a file). */
+export const MAX_PDF_BYTES = 5 * 1024 * 1024;
+export const MAX_TEXT_FILE_BYTES = 100 * 1024;
+
+/** Reads a text file. Falls back to FileReader where Blob.text is missing (older browsers). */
+export const readTextFile = (file: File): Promise<string> =>
+  typeof file.text === "function"
+    ? file.text()
+    : new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result ?? ""));
+        r.onerror = () => reject(r.error);
+        r.readAsText(file);
+      });
+
 /** A blob URL for a base64 PDF. The caller revokes it when done. */
 export function pdfUrl(base64: string): string {
   const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));

@@ -46,6 +46,7 @@ describe("every résumé route needs a verified student", () => {
       await request(app).post("/api/resume/ats").send({ latex: "x" }),
       await request(app).post("/api/resume/compile").send({ latex: "x" }),
       await request(app).get("/api/resume/templates"),
+      await request(app).post("/api/resume/import").send({ text: "x" }),
       await request(app).delete("/api/resume").set({ Authorization: "Bearer nope" }),
     ]) expect(r.status).toBe(401);
   });
@@ -87,6 +88,31 @@ describe("saving and reading a résumé", () => {
     const t = (await request(app).get("/api/resume/templates").set(as("a")).expect(200)).body.templates;
     expect(t.map((x: { id: string }) => x.id)).toEqual(["classic", "compact"]);
     expect(t[0].latex).toContain("\\documentclass");
+  });
+});
+
+describe("importing an existing résumé", () => {
+  const text = "Priya Nair\npriya@example.edu\nEducation\nSample College  2022 – 2026\nSkills\nLanguages: Python, SQL\nProjects\n• Built a tool used by 120 students";
+  it("converts the text to editable LaTeX and stores nothing", async () => {
+    const { app } = setup();
+    const r = await request(app).post("/api/resume/import").set(as("alice")).send({ text }).expect(200);
+    expect(r.body.sections).toEqual(["Education", "Skills", "Projects"]);
+    expect(r.body.latex).toContain("\\documentclass");
+    expect(r.body.latex).toContain("\\item Built a tool used by 120 students");
+    expect(r.body.warnings.at(-1)).toMatch(/Check the converted text/);
+    expect((await request(app).get("/api/resume").set(as("alice"))).body.document).toBeNull();
+    // the converted document is a valid résumé the engine can score
+    const scored = await request(app).post("/api/resume/ats").set(as("alice")).send({ latex: r.body.latex }).expect(200);
+    expect(scored.body.stats.sections).toEqual(["Education", "Skills", "Projects"]);
+  });
+
+  it("validates input", async () => {
+    const { app } = setup();
+    const post = (b: object) => request(app).post("/api/resume/import").set(as("alice")).send(b);
+    expect((await post({ text: "   " })).body.error.code).toBe("BAD_REQUEST");
+    expect((await post({ text: "x".repeat(40_001) })).status).toBe(400);
+    expect((await post({})).status).toBe(400);
+    expect((await post({ text, owner_uid: "bob" })).status).toBe(400); // strict body
   });
 });
 
