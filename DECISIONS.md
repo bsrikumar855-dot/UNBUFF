@@ -355,7 +355,7 @@ everything once gcloud is available.
 - **Mentor gets a minimised summary only for GitHub or project questions**: counts, repository names, languages, dates and checklist flags, no descriptions or file text. GitHub activity never feeds DSA analytics.
 - **Not verified against real GitHub or a real Firebase project**: see docs/phase-7-github-insights.md.
 
-## Phase 8 — GraphQL Learning Lab
+## Phase 8 — GraphQL Learning Lab (REMOVED, replaced by Learn: DSA patterns and DBMS; see docs/learn.md)
 
 - **One new dependency, `graphql` 16 (graphql-js).** Nothing GraphQL-capable existed. Version 16 was chosen over 17 because the backend declares Node >= 20 and 16 is the long-established stable line; `npm audit --omit=dev` stays at 0.
 - **A closed training API, not a proxy.** A fixed invented dataset (campus placement hub), an SDL schema and deterministic resolvers. Students send only a document and variables; no URL, header, token or code is accepted anywhere. Parsing, validation, depth/field/size/time limits and result-size limits run before and around execution; unexpected exceptions are never shown.
@@ -385,3 +385,10 @@ everything once gcloud is available.
 - **Journey test keeps mock and genuine apart.** The stand-in judge counts only through a test-only switch; the production-policy test proves stand-in results are excluded from analytics and the plan.
 - **Every route is audited for authentication by reading the route source**, so a new route cannot silently ship unauthenticated.
 - **Not production-ready**: see docs/phase-10-release-readiness.md for blockers and operator actions.
+
+## Learn: DSA patterns and DBMS (replaces the GraphQL Lab)
+
+- **GraphQL Lab removed completely**: pages, API, tests, the `graphql` dependency and the mentor and placement hooks. Placement now uses a DBMS area fed by passed DBMS quizzes. Older phase documents describe the Lab as it was and are kept as history.
+- **Original content, not copied.** Patterns and DBMS notes are written for UNBLUFF. Practice links are problem titles pointing at the public LeetCode pages, plus UNBLUFF's own judged exercises.
+- **Content is verified by tests.** Every pattern's Python template runs against its own asserts; every DBMS SQL example runs on SQLite and must return the rows shown.
+- **Quizzes are graded on the server**; answers are never sent with the questions. Pass mark 3 of 4. Pattern and problem marks are self-reported and labelled as such; they never count as verified practice.

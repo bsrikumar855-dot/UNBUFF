@@ -55,9 +55,6 @@ backend code decides pass/fail, verdicts, proficiency, readiness, coverage and p
 | 409 | `GITHUB_REAUTH_REQUIRED` | GitHub rejected the stored credential (revoked or expired); connect again |
 | 429 | `GITHUB_RATE_LIMITED` | GitHub's API rate limit is exhausted; the message says when it resets |
 | 502 | `GITHUB_UNAVAILABLE` | GitHub timed out, failed, or returned a response that did not match the expected shape |
-| 404 | `MODULE_NOT_FOUND` | Unknown GraphQL Lab module id |
-| 404 | `EXERCISE_NOT_FOUND` | Unknown GraphQL Lab exercise id |
-| 503 | `GRAPHQL_LAB_UNAVAILABLE` | The Lab's progress storage failed, so the result could not be saved or loaded |
 | 409 | `PLACEMENT_PROFILE_REQUIRED` | Set your placement goals and availability before generating a plan |
 | 404 | `PLACEMENT_TASK_NOT_FOUND` | Unknown plan task id, or one the caller does not own |
 | 404 | `REVISION_NOT_FOUND` | Unknown revision item, or one the caller does not own |
@@ -123,9 +120,6 @@ export type ErrorCode =
   | "GITHUB_REAUTH_REQUIRED"
   | "GITHUB_RATE_LIMITED"
   | "GITHUB_UNAVAILABLE"
-  | "MODULE_NOT_FOUND"
-  | "EXERCISE_NOT_FOUND"
-  | "GRAPHQL_LAB_UNAVAILABLE"
   | "PLACEMENT_PROFILE_REQUIRED"
   | "PLACEMENT_TASK_NOT_FOUND"
   | "EXECUTION_UNAVAILABLE"
@@ -141,6 +135,7 @@ export type ErrorCode =
   | "LEETCODE_IMPORT_CONFLICT"
   | "LEETCODE_UNAVAILABLE"
   | "LATEX_UNAVAILABLE"
+  | "LEARN_NOT_FOUND"
   | "LLM_INVALID_OUTPUT"
   | "LLM_TIMEOUT"
   | "INTERNAL";
@@ -1019,246 +1014,16 @@ export interface GithubSyncResponse {
   rate_limit_remaining: number | null;
 }
 
-// ---------- GraphQL Learning Lab (Phase 8) ----------
-// An educational module. Students run queries against a small, controlled TRAINING API (never an external server).
-// Results here are separate from DSA analytics and from any readiness score.
-export type LabDifficulty = "beginner" | "intermediate" | "advanced";
-export type LabExerciseType = "query" | "mutation" | "multiple_choice" | "schema_reading" | "explanation";
-export type LabModuleStatus = "not_started" | "in_progress" | "completed";
-export type LabErrorCategory = "syntax" | "validation" | "variables" | "execution" | "authorization" | "limits";
-export type LabPhase = "ok" | "syntax" | "validation" | "variables" | "execution";
-export type LabHelpAction = "explain_query" | "explain_error" | "hint" | "explain_schema" | "practice_question" | "explain_result";
-
-export type LabBlock =
-  | { kind: "p"; text: string }
-  | { kind: "list"; items: string[] }
-  | { kind: "code"; code: string; language: "graphql" | "json" }
-  | { kind: "try"; label: string; query: string; variables?: Record<string, unknown> }; // a runnable example
-
-export interface LabError {
-  message: string;
-  locations?: { line: number; column: number }[];
-  path?: (string | number)[];
-  category: LabErrorCategory;
-  code: string | null;
-}
-export interface LabResult {
-  data?: unknown;
-  errors?: LabError[];
-}
-export interface LabExecuteRequest {
-  query: string; // max 4000 characters
-  variables?: Record<string, unknown> | null; // max 2000 characters as JSON
-  operation_name?: string;
-}
-export interface LabExecuteResponse {
-  phase: LabPhase; // where it stopped: syntax, validation, variables (coercion) or execution; "ok" when it ran
-  operation: "query" | "mutation" | "subscription" | null;
-  result: LabResult; // a standard GraphQL response ({ data, errors })
-  state_changed: boolean; // true when a mutation changed YOUR training data
-  training_data: "per_student" | "read_only"; // read_only: storage is unavailable, so mutations are refused
-}
-
-export interface LabModuleSummary {
-  id: string;
-  order: number;
-  title: string;
-  summary: string;
-  difficulty: LabDifficulty;
-  prerequisites: string[]; // module ids; recommended first, not enforced
-  recommended_first: string[]; // the prerequisites this student has not completed yet
-  lesson_count: number;
-  exercise_count: number;
-  status: LabModuleStatus;
-  lessons_completed: number;
-  exercises_passed: number;
-}
-export interface LabModulesResponse {
-  modules: LabModuleSummary[];
-  current_module_id: string | null;
-}
-export interface LabLesson {
-  id: string;
-  title: string;
-  objectives: string[];
-  blocks: LabBlock[];
-  exercise_ids: string[];
-  completed: boolean;
-}
-export interface LabChoiceOption {
-  id: string;
-  text: string;
-}
-export interface LabExerciseStudent {
-  attempts: number;
-  passed: boolean;
-  passed_at: string | null;
-  hints_used: number;
-  last_attempt_at: string | null;
-}
-export interface LabExercise {
-  id: string;
-  module_id: string;
-  lesson_id: string;
-  order: number;
-  title: string;
-  type: LabExerciseType;
-  difficulty: LabDifficulty;
-  description: string;
-  objectives: string[];
-  concepts: string[];
-  requirements: string[]; // what the solution must do; each is checked by the grader
-  starter_query: string | null;
-  starter_variables: Record<string, unknown> | null;
-  example: { query: string; variables?: Record<string, unknown> } | null;
-  options: LabChoiceOption[] | null; // choice and schema-reading questions
-  multi_select: boolean;
-  schema_excerpt: string | null;
-  hints_total: number;
-  max_answer_chars: number | null; // explanation questions
-  grading: string; // how it is graded, in words
-  version: number;
-  provenance: "authored_original";
-  student: LabExerciseStudent;
-}
-export interface LabModuleDetail {
-  module: LabModuleSummary;
-  objectives: string[];
-  completion_criteria: string;
-  lessons: LabLesson[];
-  exercises: LabExercise[];
-}
-export interface LabExercisesResponse {
-  exercises: LabExercise[];
-}
-
-export interface LabSchemaArg {
-  name: string;
-  type: string;
-  default: string | null;
-  description: string | null;
-}
-export interface LabSchemaField {
-  name: string;
-  type: string;
-  description: string | null;
-  args: LabSchemaArg[];
-}
-export interface LabSchemaType {
-  name: string;
-  kind: "OBJECT" | "INPUT_OBJECT" | "ENUM" | "UNION" | "INTERFACE" | "SCALAR";
-  description: string | null;
-  fields: LabSchemaField[]; // object types and input objects
-  enum_values: { name: string; description: string | null }[];
-  possible_types: string[]; // unions
-}
-export interface LabTrainingSchemaResponse {
-  sdl: string; // the actual schema the server executes against
-  types: LabSchemaType[]; // derived from that same schema
-  query_type: string;
-  mutation_type: string | null;
-  limits: { max_query_chars: number; max_variables_chars: number; max_depth: number; max_fields: number; max_result_bytes: number };
-}
-
-export interface LabSubmitRequest {
-  client_attempt_id: string; // 8 to 64 letters, digits, - or _; a retry with the same id returns the stored result
-  query?: string;
-  variables?: Record<string, unknown> | null;
-  answer?: string | string[]; // choice ids, or the written explanation
-}
-export interface LabCheck {
-  label: string;
-  passed: boolean;
-}
-export interface LabAttempt {
-  id: string;
-  exercise_id: string;
-  at: string;
-  passed: boolean;
-  query: string | null;
-  variables: Record<string, unknown> | null;
-  answer: string | string[] | null;
-  feedback: string;
-  checks: LabCheck[];
-}
-export interface LabSubmitResponse {
-  attempt: LabAttempt;
-  outcome: "passed" | "needs_improvement";
-  feedback: string;
-  checks: LabCheck[];
-  hint: string | null; // a nudge when it did not pass (never the answer)
-  explanation: string | null; // shown only after passing
-  lesson: { module_id: string; lesson_id: string; title: string };
-  newly_completed: { lesson: boolean; module: boolean };
-  exercise: LabExerciseStudent;
-  execution: LabExecuteResponse | null; // the result of running the student's own query, when there was one
-  replayed: boolean; // true when this was a retry of an earlier submission
-}
-export interface LabAttemptsResponse {
-  attempts: LabAttempt[];
-}
-export interface LabHintResponse {
-  hint: string;
-  hint_number: number;
-  hints_total: number;
-}
-
-export interface LabModuleProgress {
-  module_id: string;
-  title: string;
-  status: LabModuleStatus;
-  lessons_completed: number;
-  lessons_total: number;
-  exercises_passed: number;
-  exercises_total: number;
-}
-export interface LabProgressResponse {
-  has_started: boolean;
-  totals: {
-    modules_started: number;
-    modules_completed: number;
-    modules_total: number;
-    lessons_completed: number;
-    lessons_total: number;
-    exercises_attempted: number;
-    exercises_passed: number;
-    exercises_total: number;
-    attempts: number;
-  };
-  current_module_id: string | null;
-  modules: LabModuleProgress[];
-  recent_activity: { at: string; kind: "passed" | "attempt" | "hint"; exercise_id: string; exercise_title: string; module_id: string }[];
-  needs_another_attempt: { concept: string; exercise_ids: string[] }[]; // concepts of exercises attempted but not yet passed
-  definitions: { metric: string; meaning: string }[];
-}
-
-export interface LabHelpRequest {
-  action: LabHelpAction;
-  exercise_id?: string;
-  query?: string;
-  variables?: Record<string, unknown> | null;
-  message?: string; // the student's own question, max 500 characters
-}
-export interface LabHelpResponse {
-  reply: string;
-  mock: boolean; // true when the built-in mock mentor answered
-  query_status: { phase: LabPhase; error_count: number } | null; // what actually happened when the server ran the student's query
-  memory_saved: MentorSavedMemory[];
-}
-export interface LabResetResponse {
-  application_count: number;
-}
-
 // ---------- Unified Placement Intelligence (Phase 9) ----------
 // Everything here is computed by the application from stored records. The AI mentor explains it; it never supplies
 // a score, a task or a completion. There is deliberately no overall readiness score or offer probability.
 export type PlacementExperience = "beginner" | "intermediate" | "advanced";
-export type PlacementPriority = "dsa" | "interview" | "graphql" | "projects" | "communication";
-export type PlacementTaskType = "dsa_practice" | "dsa_revision" | "graphql" | "technical_interview" | "communication" | "project" | "diagnostic" | "general";
+export type PlacementPriority = "dsa" | "interview" | "dbms" | "projects" | "communication";
+export type PlacementTaskType = "dsa_practice" | "dsa_revision" | "dbms" | "technical_interview" | "communication" | "project" | "diagnostic" | "general";
 export type PlacementTaskStatus = "planned" | "in_progress" | "completed" | "skipped" | "removed" | "superseded"; // postponing keeps "planned" and moves the due date
 export type PlacementTaskAction = "start" | "complete" | "postpone" | "skip" | "reschedule" | "remove" | "reopen";
 export type EvidenceProvenance = "verified" | "self_reported" | "demonstration" | "unavailable";
-export type EvidenceKind = "dsa_judged" | "interview_assessment" | "graphql_lab" | "github_context" | "none";
+export type EvidenceKind = "dsa_judged" | "interview_assessment" | "dbms_quiz" | "github_context" | "none";
 export type SkillStatus = "strong" | "developing" | "weak" | "unassessed";
 export type EvidenceConfidence = "none" | "low" | "medium" | "high";
 export type EvidenceRecency = "recent" | "aging" | "stale" | "none";
@@ -1284,14 +1049,14 @@ export interface PlacementProfileResponse {
 }
 
 export interface EvidenceLimitation {
-  source: "dsa" | "interview" | "graphql" | "github" | "memory" | "leetcode";
+  source: "dsa" | "interview" | "dbms" | "github" | "memory" | "leetcode";
   severity: "info" | "limits_accuracy";
   message: string;
 }
 export interface SkillAssessment {
-  area: string; // stable key, for example dsa:Arrays, interview:react_state, graphql, project:github
+  area: string; // stable key, for example dsa:Arrays, interview:react_state, dbms, project:github
   label: string;
-  category: "dsa" | "interview" | "graphql" | "project";
+  category: "dsa" | "interview" | "dbms" | "project";
   status: SkillStatus;
   estimate: number | null; // 0..1, only from verified results; null when there is not enough to estimate
   evidence: { kind: EvidenceKind; provenance: EvidenceProvenance; count: number; unit: string; last_at: string | null; recency: EvidenceRecency };
@@ -1366,7 +1131,7 @@ export interface PlacementImprovement {
   at: string | null;
   area: string;
   message: string;
-  source: "dsa_judged" | "graphql_lab" | "interview_assessment" | "plan";
+  source: "dsa_judged" | "dbms_quiz" | "interview_assessment" | "plan";
 }
 export interface PlacementDashboard {
   generated_at: string;
@@ -1794,6 +1559,110 @@ export interface ResumeImportResponse {
   warnings: string[]; // what could not be read, and what to check
   sections: string[]; // the section headings that were recognised
 }
+
+// ---------- Learn: DSA patterns and DBMS ----------
+export type PatternLevel = "core" | "intermediate" | "advanced";
+export type LearnDifficulty = "easy" | "medium" | "hard";
+export interface PatternProblem {
+  key: string; // stable id for progress: the public slug, or the UNBLUFF question id
+  title: string;
+  difficulty: LearnDifficulty;
+  note: string; // what the pattern's cue looks like in this problem
+  url: string | null; // the problem's public page; null for UNBLUFF's own problems
+  practice_id: string | null; // an UNBLUFF graded question id: it opens in the code workspace
+}
+export interface PatternSummary {
+  id: string;
+  name: string;
+  topic: string;
+  level: PatternLevel;
+  cues: string[]; // phrases in a problem statement that point to this pattern
+  summary: string;
+  problem_count: number;
+}
+export interface PatternDetail extends PatternSummary {
+  idea: string[];
+  template: string; // Python, checked by tests
+  complexity: { time: string; space: string };
+  pitfalls: string[];
+  variants: { name: string; when: string }[];
+  problems: PatternProblem[];
+  related: { id: string; name: string }[];
+}
+export interface PatternsResponse {
+  patterns: PatternSummary[];
+  topics: string[]; // the families, in display order
+}
+export interface DbmsTopicSummary {
+  id: string;
+  name: string;
+  group: string;
+  summary: string;
+  minutes: number;
+  has_example: boolean;
+  quiz_questions: number;
+}
+export interface DbmsExample {
+  title: string;
+  setup: string;
+  query: string;
+  explanation: string;
+  columns: string[];
+  rows: (string | number | null)[][]; // what the query returns; tests run it on SQLite
+}
+export interface DbmsTopicDetail extends DbmsTopicSummary {
+  sections: { heading: string; body: string[] }[];
+  key_points: string[];
+  example: DbmsExample | null;
+  interview: { q: string; a: string }[];
+  quiz: { id: string; question: string; options: string[] }[]; // answers are never sent with the questions
+  related: { id: string; name: string }[];
+}
+export interface DbmsTopicsResponse {
+  topics: DbmsTopicSummary[];
+  groups: string[];
+}
+/** POST /api/learn/dbms/:id/quiz. One answer (an option index) per question, in order. */
+export interface DbmsQuizRequest {
+  answers: number[];
+}
+export interface DbmsProgress {
+  best_score: number;
+  total: number;
+  attempts: number;
+  passed_at: string | null; // when a score at or above the pass mark was first reached
+  last_attempt_at: string;
+}
+export interface DbmsQuizResult {
+  topic_id: string;
+  score: number;
+  total: number;
+  pass_mark: number; // the score needed to pass
+  passed: boolean;
+  results: { question_id: string; chosen: number; answer: number; correct: boolean; why: string }[];
+  progress: DbmsProgress;
+}
+export interface PatternProgress {
+  done: boolean;
+  problems_done: string[]; // PatternProblem.key values the student marked solved
+}
+export interface LearnProgress {
+  patterns: Record<string, PatternProgress>;
+  dbms: Record<string, DbmsProgress>;
+  updated_at: string | null;
+}
+export interface LearnProgressResponse {
+  progress: LearnProgress;
+  patterns_done: number;
+  patterns_total: number;
+  dbms_passed: number;
+  dbms_total: number;
+}
+/** PUT /api/learn/patterns/:id/progress. Self-reported marks: they are never presented as verified practice. */
+export interface PatternProgressRequest {
+  done?: boolean;
+  problems?: { key: string; done: boolean }[];
+}
 export interface LeetCodeHistoryResponse {
   snapshots: LeetCodeSnapshotSummary[]; // newest capture first
   total: number;
@@ -1941,30 +1810,19 @@ Read-only and public-data-only. All routes except the OAuth callback require the
 - Each section (`contributions`, `repositories`, `activity`) is stored with its own time. If one section fails, the others are updated and the older copy of the failed one is kept and labelled with its older `synced_at`.
 - `POST /api/mentor/chat` may return `github_context` when the message was about GitHub or projects. The mentor then received a short summary of the saved public data; it never receives tokens or repository text.
 
-### GraphQL Learning Lab *(Phase 8)*
+### Learn: DSA patterns and DBMS (`/api/learn*`)
 
-An educational module. Every route requires the bearer token and acts only on the verified uid. The only GraphQL endpoint is the Lab's own **training API**; there is no proxy: no URL, header, token or user id is accepted. Progress and training data are separate from DSA analytics. Responses are `Cache-Control: no-store` except the schema.
+Original learning content, written for UNBLUFF; details in `docs/learn.md`. The content routes are public (static, cacheable, no student data); progress and quizzes need the bearer token and act only on the verified uid.
 
-| Method | Path | Body / query | Response |
-|---|---|---|---|
-| GET | `/api/graphql-lab/modules` | | `LabModulesResponse` (ten modules, status from your progress, recommended prerequisites) |
-| GET | `/api/graphql-lab/modules/:moduleId` | | `LabModuleDetail` (`404 MODULE_NOT_FOUND`) |
-| GET | `/api/graphql-lab/exercises` | | `LabExercisesResponse` |
-| GET | `/api/graphql-lab/exercises/:exerciseId` | | `LabExercise` (`404 EXERCISE_NOT_FOUND`) |
-| GET | `/api/graphql-lab/training-schema` | | `LabTrainingSchemaResponse` (derived from the schema that executes queries, plus the enforced limits) |
-| POST | `/api/graphql-lab/execute` | `LabExecuteRequest` (strict) | `LabExecuteResponse` (always 200 for a bad document: `phase` says syntax, validation, variables or execution) |
-| POST | `/api/graphql-lab/exercises/:exerciseId/hint` | `{}` | `LabHintResponse` (next hint; the last one repeats) |
-| POST | `/api/graphql-lab/exercises/:exerciseId/submit` | `LabSubmitRequest` (strict) | `LabSubmitResponse` |
-| GET | `/api/graphql-lab/progress` | | `LabProgressResponse` |
-| GET | `/api/graphql-lab/attempts` | `exercise_id?` | `LabAttemptsResponse` (newest first, at most 20 per exercise are kept) |
-| POST | `/api/graphql-lab/training-data/reset` | `{}` | `LabResetResponse` |
-| POST | `/api/graphql-lab/help` | `LabHelpRequest` (strict) | `LabHelpResponse` (the Phase 6 mentor; `502/504` if the model is unavailable, the Lab otherwise keeps working) |
-| DELETE | `/api/graphql-lab/progress` | | `204`; deletes your progress, attempts and training data |
-
-- **Grading is real.** A query exercise is graded by validating the student's document against the training schema, executing it (once per hidden variable set) on fresh training data, and comparing the response, and for mutations the resulting data, with the trusted reference's. Equivalent documents pass; text is never compared. Hidden references, variable sets, answer keys and rubrics never appear in any response, and hints are returned only by the hint endpoint, one at a time.
-- **Completion is idempotent.** `client_attempt_id` (8 to 64 letters, digits, `-`, `_`) makes a submission safe to retry: a repeat returns the stored result with `replayed: true` and counts once. `passed_at` is set by the first pass only.
-- **Limits** (see `limits` in the training schema): 4000-character query, 2000-character variables, depth 7, 120 fields after fragment expansion, 60 000-byte response, 1.5 s execution. Rate limits per student: execute 60/min, submit/hint/reset 30/min, help 12/min.
-- Mutations change only the caller's own training data. If it cannot be loaded, queries still run (`training_data: "read_only"`) and mutations are refused; if a mutation cannot be saved the request fails with `503 GRAPHQL_LAB_UNAVAILABLE` instead of claiming success.
+| Method and path | Purpose |
+|---|---|
+| `GET /api/learn/patterns` | `PatternsResponse`: every pattern (name, family, level, the cues that point to it) and the families in display order. Public. |
+| `GET /api/learn/patterns/:id` | `PatternDetail`: the idea, a Python template, complexity, pitfalls, variants, practice problems (public links, or UNBLUFF graded question ids) and related patterns. `404 LEARN_NOT_FOUND`. Public. |
+| `GET /api/learn/dbms` | `DbmsTopicsResponse`. Public. |
+| `GET /api/learn/dbms/:id` | `DbmsTopicDetail`: notes, key points, an SQL example with the rows it returns, interview questions and quiz questions **without their answers**. `404 LEARN_NOT_FOUND`. Public. |
+| `POST /api/learn/dbms/:id/quiz` | `DbmsQuizRequest` (`{ answers }`, one option index per question, strict) gives `DbmsQuizResult`. Graded on the server; passing needs three of four. The best score and the first pass are kept, so a worse retry never undoes a pass. `400 BAD_REQUEST` for a wrong count or an out-of-range answer. |
+| `GET /api/learn/progress` | `LearnProgressResponse`. |
+| `PUT /api/learn/patterns/:id/progress` | `PatternProgressRequest` (strict) gives `LearnProgressResponse`. Self-reported marks on a pattern and its problems; never treated as verified practice. |
 
 ### Unified placement intelligence *(Phase 9)*
 

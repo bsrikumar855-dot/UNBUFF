@@ -28,7 +28,7 @@ const bundle = (over: Partial<EvidenceBundle> = {}): EvidenceBundle => ({
   generatedAt: NOW.toISOString(),
   dsa: { overview: null, outcomes: [], revision: [], gradable: [], topicsInScope: [], execution: { configured: true, verified: true }, readFailed: false, ...(over.dsa ?? {}) },
   interview: { skills: [], sessions: [], demonstration: false, readFailed: false, ...(over.interview ?? {}) },
-  lab: { exercises: [], readFailed: false, ...(over.lab ?? {}) },
+  dbms: { topics: [], readFailed: false, ...(over.dbms ?? {}) },
   github: { status: "not_connected", stale: false, syncedAt: null, totalPublic: null, gaps: [], readFailed: false, ...(over.github ?? {}) },
   memory: { goals: [], profile: null, readFailed: false, ...(over.memory ?? {}) },
   conversations: over.conversations ?? [],
@@ -199,22 +199,25 @@ describe("skill assessment", () => {
     expect(r.limitations.some((l) => /Choose a target role/.test(l.message))).toBe(true);
   });
 
-  it("GraphQL: reading is not competence; passed exercises are", () => {
-    const ex = (id: string, passed: boolean, attempts: number) => ({ id, module_id: "m1", lesson_id: "l1", title: id, order: 1, passed, attempts, last_attempt_at: attempts ? "2026-06-14T00:00:00.000Z" : null, module_title: "M1", module_order: 1, difficulty: "beginner" });
-    const none = area(bundle({ lab: { exercises: [ex("a", false, 0), ex("b", false, 0)], readFailed: false } }), "graphql", profile({ priorities: ["graphql"] }));
+  it("DBMS: reading is not competence; passed quizzes are", () => {
+    const tp = (id: string, passed: boolean, attempts: number) => ({ id, title: id, group: "SQL", minutes: 12, passed, attempts, best_score: passed ? 4 : attempts ? 2 : 0, total: 4, last_attempt_at: attempts ? "2026-06-14T00:00:00.000Z" : null });
+    const none = area(bundle({ dbms: { topics: [tp("a", false, 0), tp("b", false, 0)], readFailed: false } }), "dbms", profile({ priorities: ["dbms"] }));
     expect(none).toMatchObject({ status: "unassessed", estimate: null, evidence: { provenance: "unavailable" } });
-    expect(none.note).toMatch(/Reading lessons alone is not counted/);
-    const some = area(bundle({ lab: { exercises: [ex("a", true, 1), ex("b", false, 2), ex("c", false, 0), ex("d", false, 0)], readFailed: false } }), "graphql", profile({ priorities: ["graphql"] }));
+    expect(none.note).toMatch(/Reading the notes alone is not counted/);
+    const some = area(bundle({ dbms: { topics: [tp("a", true, 1), tp("b", false, 2), tp("c", false, 0), tp("d", false, 0)], readFailed: false } }), "dbms", profile({ priorities: ["dbms"] }));
     expect(some.estimate).toBe(0.25);
-    expect(some.evidence).toMatchObject({ provenance: "verified", count: 2, unit: "exercises attempted" });
+    expect(some.evidence).toMatchObject({ kind: "dbms_quiz", provenance: "verified", count: 2, unit: "topic quizzes attempted" });
     expect(some.confidence).toBe("low");
     expect(some.gaps).toEqual(["Not yet passed: b"]);
   });
-  it("GraphQL is left out when it is not wanted and not used, and included when the role needs APIs", () => {
+  it("DBMS is left out when it is not wanted and not used, and included when it is a priority or has been attempted", () => {
     const off = assessSkills(bundle(), profile({ role_ids: [], priorities: ["dsa"] }), roles, NOW);
-    expect(off.skills.some((s) => s.area === "graphql")).toBe(false);
-    const viaRole = assessSkills(bundle(), profile({ priorities: ["dsa"] }), roles, NOW); // frontend_developer lists rest_apis
-    expect(viaRole.skills.some((s) => s.area === "graphql")).toBe(true);
+    expect(off.skills.some((s) => s.area === "dbms")).toBe(false);
+    expect(off.limitations.some((l) => l.source === "dbms" && /not in your priorities/.test(l.message))).toBe(true);
+    const chosen = assessSkills(bundle(), profile({ priorities: ["dsa", "dbms"] }), roles, NOW);
+    expect(chosen.skills.some((s) => s.area === "dbms")).toBe(true);
+    const tried = bundle({ dbms: { topics: [{ id: "joins", title: "Joins", group: "SQL", minutes: 14, passed: false, attempts: 1, best_score: 1, total: 4, last_attempt_at: "2026-06-14T00:00:00.000Z" }], readFailed: false } });
+    expect(assessSkills(tried, profile({ priorities: ["dsa"] }), roles, NOW).skills.some((s) => s.area === "dbms")).toBe(true);
   });
 
   it("GitHub is context only: it never gives an estimate or counts towards coverage, and its absence costs nothing", () => {
@@ -264,10 +267,10 @@ describe("completion proof and obsolescence use real records only", () => {
     expect(completionProof(d, ev("2026-06-15T10:00:00.000Z"))).toMatch(/counted judged submission/);
     expect(completionProof(d, ev("2026-06-14T10:00:00.000Z"))).toBeNull(); // an attempt from before the task existed proves nothing
   });
-  it("GraphQL, interview, conversation and GitHub tasks complete only from their own records", () => {
-    const labEv = (passed: boolean) => bundle({ lab: { exercises: [{ id: "m1-e1", module_id: "m1", lesson_id: "l", title: "t", order: 1, passed, attempts: 1, last_attempt_at: null, module_title: "M", module_order: 1, difficulty: "beginner" }], readFailed: false } });
-    expect(completionProof(task({ ref: { kind: "lab_exercise", id: "m1-e1" } }), labEv(false))).toBeNull();
-    expect(completionProof(task({ ref: { kind: "lab_exercise", id: "m1-e1" } }), labEv(true))).toMatch(/GraphQL Lab/);
+  it("DBMS, interview, conversation and GitHub tasks complete only from their own records", () => {
+    const dbmsEv = (passed: boolean) => bundle({ dbms: { topics: [{ id: "joins", title: "Joins", group: "SQL", minutes: 14, passed, attempts: 1, best_score: passed ? 4 : 1, total: 4, last_attempt_at: null }], readFailed: false } });
+    expect(completionProof(task({ ref: { kind: "dbms_topic", id: "joins" } }), dbmsEv(false))).toBeNull();
+    expect(completionProof(task({ ref: { kind: "dbms_topic", id: "joins" } }), dbmsEv(true))).toMatch(/passed quiz for this DBMS topic/);
     const iv = (assessed: string[], at: string) => bundle({ interview: { skills: [], sessions: [{ id: "s", role_id: "frontend_developer", created_at: at, assessed_skill_ids: assessed }], demonstration: false, readFailed: false } });
     const t = task({ ref: { kind: "role", id: "frontend_developer" } });
     expect(completionProof(t, iv(["testing"], "2026-06-15T12:00:00.000Z"))).toMatch(/interview session/);

@@ -13,11 +13,11 @@ import { FreehireClient } from "./careers/freehire.js";
 import { HttpLeetCodeLookup } from "./leetcode/lookup.js";
 import { LeetCodeService } from "./leetcode/service.js";
 import { DockerLatexCompiler, UnavailableLatex } from "./resume/latex.js";
+import { LearnService } from "./learn/service.js";
+import { FirestoreLearnStore, MemoryLearnStore, type LearnStore } from "./learn/store.js";
 import { ResumeService } from "./resume/service.js";
 import { FirestoreResumeStore, MemoryResumeStore, type ResumeStore } from "./resume/store.js";
 import { FirestoreLeetCodeStore, MemoryLeetCodeStore, type LeetCodeStore } from "./leetcode/store.js";
-import { FirestoreLabStore, MemoryLabStore, type LabStore } from "./graphqllab/store.js";
-import { LabService } from "./graphqllab/service.js";
 import { GithubGraphQL } from "./github/client.js";
 import { GithubOAuth } from "./github/oauth.js";
 import { GithubService } from "./github/service.js";
@@ -52,8 +52,8 @@ function backendRoot(): string {
   return here.includes(`${join("dist", "src")}`) ? join(here, "..", "..") : join(here, "..");
 }
 
-function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore; github: GithubStore; lab: LabStore; placement: PlacementStore; career: CareerStore; leetcode: LeetCodeStore; resume: ResumeStore } {
-  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore(), mentor: new MemoryMentorStore(), github: new MemoryGithubStore(), lab: new MemoryLabStore(), placement: new MemoryPlacementStore(), career: new MemoryCareerStore(), leetcode: new MemoryLeetCodeStore(), resume: new MemoryResumeStore() };
+function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore; github: GithubStore; placement: PlacementStore; career: CareerStore; leetcode: LeetCodeStore; resume: ResumeStore; learn: LearnStore } {
+  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore(), mentor: new MemoryMentorStore(), github: new MemoryGithubStore(), placement: new MemoryPlacementStore(), career: new MemoryCareerStore(), leetcode: new MemoryLeetCodeStore(), resume: new MemoryResumeStore(), learn: new MemoryLearnStore() };
   const account = config.FIREBASE_SERVICE_ACCOUNT_JSON ? parseServiceAccount(config.FIREBASE_SERVICE_ACCOUNT_JSON) : null;
   const projectId = config.GOOGLE_CLOUD_PROJECT ?? account?.project_id ?? config.FIREBASE_PROJECT_ID;
   // Without a service-account secret, Application Default Credentials apply (Cloud Run identity, gcloud login, emulator).
@@ -62,7 +62,7 @@ function createStores(config: Config): { sessions: SessionStore; progress: Progr
     ignoreUndefinedProperties: true,
     ...(account ? { credentials: { client_email: account.client_email, private_key: account.private_key } } : {}),
   });
-  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db), mentor: new FirestoreMentorStore(undefined, db), github: new FirestoreGithubStore(db), lab: new FirestoreLabStore(db), placement: new FirestorePlacementStore(db), career: new FirestoreCareerStore(db), leetcode: new FirestoreLeetCodeStore(db), resume: new FirestoreResumeStore(db) };
+  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db), mentor: new FirestoreMentorStore(undefined, db), github: new FirestoreGithubStore(db), placement: new FirestorePlacementStore(db), career: new FirestoreCareerStore(db), leetcode: new FirestoreLeetCodeStore(db), resume: new FirestoreResumeStore(db), learn: new FirestoreLearnStore(db) };
 }
 
 /**
@@ -168,6 +168,7 @@ function main(): void {
     logger,
   });
   if (config.LATEX_COMPILER === "docker") logger.warn("LATEX_COMPILER=docker: building PDFs in local Docker containers (development only)");
+  const learn = new LearnService({ store: stores.learn }); // DSA patterns and DBMS topics
   const careerHolder: { current?: CareerService } = {}; // the Career service is built after the placement service, which needs the mentor
   const mentor = new MentorService({
     store: stores.mentor,
@@ -186,7 +187,6 @@ function main(): void {
     career: () => careerHolder.current,
     retention: { conversationDays: config.MENTOR_CONVERSATION_RETENTION_DAYS, summaryDays: config.MENTOR_SUMMARY_RETENTION_DAYS, learningDays: config.MENTOR_LEARNING_RETENTION_DAYS },
   });
-  const lab = new LabService({ store: stores.lab, mentor, logger });
   const suites = loadSuites(config, root, logger);
   const code = new CodeService({
     provider: createExecutionProvider(config, logger),
@@ -203,7 +203,7 @@ function main(): void {
   const executionStatus = { configured: config.EXECUTION_PROVIDER !== "none", verified: config.EXECUTION_PROVIDER === "judge0" && config.EXECUTION_PROVIDER_VERIFIED };
   const placement = new PlacementService({
     store: stores.placement,
-    evidence: new EvidenceService({ analytics, sessions: stores.sessions, roles, lab, github, leetcode, mentor, catalogue: () => catalogue, suites, execution: executionStatus, llmMode: llm.mode, logger }),
+    evidence: new EvidenceService({ analytics, sessions: stores.sessions, roles, learn, github, leetcode, mentor, catalogue: () => catalogue, suites, execution: executionStatus, llmMode: llm.mode, logger }),
     roles,
     topics: () => catalogue.allTopics(),
     mentor,
@@ -231,11 +231,11 @@ function main(): void {
     analytics,
     mentor,
     github,
-    lab,
     placement,
     career,
     leetcode,
     resume,
+    learn,
     llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
   const server = app.listen(config.PORT, "0.0.0.0", (err?: Error) => {
     if (err) {

@@ -23,7 +23,7 @@ export const PLAN_RULES = {
   /** Questions and lessons already planned or finished in the last N days are not suggested again if alternatives exist. */
   repeatSuppressionDays: 30,
   /** Estimated minutes by difficulty. */
-  minutes: { easy: 25, medium: 40, hard: 60, revision: 20, interview: 45, communication: 30, project: 30, review: 15, graphql: { beginner: 20, intermediate: 30, advanced: 40 } },
+  minutes: { easy: 25, medium: 40, hard: 60, revision: 20, interview: 45, communication: 30, project: 30, review: 15 },
   /** feasibility: required work up to this share of available time is "ok"; up to 100% is "tight". */
   okShare: 0.8,
 } as const;
@@ -236,34 +236,38 @@ export function buildCandidates(input: PlannerInput): Candidate[] {
     });
   }
 
-  // ---- R6: the next GraphQL Lab exercises, when GraphQL is in scope
-  if (skills.skills.some((s) => s.area === "graphql")) {
-    const next = ev.lab.exercises.filter((e) => !e.passed).slice(0, 2);
-    const done = ev.lab.exercises.filter((e) => e.passed).length;
-    next.forEach((e, i) => {
+  // ---- R6: the next DBMS topics, when DBMS is in scope
+  if (skills.skills.some((sk) => sk.area === "dbms")) {
+    // Topics already started come first, then the rest in the order they are taught.
+    const open = ev.dbms.topics.filter((t) => !t.passed);
+    const next = [...open.filter((t) => t.attempts > 0), ...open.filter((t) => t.attempts === 0)].slice(0, 2);
+    const done = ev.dbms.topics.filter((t) => t.passed).length;
+    next.forEach((t, i) => {
       const prev = next[i - 1];
       out.push({
-        key: `graphql|lab:${e.id}`,
-        type: "graphql",
-        title: `GraphQL: ${e.title}`,
-        description: `Exercise ${e.order} of the module "${e.module_title}" in the GraphQL Lab.`,
-        skill_area: "graphql",
-        priority: profile.priorities.includes("graphql") ? 2 : 3,
-        minutes: PLAN_RULES.minutes.graphql[e.difficulty as "beginner" | "intermediate" | "advanced"] ?? 30,
-        link: `/graphql-lab/modules/${encodeURIComponent(e.module_id)}?exercise=${encodeURIComponent(e.id)}`,
-        ref: { kind: "lab_exercise", id: e.id },
-        completion_criteria: "Pass the exercise's check in the GraphQL Lab.",
+        key: `dbms|topic:${t.id}`,
+        type: "dbms",
+        title: `DBMS: ${t.title}`,
+        description: `Read the "${t.title}" notes (about ${t.minutes} minutes), then take the topic quiz.`,
+        skill_area: "dbms",
+        priority: profile.priorities.includes("dbms") ? 2 : 3,
+        minutes: t.minutes + 5,
+        link: `/learn/dbms/${encodeURIComponent(t.id)}`,
+        ref: { kind: "dbms_topic", id: t.id },
+        completion_criteria: "Pass the topic's quiz: three of four answers correct.",
         completion_check: "verified_event",
-        evidence_source: `lab:${e.id}`,
+        evidence_source: `dbms:${t.id}`,
         reason: prev
-          ? `It follows "${prev.title}" in the GraphQL Lab path and unlocks once that one is passed.`
-          : done === 0
-            ? profile.priorities.includes("graphql")
-              ? "You chose GraphQL as a priority and have not passed a Lab exercise yet."
-              : "Your target role lists an API skill, and the GraphQL Lab teaches API design; no exercise has been passed yet."
-            : `You have passed ${done} Lab exercise(s); this is the next one in the path.`,
-        reason_codes: [prev ? "graphql_follow_up" : done === 0 ? "graphql_start" : "graphql_next"],
-        depends_on_keys: prev ? [`graphql|lab:${prev.id}`] : [],
+          ? `It follows "${prev.title}" in the DBMS path and unlocks once that one is passed.`
+          : t.attempts > 0
+            ? `You have attempted this quiz (best ${t.best_score} of ${t.total}) without passing yet.`
+            : done === 0
+              ? profile.priorities.includes("dbms")
+                ? "You chose DBMS as a priority and have not passed a topic quiz yet."
+                : "You have started DBMS, and no topic quiz has been passed yet."
+              : `You have passed ${done} DBMS topic(s); this is the next one in the path.`,
+        reason_codes: [prev ? "dbms_follow_up" : t.attempts > 0 ? "dbms_retry" : done === 0 ? "dbms_start" : "dbms_next"],
+        depends_on_keys: prev ? [`dbms|topic:${prev.id}`] : [],
       });
     });
   }

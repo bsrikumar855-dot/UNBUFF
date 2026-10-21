@@ -28,9 +28,9 @@ const MODULES = [
     copy: "A mentor that reads your real records, remembers only what you tell it, and lets you delete it.",
   },
   {
-    to: routes.graphqlLab,
-    name: "GraphQL Lab",
-    copy: "Lessons and graded exercises against a controlled training API, decided by running your query.",
+    to: routes.learnPatterns,
+    name: "DSA patterns and DBMS",
+    copy: "Two pointers, sliding window, DP and the rest as patterns with templates, plus DBMS notes with graded quizzes.",
   },
   {
     to: routes.github,

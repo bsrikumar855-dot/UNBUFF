@@ -183,7 +183,7 @@ export const SkillsSection: React.FC<{ d: PlacementDashboard }> = ({ d }) => {
       title: "Technical interviews",
       items: d.skills.skills.filter((s) => s.category === "interview"),
     },
-    { title: "GraphQL", items: d.skills.skills.filter((s) => s.category === "graphql") },
+    { title: "DBMS", items: d.skills.skills.filter((s) => s.category === "dbms") },
     {
       title: "Projects (context only)",
       items: d.skills.skills.filter((s) => s.category === "project"),

@@ -197,19 +197,21 @@ async function main() {
     check("the mentor answers and the transcript labels the roles", Boolean(await waitText(/YOU[\s\S]*MENTOR/i, 30000)));
     await shot("flow-6-mentor");
 
-    // 6. GraphQL Lab
-    await go("/graphql-lab/modules/m1-fundamentals");
-    await waitText(/How a GraphQL client gets its data/);
-    await js(`document.querySelectorAll('input[type=radio]')[1]?.click()`);
-    await clickText("button", "Submit answer");
-    check("a graded GraphQL exercise passes", Boolean(await waitText(/1 of 4 exercises passed/, 15000)));
-    await shot("flow-7-lab");
+    // 6. Learn: a DSA pattern and a DBMS quiz (answers are graded on the server)
+    await go("/learn/patterns/sliding-window-fixed");
+    await waitText(/Spot it/);
+    check("a pattern page shows its template and practice links", /Template \(Python\)/.test(await bodyText()) && /Practice/.test(await bodyText()));
+    await go("/learn/dbms/joins");
+    await waitText(/Check my answers/);
+    await js(`document.querySelectorAll('fieldset').forEach(f => f.querySelector('input[type=radio]')?.click())`);
+    await clickText("button", "Check my answers");
+    check("a DBMS quiz is graded by the server", Boolean(await waitText(/\d of \d correct/, 15000)));
+    await shot("flow-7-learn");
 
     // 7. integrated dashboard
     await go("/placement");
     const dash = await waitText(/Balanced Brackets[^\n]*done/, 20000);
     check("the dashboard shows the diagnostic completed from the verified record", Boolean(dash));
-    check("GraphQL progress appears on the dashboard", /1 of 55 exercises passed/.test(await bodyText()));
     await shot("flow-8-dashboard");
   } catch (e) {
     failures += 1;

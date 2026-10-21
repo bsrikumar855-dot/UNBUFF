@@ -11,9 +11,6 @@ export interface RateLimitOptions {
   mentorChatPerMinute?: number;
   githubConnectPerMinute?: number;
   githubSyncPerMinute?: number;
-  labExecutePerMinute?: number;
-  labSubmitPerMinute?: number;
-  labHelpPerMinute?: number;
   placementRefreshPerMinute?: number;
   placementAssistantPerMinute?: number;
   placementActionPerMinute?: number;
@@ -24,6 +21,8 @@ export interface RateLimitOptions {
   resumeReadPerMinute?: number;
   resumeWritePerMinute?: number;
   resumeCompilePerMinute?: number;
+  learnReadPerMinute?: number;
+  learnWritePerMinute?: number;
 }
 
 export const DEFAULT_RATE_LIMITS: RateLimitOptions = { globalPerMinute: 300, llmPerMinute: 40 };
@@ -79,14 +78,14 @@ export function createLeetcodeLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIM
   return { read: userLimiter(opts.leetcodeReadPerMinute ?? 90), write: userLimiter(opts.leetcodeWritePerMinute ?? 30) };
 }
 
+/** Learn: progress reads and writes, and quiz attempts. Per student. Mount after requireAuth. */
+export function createLearnLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
+  return { read: userLimiter(opts.learnReadPerMinute ?? 90), write: userLimiter(opts.learnWritePerMinute ?? 40) };
+}
+
 /** Résumé builder: saving and scoring are cheap, compiling runs TeX in a container so it is limited more tightly than saving. Per student; the page also builds automatically after edits. */
 export function createResumeLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
   return { read: userLimiter(opts.resumeReadPerMinute ?? 90), write: userLimiter(opts.resumeWritePerMinute ?? 40), compile: userLimiter(opts.resumeCompilePerMinute ?? 20) };
-}
-
-/** GraphQL Learning Lab: running queries, grading submissions and mentor help, each per student. Mount after requireAuth. */
-export function createLabLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
-  return { execute: userLimiter(opts.labExecutePerMinute ?? 60), submit: userLimiter(opts.labSubmitPerMinute ?? 30), help: userLimiter(opts.labHelpPerMinute ?? 12) };
 }
 
 /** GitHub: connecting/disconnecting and manual syncs are per user; the OAuth callback (no token) is per IP. */

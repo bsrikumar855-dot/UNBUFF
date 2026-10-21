@@ -43,7 +43,7 @@ import {
   type Draft,
   type RetentionConfig,
 } from "./memories.js";
-import { chatPrompt, CONTEXT_LIMITS, labSystemPrompt, planSystemPrompt, summaryPrompt, SUMMARY_SYSTEM, systemPrompt } from "./prompts.js";
+import { chatPrompt, CONTEXT_LIMITS, planSystemPrompt, summaryPrompt, SUMMARY_SYSTEM, systemPrompt } from "./prompts.js";
 import { selectMemories, topicsIn } from "./retrieve.js";
 import type { ConversationRecord, MemoryRecord, MentorStore, StoredMessage } from "./store.js";
 
@@ -293,14 +293,14 @@ export class MentorService {
     };
   }
 
-  // ---------------- GraphQL Learning Lab tutoring ----------------
+  // ---------------- placement-plan tutoring ----------------
 
   /**
-   * One-shot contextual help for the GraphQL Lab, answered by the same mentor, model, memory store and safeguards as chat.
-   * `lab` is context prepared by the Lab from the real schema and a real execution result; it is untrusted data to the model.
+   * One-shot help explaining the student's placement plan, answered by the same mentor, model, memory store and safeguards as chat.
+   * `context` is the plan the application calculated; it is untrusted data to the model.
    * Nothing is stored as a conversation. A memory is saved only when the student's own typed question states a supported fact.
    */
-  async tutorHelp(uid: string, input: { lab: string; message: string; topics: string[]; kind?: "lab" | "plan" }): Promise<{ reply: string; mock: boolean; memory_saved: MentorSavedMemory[] }> {
+  async tutorHelp(uid: string, input: { context: string; message: string; topics: string[] }): Promise<{ reply: string; mock: boolean; memory_saved: MentorSavedMemory[] }> {
     if (this.inFlight.has(uid)) throw new ApiError("RATE_LIMITED", "Your previous mentor request is still being answered. Wait for it to finish.");
     this.inFlight.add(uid);
     try {
@@ -310,7 +310,7 @@ export class MentorService {
     }
   }
 
-  private async tutorOnce(uid: string, input: { lab: string; message: string; topics: string[]; kind?: "lab" | "plan" }) {
+  private async tutorOnce(uid: string, input: { context: string; message: string; topics: string[] }) {
     const { store, llm, logger } = this.deps;
     const now = this.now();
     const message = stripControl(input.message).trim().slice(0, 500);
@@ -320,18 +320,18 @@ export class MentorService {
       allMemories = (await store.listMemories(uid, MAX_MEMORY_SCAN)).filter((m) => !isExpired(m.expires_at, now));
     } catch (err) {
       memoryReadFailed = true;
-      logger.warn({ err: (err as Error).message }, "mentor: memory could not be read for lab help; answering without it");
+      logger.warn({ err: (err as Error).message }, "mentor: memory could not be read for plan help; answering without it");
     }
     const selected = selectMemories(allMemories, { topics: input.topics, now });
     const profile = profileFromMemories(allMemories).profile;
     let out;
     try {
       out = await llm.mentorChat({
-        system: input.kind === "plan" ? planSystemPrompt() : labSystemPrompt(),
-        prompt: chatPrompt({ activity: "(not used in the GraphQL Lab)", profile: nonEmptyProfileJson(profile), memories: selected, recent: [], message: message || "(the student did not type a question; use the context block)", ...(input.kind === "plan" ? { plan: input.lab } : { lab: input.lab }) }),
+        system: planSystemPrompt(),
+        prompt: chatPrompt({ activity: "(not used for plan help)", profile: nonEmptyProfileJson(profile), memories: selected, recent: [], message: message || "(the student did not type a question; use the context block)", plan: input.context }),
       });
     } catch (err) {
-      if (err instanceof LlmError) throw new ApiError(err.code === "LLM_TIMEOUT" ? "LLM_TIMEOUT" : "LLM_INVALID_OUTPUT", "The mentor could not answer right now. The playground and exercises still work.");
+      if (err instanceof LlmError) throw new ApiError(err.code === "LLM_TIMEOUT" ? "LLM_TIMEOUT" : "LLM_INVALID_OUTPUT", "The mentor could not answer right now. The plan itself is unaffected.");
       throw err;
     }
     const saved: MentorSavedMemory[] = [];
@@ -345,7 +345,7 @@ export class MentorService {
           for (const m of result.saved) saved.push({ id: m.id, type: m.type, content: m.content, provenance: m.provenance });
         } catch (err) {
           saved.length = 0;
-          logger.error({ err: (err as Error).message }, "mentor: memory could not be saved for lab help");
+          logger.error({ err: (err as Error).message }, "mentor: memory could not be saved for plan help");
         }
       }
     }

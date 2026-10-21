@@ -19,7 +19,7 @@ export const PlacementProfileInput = z.strictObject({
   experience_level: z.enum(["beginner", "intermediate", "advanced"]).nullable(),
   strengths: z.array(text(60)).max(8),
   weak_areas: z.array(text(60)).max(8),
-  priorities: z.array(z.enum(["dsa", "interview", "graphql", "projects", "communication"])).max(5),
+  priorities: z.array(z.enum(["dsa", "interview", "dbms", "projects", "communication"])).max(5),
 });
 
 const dedupe = (xs: string[]) => {

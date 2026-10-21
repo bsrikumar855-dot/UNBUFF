@@ -12,8 +12,8 @@ import { newClaim } from "../../src/core/claims.js";
 import { DsaProgressService } from "../../src/dsa/progressService.js";
 import { MemoryProgressStore } from "../../src/dsa/progressStore.js";
 import type { GithubService } from "../../src/github/service.js";
-import { LabService } from "../../src/graphqllab/service.js";
-import { MemoryLabStore } from "../../src/graphqllab/store.js";
+import { LearnService } from "../../src/learn/service.js";
+import { MemoryLearnStore } from "../../src/learn/store.js";
 import { MockProvider } from "../../src/llm/mock.js";
 import type { LLMProvider } from "../../src/llm/provider.js";
 import { MentorService } from "../../src/mentor/service.js";
@@ -123,12 +123,12 @@ export function harness(opts: HarnessOptions = {}) {
   const submissionStore = new MemorySubmissionStore();
   const analytics = new AnalyticsService({ stats: statsStore, revisions: revisionStore, submissions: submissionStore, progress: dsaProgress, catalogue: () => catalogue, logger: silentLogger, now });
   const mentor = new MentorService({ store: new MemoryMentorStore(), llm, stats: statsStore, revisions: revisionStore, analytics, progress: dsaProgress, catalogue: () => catalogue, sessions: sessionStore, roles, logger: silentLogger, now });
-  const lab = new LabService({ store: new MemoryLabStore(), mentor, logger: silentLogger, now });
+  const learn = new LearnService({ store: new MemoryLearnStore(), now });
   const github = fakeGithub(opts.github ?? { status: "disconnected", cached: null });
   const store = opts.placementStore ?? new MemoryPlacementStore();
   const placement = new PlacementService({
     store,
-    evidence: new EvidenceService({ analytics, sessions: sessionStore, roles, lab, github, mentor, catalogue: () => catalogue, suites, execution, llmMode: opts.llmMode ?? "live", logger: silentLogger, now }),
+    evidence: new EvidenceService({ analytics, sessions: sessionStore, roles, learn, github, mentor, catalogue: () => catalogue, suites, execution, llmMode: opts.llmMode ?? "live", logger: silentLogger, now }),
     roles,
     topics: () => catalogue.allTopics(),
     mentor,
@@ -153,7 +153,7 @@ export function harness(opts: HarnessOptions = {}) {
         now,
       })
     : undefined;
-  const app: Express = testApp({ autoAuth: false, llm, analytics, statsStore, revisionStore, store: sessionStore, lab, mentor, github, placement, catalogue, submissionStore, progressStore: undefined, ...(code ? { code } : {}) });
+  const app: Express = testApp({ autoAuth: false, llm, analytics, statsStore, revisionStore, store: sessionStore, learn, mentor, github, placement, catalogue, submissionStore, progressStore: undefined, ...(code ? { code } : {}) });
   const auth = (uid: string) => ({ Authorization: bearer(uid) });
 
   const api = {
@@ -217,7 +217,7 @@ export function harness(opts: HarnessOptions = {}) {
     clock.now = t;
   };
 
-  return { app, api, clock, advance, analytics, lab, mentor, placement, store, statsStore, revisionStore, sessionStore, catalogue, auth, setStats, addSession };
+  return { app, api, clock, advance, analytics, learn, mentor, placement, store, statsStore, revisionStore, sessionStore, catalogue, auth, setStats, addSession };
 }
 
 export type Harness = ReturnType<typeof harness>;

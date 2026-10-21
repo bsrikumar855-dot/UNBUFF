@@ -11,6 +11,14 @@ import type {
   CareerTrackerUpdate,
   HealthResponse,
   LeetCodeConnectionResponse,
+  PatternsResponse,
+  PatternDetail,
+  DbmsTopicsResponse,
+  DbmsTopicDetail,
+  DbmsQuizRequest,
+  DbmsQuizResult,
+  LearnProgressResponse,
+  PatternProgressRequest,
   LeetCodeHistoryResponse,
   LeetCodeImportConfirmRequest,
   LeetCodeImportConfirmResponse,
@@ -80,20 +88,6 @@ import type {
   PlacementAssistantResponse,
   PlacementApplyChangeRequest,
   PlacementApplyChangeResponse,
-  LabModulesResponse,
-  LabModuleDetail,
-  LabExercise,
-  LabTrainingSchemaResponse,
-  LabExecuteRequest,
-  LabExecuteResponse,
-  LabHintResponse,
-  LabSubmitRequest,
-  LabSubmitResponse,
-  LabProgressResponse,
-  LabAttemptsResponse,
-  LabResetResponse,
-  LabHelpRequest,
-  LabHelpResponse,
   GithubConnection,
   GithubConnectResponse,
   GithubDisconnectResponse,
@@ -522,42 +516,27 @@ export const api = {
     return apiClient<void>("/placement/data", { method: "DELETE" });
   },
 
-  /** GraphQL Learning Lab: runs only against the Lab's own training API. */
-  async getLabModules(): Promise<LabModulesResponse> {
-    return apiClient<LabModulesResponse>("/graphql-lab/modules", { method: "GET" });
+  /** Learn: the pattern and DBMS lessons are public; progress and quizzes need sign-in. */
+  async getLearnPatterns(): Promise<PatternsResponse> {
+    return apiClient<PatternsResponse>("/learn/patterns", { method: "GET" });
   },
-  async getLabModule(id: string): Promise<LabModuleDetail> {
-    return apiClient<LabModuleDetail>(`/graphql-lab/modules/${encodeURIComponent(id)}`, { method: "GET" });
+  async getLearnPattern(id: string): Promise<PatternDetail> {
+    return apiClient<PatternDetail>(`/learn/patterns/${encodeURIComponent(id)}`, { method: "GET" });
   },
-  async getLabExercise(id: string): Promise<LabExercise> {
-    return apiClient<LabExercise>(`/graphql-lab/exercises/${encodeURIComponent(id)}`, { method: "GET" });
+  async getDbmsTopics(): Promise<DbmsTopicsResponse> {
+    return apiClient<DbmsTopicsResponse>("/learn/dbms", { method: "GET" });
   },
-  async getLabTrainingSchema(): Promise<LabTrainingSchemaResponse> {
-    return apiClient<LabTrainingSchemaResponse>("/graphql-lab/training-schema", { method: "GET" });
+  async getDbmsTopic(id: string): Promise<DbmsTopicDetail> {
+    return apiClient<DbmsTopicDetail>(`/learn/dbms/${encodeURIComponent(id)}`, { method: "GET" });
   },
-  async executeLab(body: LabExecuteRequest): Promise<LabExecuteResponse> {
-    return apiClient<LabExecuteResponse>("/graphql-lab/execute", { method: "POST", body: JSON.stringify(body) });
+  async getLearnProgress(): Promise<LearnProgressResponse> {
+    return apiClient<LearnProgressResponse>("/learn/progress", { method: "GET" });
   },
-  async hintLab(exerciseId: string): Promise<LabHintResponse> {
-    return apiClient<LabHintResponse>(`/graphql-lab/exercises/${encodeURIComponent(exerciseId)}/hint`, { method: "POST", body: JSON.stringify({}) });
+  async setPatternProgress(id: string, body: PatternProgressRequest): Promise<LearnProgressResponse> {
+    return apiClient<LearnProgressResponse>(`/learn/patterns/${encodeURIComponent(id)}/progress`, { method: "PUT", body: JSON.stringify(body) });
   },
-  async submitLab(exerciseId: string, body: LabSubmitRequest): Promise<LabSubmitResponse> {
-    return apiClient<LabSubmitResponse>(`/graphql-lab/exercises/${encodeURIComponent(exerciseId)}/submit`, { method: "POST", body: JSON.stringify(body) });
-  },
-  async getLabProgress(): Promise<LabProgressResponse> {
-    return apiClient<LabProgressResponse>("/graphql-lab/progress", { method: "GET" });
-  },
-  async getLabAttempts(exerciseId?: string): Promise<LabAttemptsResponse> {
-    return apiClient<LabAttemptsResponse>(`/graphql-lab/attempts${exerciseId ? `?exercise_id=${encodeURIComponent(exerciseId)}` : ""}`, { method: "GET" });
-  },
-  async resetLabTrainingData(): Promise<LabResetResponse> {
-    return apiClient<LabResetResponse>("/graphql-lab/training-data/reset", { method: "POST", body: JSON.stringify({}) });
-  },
-  async deleteLabProgress(): Promise<void> {
-    return apiClient<void>("/graphql-lab/progress", { method: "DELETE" });
-  },
-  async labHelp(body: LabHelpRequest): Promise<LabHelpResponse> {
-    return apiClient<LabHelpResponse>("/graphql-lab/help", { method: "POST", body: JSON.stringify(body) });
+  async submitDbmsQuiz(id: string, body: DbmsQuizRequest): Promise<DbmsQuizResult> {
+    return apiClient<DbmsQuizResult>(`/learn/dbms/${encodeURIComponent(id)}/quiz`, { method: "POST", body: JSON.stringify(body) });
   },
 
   /** GitHub (read-only, public data). The token never reaches the browser. */

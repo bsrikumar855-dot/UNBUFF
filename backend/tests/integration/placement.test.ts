@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- these tests walk arbitrary API response JSON */
 import request from "supertest";
 import { describe, expect, it } from "vitest";
-import { exerciseById } from "../../src/graphqllab/curriculum.js";
-import { isChoiceExercise } from "../../src/graphqllab/model.js";
+import { DBMS_TOPICS } from "../../src/learn/content/index.js";
 import { LlmError } from "../../src/llm/provider.js";
 import type { PlacementStore, TaskRecord } from "../../src/placement/store.js";
 import { MemoryPlacementStore } from "../../src/placement/store.js";
@@ -145,22 +144,23 @@ describe("placement: generating the plan", () => {
 
   it("explains each kind of task with the record or rule behind it", async () => {
     const h = harness();
-    const d = await ready(h);
+    const d = await ready(h, { priorities: ["dsa", "interview", "dbms"] });
     const diag = find(d, (t) => t.type === "diagnostic")!;
     expect(diag.reason).toMatch(/no verified result for .* yet/);
     expect(diag.evidence_source).toBe("rule:diagnostic_unassessed_topic");
     const iv = find(d, (t) => t.type === "technical_interview")!;
     expect(iv.reason).toMatch(/No interview skill for .* has been assessed yet/);
     expect(iv.link).toBe("/setup");
-    const gq = find(d, (t) => t.type === "graphql")!;
-    expect(gq.reason).toMatch(/API skill|chose GraphQL/);
+    const gq = find(d, (t) => t.type === "dbms")!;
+    expect(gq.reason).toMatch(/chose DBMS as a priority/);
+    expect(gq.link).toBe("/learn/dbms/er-model");
     expect(find(d, (t) => t.type === "general")!.title).toBe("Weekly review");
   });
 
-  it("orders GraphQL tasks by their prerequisite: the second waits for the first", async () => {
+  it("orders DBMS tasks by their prerequisite: the second waits for the first", async () => {
     const h = harness();
-    const d = await ready(h);
-    const g = allTasks(d).filter((t) => t.type === "graphql").sort((a, b) => a.due_date.localeCompare(b.due_date) || a.id.localeCompare(b.id));
+    const d = await ready(h, { priorities: ["dsa", "interview", "dbms"] });
+    const g = allTasks(d).filter((t) => t.type === "dbms").sort((a, b) => a.due_date.localeCompare(b.due_date) || a.id.localeCompare(b.id));
     expect(g).toHaveLength(2);
     const second = g.find((t) => t.depends_on.length > 0)!;
     expect(second.blocked).toBe(true);
@@ -198,7 +198,7 @@ describe("placement: honest evidence handling", () => {
   });
   it("plans practice but refuses to count it as verified when the execution service is unverified", async () => {
     const h = harness({ execution: { configured: true, verified: false } });
-    const d = await ready(h);
+    const d = await ready(h, { priorities: ["dsa", "interview", "dbms"] });
     const diag = find(d, (t) => t.type === "diagnostic")!;
     expect(diag.completion_check).toBe("student");
     expect(diag.completion_criteria).toMatch(/not counted as verified/);
@@ -349,27 +349,36 @@ describe("placement: the plan adapts to verified new evidence", () => {
     expect(d3.history.improvements.some((i) => i.source === "plan")).toBe(true);
   });
 
-  it("completing a GraphQL exercise unlocks and adds the next one", async () => {
+  it("passing a DBMS quiz completes its task, unlocks the next topic and adds another", async () => {
     const h = harness();
-    const d = await ready(h);
-    const first = allTasks(d).find((t) => t.type === "graphql" && t.depends_on.length === 0)!;
-    expect(first.ref.id).toBe("m1-e1");
-    const def = exerciseById("m1-e1")!.def;
-    expect(isChoiceExercise(def)).toBe(true);
-    await h.lab.submit(A, "m1-e1", { client_attempt_id: "attempt_placement_1", answer: isChoiceExercise(def) ? def.correct : [] });
+    const d = await ready(h, { priorities: ["dsa", "interview", "dbms"] });
+    const first = allTasks(d).find((t) => t.type === "dbms" && t.depends_on.length === 0)!;
+    expect(first.ref.id).toBe("er-model");
+    await h.learn.gradeQuiz(A, "er-model", DBMS_TOPICS[0]!.quiz.map((q) => q.answer));
     const d2 = await refresh(h);
     expect(d2.history.recent_completed.find((t) => t.id === first.id)).toMatchObject({ completed_by: "verified_event" });
-    const next = allTasks(d2).filter((t) => t.type === "graphql" && t.status === "planned");
-    expect(next.map((t) => t.ref.id).sort()).toEqual(["m1-e2", "m1-e3"]);
-    expect(next.find((t) => t.ref.id === "m1-e2")!.blocked).toBe(false); // unlocked
-    expect(next.find((t) => t.ref.id === "m1-e3")!.blocked).toBe(true);
-    expect(d2.skills.skills.find((s) => s.area === "graphql")).toMatchObject({ evidence: { provenance: "verified", count: 1 } });
-    expect(d2.history.changes.some((c) => c.kind === "task_added" && /m1-e3|GraphQL: /.test(c.summary))).toBe(true);
+    const next = allTasks(d2).filter((t) => t.type === "dbms" && t.status === "planned");
+    expect(next.map((t) => t.ref.id).sort()).toEqual(["keys-constraints", "sql-basics"]);
+    expect(next.find((t) => t.ref.id === "keys-constraints")!.blocked).toBe(false); // unlocked
+    expect(next.find((t) => t.ref.id === "sql-basics")!.blocked).toBe(true);
+    expect(d2.skills.skills.find((x) => x.area === "dbms")).toMatchObject({ evidence: { kind: "dbms_quiz", provenance: "verified", count: 1 } });
+    expect(d2.history.changes.some((c) => c.kind === "task_added" && /DBMS: /.test(c.summary))).toBe(true);
+  });
+
+  it("puts a topic you have tried but not passed ahead of untouched ones", async () => {
+    const h = harness();
+    await h.learn.gradeQuiz(A, "joins", DBMS_TOPICS.find((t) => t.id === "joins")!.quiz.map((q) => (q.answer + 1) % 4)); // all wrong
+    const d = await ready(h, { priorities: ["dsa", "interview", "dbms"] });
+    const first = allTasks(d).find((t) => t.type === "dbms" && t.depends_on.length === 0)!;
+    expect(first.ref.id).toBe("joins");
+    expect(first.reason).toMatch(/attempted this quiz \(best 0 of 4\) without passing/);
+    const second = allTasks(d).find((t) => t.type === "dbms" && t.depends_on.length > 0)!;
+    expect(second.ref.id).toBe("er-model"); // then the rest, in the order they are taught
   });
 
   it("completes a practice task only when the verified record shows it solved", async () => {
     const h = harness();
-    const d = await ready(h);
+    const d = await ready(h, { priorities: ["dsa", "interview", "dbms"] });
     const diag = find(d, (t) => t.type === "diagnostic")!;
     h.advance(0, 12);
     await h.setStats(A, diag.ref.id, { attempts: 1, accepted: 0 }); // a failed counted attempt is still a measurement for a diagnostic
@@ -568,11 +577,11 @@ describe("placement: ownership", () => {
   it("deleting planner data removes the plan but leaves the other modules' records alone", async () => {
     const h = harness();
     await ready(h);
-    await h.lab.submit(A, "m1-e1", { client_attempt_id: "attempt_placement_2", answer: ["b"] });
+    await h.learn.gradeQuiz(A, "er-model", DBMS_TOPICS[0]!.quiz.map((q) => q.answer));
     expect((await h.api.del("/data")).status).toBe(204);
     const d = (await h.api.get("/dashboard")).body as PlacementDashboard;
     expect(d).toMatchObject({ needs_profile: true, plan: null });
-    expect((await h.lab.progress(A)).totals.exercises_passed).toBe(1);
+    expect((await h.learn.progress(A)).dbms_passed).toBe(1);
   });
   it("reports a storage failure without exposing internals", async () => {
     const inner = new MemoryPlacementStore();
@@ -709,7 +718,7 @@ describe("placement: the AI mentor explains the plan and proposes changes", () =
 });
 
 describe("placement: existing features stay intact", () => {
-  it("does not change DSA analytics, the revision queue or the GraphQL Lab, and the mentor still chats", async () => {
+  it("does not change DSA analytics, the revision queue or Learn progress, and the mentor still chats", async () => {
     const h = harness();
     const stable = async () => JSON.stringify({ ...(await h.analytics.overview(A)), generated_at: 0 }).replace(/\d{4}-\d\d-\d\dT[\d:.]+Z/g, "T");
     await h.analytics.add(A, QUESTION_IDS[1]!);
@@ -720,29 +729,29 @@ describe("placement: existing features stay intact", () => {
     await ask(h, "what should I do today?");
     expect(await stable()).toBe(before);
     expect(JSON.stringify((await h.analytics.queue(A, "all", 1, 50)).items.map((i) => [i.question_id, i.status, i.stage]))).toBe(queueBefore);
-    expect((await h.lab.progress(A)).has_started).toBe(false);
+    expect((await h.learn.progress(A)).dbms_passed).toBe(0);
     const chat = await request(h.app).post("/api/mentor/chat").set({ Authorization: bearer(A) }).send({ mode: "dsa_coach", message: "Explain binary search", client_message_id: "cm_placement_001" });
     expect(chat.status).toBe(200);
     expect((await request(h.app).get("/api/roles")).status).toBe(200);
     expect((await request(h.app).get("/api/github/connection").set({ Authorization: bearer(A) })).status).toBe(200);
-    expect((await request(h.app).get("/api/graphql-lab/modules").set({ Authorization: bearer(A) })).status).toBe(200);
+    expect((await request(h.app).get("/api/learn/progress").set({ Authorization: bearer(A) })).status).toBe(200);
   });
   const ask = (h: Harness, message: string) => h.api.post("/assistant", { message });
 });
 
 describe("placement: role- and priority-based rules", () => {
-  it("includes GraphQL only when the role needs APIs or the student asked for it", async () => {
+  it("includes DBMS only when the student asked for it", async () => {
     const h = harness();
     const none = await ready(h, { role_ids: [], priorities: ["dsa"] });
-    expect(allTasks(none).some((t) => t.type === "graphql")).toBe(false);
+    expect(allTasks(none).some((t) => t.type === "dbms")).toBe(false);
     const h2 = harness();
-    const asked = await ready(h2, { role_ids: [], priorities: ["graphql"] });
-    const g = find(asked, (t) => t.type === "graphql" && t.depends_on.length === 0)!;
+    const asked = await ready(h2, { role_ids: [], priorities: ["dbms"] });
+    const g = find(asked, (t) => t.type === "dbms" && t.depends_on.length === 0)!;
     expect(g.priority).toBe(2);
-    expect(g.reason).toMatch(/chose GraphQL as a priority/);
+    expect(g.reason).toMatch(/chose DBMS as a priority/);
     const h3 = harness();
-    const viaRole = await ready(h3, { priorities: ["dsa"] }); // frontend_developer lists a REST API skill
-    expect(find(viaRole, (t) => t.type === "graphql")!.reason).toMatch(/target role lists an API skill/);
+    const viaRole = await ready(h3, { priorities: ["dsa"] }); // a role alone does not add DBMS
+    expect(allTasks(viaRole).some((t) => t.type === "dbms")).toBe(false);
   });
 
   it("plans communication practice only when chosen, and completes it from a real mentor conversation", async () => {
@@ -784,7 +793,7 @@ describe("placement: role- and priority-based rules", () => {
 
   it("caps open work so the plan stays manageable", async () => {
     const h = harness();
-    const d = await ready(h, { priorities: ["dsa", "interview", "graphql", "communication", "projects"] });
+    const d = await ready(h, { priorities: ["dsa", "interview", "dbms", "communication", "projects"] });
     expect(d.counts.planned).toBeLessThanOrEqual(14);
   });
 });

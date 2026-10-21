@@ -3,7 +3,7 @@ import { MATCH_WEIGHTS, compareMatches, evidenceCoverage, matchJob, rankValue, t
 import { normalizeJob } from "../../src/careers/normalize.js";
 import { deriveSignals, verifiedSkillSlugs } from "../../src/careers/signals.js";
 import type { CareerPreferences } from "../../src/types.js";
-import { demoOnly, profile, rawJob, verifiedGraphql, verifiedReact, weakVerified } from "../careers/fakes.js";
+import { demoOnly, profile, rawJob, verifiedDbms, verifiedReact, weakVerified } from "../careers/fakes.js";
 
 const prefs = (over: Partial<CareerPreferences> = {}): CareerPreferences => ({ categories: [], skills: [], countries: [], cities: [], work_modes: [], employment_types: [], must_match_location: false, must_match_work_mode: false, must_match_employment: false, ...over });
 const signals = (over: Partial<CareerSignals> = {}): CareerSignals => ({ experience: "beginner", categories: { primary: ["frontend"], related: ["fullstack"] }, skills: { verified: new Set(["react"]), resume: new Set<string>(), self: new Set(["javascript"]) }, prefs: prefs(), target_companies: [], ...over });
@@ -202,7 +202,7 @@ describe("ordering", () => {
 
 describe("building signals from the student's own record", () => {
   it("counts only verified results with a real status as verified skills, mapped to job skill slugs", () => {
-    expect(verifiedSkillSlugs([verifiedReact, verifiedGraphql, weakVerified, demoOnly])).toEqual(["graphql", "react"]);
+    expect(verifiedSkillSlugs([verifiedReact, verifiedDbms, weakVerified, demoOnly])).toEqual(["react", "sql"]);
   });
 
   it("derives categories from the student's roles and choices, and a skill is counted once", () => {
