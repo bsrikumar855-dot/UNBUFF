@@ -5,22 +5,11 @@ import PillNav, { type PillNavItem } from "@/components/reactbits/PillNav";
 import { useAuth } from "@/auth/context";
 import { routes } from "@/lib/routes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { AccountMenu } from "./AccountMenu";
 
 interface Entry extends PillNavItem {
   match?: (pathname: string) => boolean;
 }
-
-const SIGNED_IN: Entry[] = [
-  {
-    label: "Plan",
-    href: routes.placement,
-    match: (p) => p === "/placement" || p === "/setup",
-  },
-  { label: "DSA", href: routes.dsa, match: (p) => p === "/dsa" || p.startsWith("/dsa/") },
-  { label: "Mentor", href: routes.mentor(), match: (p) => p.startsWith("/mentor") },
-  { label: "Learn", href: routes.learnPatterns, match: (p) => p.startsWith("/learn") },
-  { label: "Career", href: routes.career, match: (p) => p.startsWith("/career") },
-];
 
 const PUBLIC: Entry[] = [
   { label: "DSA", href: routes.dsa, match: (p) => p === "/dsa" || p.startsWith("/dsa/") },
@@ -41,50 +30,46 @@ const RouterLink = React.forwardRef<
 RouterLink.displayName = "RouterLink";
 
 /**
- * The header at every width and for everyone: a pill navigation (a fill rises through each link on hover, a dot slides
- * to the page you are on) whose last pill, More, opens the full navigation panel; and, at the right, search or the
- * call to action. Narrow screens collapse the pills into the component's own menu.
+ * The marketing header: the landing page, sign-in and what a signed-out visitor can open. A pill navigation (a fill
+ * rises through each link on hover, a dot slides to the page you are on) with the public places, and at the right the
+ * call to action, or the account when someone is signed in. Signed-in students use the sidebar everywhere else. If the
+ * pills do not fit, the component folds them into its own menu.
  */
 export const TopBar: React.FC<{
-  onMenu: () => void;
   onSearch?: () => void;
   right?: React.ReactNode;
-}> = ({ onMenu, onSearch, right }) => {
+}> = ({ onSearch, right }) => {
   const { pathname } = useLocation();
   const { status } = useAuth();
-  const entries = status === "signedIn" ? SIGNED_IN : PUBLIC;
-  const items: PillNavItem[] = [
-    ...entries.map(({ match: _m, ...item }) => item),
-    { label: "More" },
-  ];
-  const active = entries.find((e) => e.match?.(pathname));
+  const items: PillNavItem[] = PUBLIC.map(({ match: _m, ...item }) => item);
+  const active = PUBLIC.find((e) => e.match?.(pathname));
 
   return (
-    <header className="sticky top-0 z-40 grid h-(--topbar-h) grid-cols-[minmax(0,1fr)_auto] items-center gap-3 bg-surface-50/55 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-5">
-      <PillNav
-        logo={<span className="font-mono text-sm font-bold text-ink-primary">U</span>}
-        logoAlt="UNBLUFF home"
-        logoHref={routes.home}
-        items={items}
-        activeHref={active?.href ?? ""}
-        linkComponent={RouterLink}
-        onItemClick={(item) => {
-          if (item.label === "More") onMenu();
-        }}
-        theme="light"
-        layout="split"
-        size="md"
-        surface="glass"
-        hoverEffect="fill"
-        indicator="dot"
-        highlightColor="#b3291a"
-        highlightTextColor="#ffffff"
-        textColor="#15130f"
-        // jsdom has no layout, so "auto" would always collapse to the burger; tests exercise the full pills.
-        collapse={import.meta.env.MODE === "test" ? "never" : "auto"}
-        style={{ "--pn-surface": "rgba(246, 243, 236, 0.93)" } as React.CSSProperties}
-        ariaLabel="Primary"
-      />
+    <header className="sticky top-0 z-40 grid h-(--topbar-h) grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-x-clip bg-surface-50/55 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-5">
+      {/* PillNav sizes itself to its parent, so give it a cell of its own that stops where the actions begin. */}
+      <div className="min-w-0">
+        <PillNav
+          logo={<span className="font-mono text-sm font-bold text-ink-primary">U</span>}
+          logoAlt="UNBLUFF home"
+          logoHref={routes.home}
+          items={items}
+          activeHref={active?.href ?? ""}
+          linkComponent={RouterLink}
+          theme="light"
+          layout="split"
+          size="md"
+          surface="glass"
+          hoverEffect="fill"
+          indicator="dot"
+          highlightColor="#b3291a"
+          highlightTextColor="#ffffff"
+          textColor="#15130f"
+          // jsdom has no layout, so "auto" would always collapse to the burger; tests exercise the full pills.
+          collapse={import.meta.env.MODE === "test" ? "never" : "auto"}
+          style={{ "--pn-surface": "rgba(246, 243, 236, 0.93)" } as React.CSSProperties}
+          ariaLabel="Primary"
+        />
+      </div>
       <div className="flex items-center justify-end gap-2">
         {right}
         {onSearch && (
@@ -102,6 +87,7 @@ export const TopBar: React.FC<{
             <TooltipContent side="bottom">Go to a screen (Ctrl K)</TooltipContent>
           </Tooltip>
         )}
+        {status === "signedIn" && <AccountMenu variant="compact" />}
       </div>
     </header>
   );

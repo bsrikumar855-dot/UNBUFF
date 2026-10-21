@@ -13,6 +13,8 @@ const WIDTH = {
   default: "max-w-6xl",
   /** Data-dense workspaces. */
   wide: "max-w-352",
+  /** Fills the space beside the navigation, with no side gaps. Pass tighter gutters in `className`. */
+  fluid: "max-w-none",
 } as const;
 
 /** The content frame every screen uses: one width strategy, one gutter, one vertical rhythm. */

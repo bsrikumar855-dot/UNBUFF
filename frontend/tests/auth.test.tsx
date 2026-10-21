@@ -159,10 +159,10 @@ describe("App navigation", () => {
     unmount();
 
     const client = fakeClient({ uid: "u1", email: "a@b.co" });
+    window.history.pushState({}, "", "/dsa"); // a signed-in student's pages use the sidebar; the landing page keeps the marketing header
     render(<App authClient={client} />);
-    // Sign out and My sessions now live in the menu panel.
-    await screen.findByRole("link", { name: "Mentor" }); // the signed-in pills have replaced the public ones
-    fireEvent.click(await screen.findByRole("button", { name: "More" }));
+    // Sign out is at the foot of the sidebar and every page, My sessions included, is listed in it.
+    await screen.findByRole("link", { name: "AI Mentor" }); // the signed-in pills have replaced the public ones
     expect(await screen.findByRole("button", { name: "Sign out" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "My sessions" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
