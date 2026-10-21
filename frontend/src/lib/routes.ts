@@ -15,6 +15,7 @@ export const routes = {
   dsaAnalytics: "/dsa/analytics",
   dsaRevision: "/dsa/revision",
   mentor: (questionId?: string) => (questionId ? `/mentor?question=${encodeURIComponent(questionId)}` : "/mentor"),
+  mentorAsk: (prompt: string) => `/mentor?prompt=${encodeURIComponent(prompt.slice(0, 300))}`,
   mentorMemory: "/mentor/memory",
   settings: "/settings",
   placement: "/placement",

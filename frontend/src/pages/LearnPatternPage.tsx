@@ -43,11 +43,16 @@ const LearnPatternPage: React.FC = () => {
             description={pattern.summary}
             crumbs={[{ label: "DSA patterns", to: routes.learnPatterns }, { label: pattern.name }]}
             actions={
-              progress.signedIn ? (
-                <Button variant="outline" size="sm" onClick={() => void progress.markPattern(pattern.id, { done: !mine?.done })}>
-                  {mine?.done ? "Unmark as learned" : "Mark as learned"}
+              <>
+                <Button asChild variant="outline" size="sm">
+                  <Link to={routes.mentorAsk(`Explain the "${pattern.name}" pattern: how do I spot it and when does it fail?`)}>Ask the mentor</Link>
                 </Button>
-              ) : undefined
+                {progress.signedIn && (
+                  <Button variant="outline" size="sm" onClick={() => void progress.markPattern(pattern.id, { done: !mine?.done })}>
+                    {mine?.done ? "Unmark as learned" : "Mark as learned"}
+                  </Button>
+                )}
+              </>
             }
           />
           {progress.error !== null && <ErrorState error={progress.error} />}

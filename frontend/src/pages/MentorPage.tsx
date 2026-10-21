@@ -48,6 +48,10 @@ const MessageBody: React.FC<{ text: string }> = ({ text }) => {
   );
 };
 
+const PROBLEM_MIN = 20;
+const PROBLEM_MAX = 4000;
+const EXPLAIN_PROBLEM = "Explain this problem in plain words with a small example. Do not give the approach or any code yet.";
+
 interface Pending {
   clientMessageId: string;
   message: string;
@@ -135,7 +139,7 @@ const MentorPage: React.FC = () => {
   const [active, setActive] = useState<MentorConversationSummary | null>(null);
   const [messages, setMessages] = useState<MentorMessage[]>([]);
   const [notice, setNotice] = useState<MentorChatResponse | null>(null);
-  const [draft, setDraft] = useState(() => (leetcodeContext || resumeContext ? (params.get("prompt") ?? "").slice(0, 300) : ""));
+  const [draft, setDraft] = useState(() => (params.get("prompt") ?? "").slice(0, 300));
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [retry, setRetry] = useState<Pending | null>(null);
@@ -145,6 +149,9 @@ const MentorPage: React.FC = () => {
   const [showList, setShowList] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [questionTitle, setQuestionTitle] = useState<string | null>(null);
+  // A problem the student pasted: drafted before the first message, then kept (read-only) with the conversation.
+  const [problemDraft, setProblemDraft] = useState("");
+  const [problem, setProblem] = useState<string | null>(null);
   const input = useRef<HTMLTextAreaElement>(null);
 
   const loadList = useCallback(async () => {
@@ -175,6 +182,8 @@ const MentorPage: React.FC = () => {
     };
   }, [questionId]);
 
+  const problemUsable = mode === "dsa_coach" && problemDraft.trim().length >= PROBLEM_MIN;
+
   const send = async (pending: Pending) => {
     setSending(true);
     setError(null);
@@ -202,11 +211,13 @@ const MentorPage: React.FC = () => {
         client_message_id: pending.clientMessageId,
         assist: pending.assist,
         question_id: questionId ?? undefined,
+        problem_text: !active && problemUsable ? problemDraft.trim() : undefined,
         career_context: careerContext || undefined,
         leetcode_context: leetcodeContext || undefined,
         resume_context: resumeContext || undefined,
       });
       setMessages((m) => [...m, res.reply]);
+      if (!active && problemUsable) setProblem(problemDraft.trim());
       setActive(res.conversation);
       setNotice(res);
       void loadList();
@@ -239,6 +250,7 @@ const MentorPage: React.FC = () => {
     try {
       const c = await api.getMentorConversation(id);
       setActive(c);
+      setProblem(c.problem_text);
       setMessages(c.messages);
       setView((v) => v + 1);
       setMode(c.mode);
@@ -252,6 +264,8 @@ const MentorPage: React.FC = () => {
 
   const startNew = () => {
     setActive(null);
+    setProblem(null);
+    setProblemDraft("");
     setMessages([]);
     setView((v) => v + 1);
     setNotice(null);
@@ -459,6 +473,45 @@ const MentorPage: React.FC = () => {
               {questionTitle ?? questionId}
             </Link>
           </p>
+        )}
+
+        {!active && mode === "dsa_coach" && !questionId && (
+          <details className="border-b border-line bg-surface-100/60 px-4 py-3 sm:px-8" open={problemDraft.length > 0 || undefined}>
+            <summary className="cursor-pointer text-sm font-medium text-ink-primary">
+              Paste a problem to get help with it (optional)
+            </summary>
+            <label htmlFor="mentor-problem" className="eyebrow mt-3 block">
+              Problem statement
+            </label>
+            <textarea
+              id="mentor-problem"
+              rows={6}
+              maxLength={PROBLEM_MAX}
+              value={problemDraft}
+              onChange={(e) => setProblemDraft(e.target.value)}
+              placeholder="Paste the whole problem: the statement, an example and the constraints."
+              className="mt-1 w-full resize-y rounded-md border border-line-strong bg-surface-50 px-3 py-2 text-[15px] leading-relaxed"
+            />
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs text-ink-muted">
+                {problemDraft.trim().length}/{PROBLEM_MAX}. The mentor explains it first, then gives hints; the full solution unlocks after 2 hints.
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                disabled={sending || !problemUsable}
+                onClick={() => void send({ clientMessageId: newClientMessageId(), message: EXPLAIN_PROBLEM })}
+              >
+                Explain this problem
+              </Button>
+            </div>
+          </details>
+        )}
+        {problem && (
+          <details className="border-b border-line bg-surface-100/60 px-4 py-2 text-sm sm:px-8">
+            <summary className="cursor-pointer font-medium text-ink-primary">The problem you pasted</summary>
+            <p className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap wrap-break-word text-ink-secondary">{problem}</p>
+          </details>
         )}
 
         {loadingConversation && (

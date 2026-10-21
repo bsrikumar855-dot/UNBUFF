@@ -228,6 +228,35 @@ describe("mentor chat", () => {
     });
   });
 
+  it("sends a pasted problem with the first message only, and keeps it visible", async () => {
+    const PROBLEM = "Given an array of integers and a target, return the indices of the two numbers that add up to the target.";
+    mocked.mentorChat.mockResolvedValue(reply());
+    renderAt("/mentor");
+    fireEvent.change(await screen.findByLabelText("Problem statement"), { target: { value: PROBLEM } });
+    fireEvent.click(screen.getByRole("button", { name: "Explain this problem" }));
+    await screen.findByText("Think about moving two indexes inward.");
+    expect(mocked.mentorChat.mock.calls[0]![0]).toMatchObject({ mode: "dsa_coach", problem_text: PROBLEM, message: expect.stringMatching(/Explain this problem/) });
+    expect(screen.getByText("The problem you pasted")).toBeInTheDocument();
+    fireEvent.change(await box(), { target: { value: "hint please" } });
+    fireEvent.keyDown(await box(), { key: "Enter" });
+    await waitFor(() => expect(mocked.mentorChat).toHaveBeenCalledTimes(2));
+    expect(mocked.mentorChat.mock.calls[1]![0].problem_text).toBeUndefined();
+    expect(screen.queryByLabelText("Problem statement")).not.toBeInTheDocument();
+  });
+
+  it("does not offer to send a problem that is too short, and hides the panel outside DSA coach mode", async () => {
+    renderAt("/mentor");
+    fireEvent.change(await screen.findByLabelText("Problem statement"), { target: { value: "two sum" } });
+    expect(screen.getByRole("button", { name: "Explain this problem" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("radio", { name: "Code Explainer" }));
+    expect(screen.queryByLabelText("Problem statement")).not.toBeInTheDocument();
+  });
+
+  it("opens with a prompt from a lesson page", async () => {
+    renderAt("/mentor?prompt=" + encodeURIComponent("Explain the Two Pointers pattern"));
+    expect(await box()).toHaveValue("Explain the Two Pointers pattern");
+  });
+
   it("Shift+Enter does not send", async () => {
     renderAt("/mentor");
     fireEvent.change(await box(), { target: { value: "draft" } });
@@ -371,6 +400,7 @@ describe("mentor chat", () => {
     });
     mocked.getMentorConversation.mockResolvedValue({
       ...conv({ title: "Graphs chat", mode: "interview_practice" }),
+      problem_text: null,
       messages: [
         { id: "m1", role: "user", content: "old question", at: "x" },
         { id: "m2", role: "assistant", content: "old answer", at: "x" },

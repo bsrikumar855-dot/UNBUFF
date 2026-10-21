@@ -22,6 +22,7 @@ const ChatBody = z.strictObject({
   client_message_id: clientId,
   assist: z.enum(["hint", "solution"]).optional(),
   question_id: questionId.optional(),
+  problem_text: z.string().trim().min(20, "paste the whole problem (at least 20 characters)").max(4000, "the problem must be at most 4000 characters").optional(),
   career_context: z.boolean().optional(),
   leetcode_context: z.boolean().optional(),
   resume_context: z.boolean().optional(),

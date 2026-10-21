@@ -14,6 +14,8 @@ export interface ConversationRecord {
   title: string;
   mode: MentorMode;
   hint_level: number;
+  /** A problem the student pasted; set once, on the first turn that supplies it. */
+  problem_text?: string;
   created_at: string;
   updated_at: string;
   messages: StoredMessage[];
