@@ -117,6 +117,7 @@ describe("learn: patterns", () => {
     expect(screen.getByRole("link", { name: /LeetCode/ })).toHaveAttribute("href", "https://leetcode.com/problems/maximum-average-subarray-i/");
     expect(screen.getByRole("link", { name: /Solve in UNBLUFF/ })).toHaveAttribute("href", "/dsa/questions/fp_021_longest_unique_stretch/code");
     expect(screen.queryByRole("button", { name: "Mark solved" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ask the mentor" })).toHaveAttribute("href", expect.stringContaining("/mentor?prompt="));
   });
 
   it("marks a problem solved for a signed-in student and shows the saved state", async () => {

@@ -136,6 +136,8 @@ export class MentorService {
     }
 
     const message = stripControl(req.message).trim().slice(0, CONTEXT_LIMITS.message);
+    // The pasted problem belongs to the conversation: the first one supplied is kept and later turns reuse it.
+    const problemText = conv?.problem_text ?? (req.problem_text ? stripControl(req.problem_text).trim().slice(0, 4000) : undefined);
     let hintLevel = conv?.hint_level ?? 0;
     if (req.assist === "hint") hintLevel = Math.min(3, hintLevel + 1);
     const gated = req.assist === "solution" && hintLevel < 2;
@@ -209,8 +211,8 @@ export class MentorService {
     } else {
       try {
         const out = await llm.mentorChat({
-          system: systemPrompt(req.mode, { hintLevel, solutionAllowed: req.assist === "solution", github: githubText !== undefined, career: careerText !== undefined, leetcode: leetcodeText !== undefined, resume: resumeText !== undefined }),
-          prompt: chatPrompt({ activity: activity.text, profile: nonEmptyProfileJson(profile), memories: selected, recent: conv?.messages ?? [], message, ...(githubText !== undefined ? { github: githubText } : {}), ...(careerText !== undefined ? { career: careerText } : {}), ...(leetcodeText !== undefined ? { leetcode: leetcodeText } : {}), ...(resumeText !== undefined ? { resume: resumeText } : {}) }),
+          system: systemPrompt(req.mode, { hintLevel, solutionAllowed: req.assist === "solution", github: githubText !== undefined, problem: problemText !== undefined, career: careerText !== undefined, leetcode: leetcodeText !== undefined, resume: resumeText !== undefined }),
+          prompt: chatPrompt({ activity: activity.text, profile: nonEmptyProfileJson(profile), memories: selected, recent: conv?.messages ?? [], message, ...(problemText !== undefined ? { problem: problemText } : {}), ...(githubText !== undefined ? { github: githubText } : {}), ...(careerText !== undefined ? { career: careerText } : {}), ...(leetcodeText !== undefined ? { leetcode: leetcodeText } : {}), ...(resumeText !== undefined ? { resume: resumeText } : {}) }),
         });
         replyText = stripControl(out.reply).trim().slice(0, 6000);
         proposals = out.memory_updates;
@@ -240,6 +242,7 @@ export class MentorService {
       expires_at: addDays(nowIso, this.retention.conversationDays),
     };
     record.mode = req.mode;
+    if (problemText !== undefined) record.problem_text = problemText;
     record.hint_level = hintLevel;
     record.turns += 1;
     record.updated_at = nowIso;
@@ -363,7 +366,7 @@ export class MentorService {
 
   async getConversation(uid: string, id: string): Promise<MentorConversation> {
     const c = await this.owned(uid, id);
-    return { ...toSummary(c), messages: c.messages.map(pub) };
+    return { ...toSummary(c), problem_text: c.problem_text ?? null, messages: c.messages.map(pub) };
   }
 
   /** Deletes the conversation and, unless keepSummary, any summary memory made from it, so no retrievable copy remains. */

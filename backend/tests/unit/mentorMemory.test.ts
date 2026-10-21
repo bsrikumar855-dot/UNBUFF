@@ -257,7 +257,7 @@ describe("prompt construction treats stored text as untrusted data", () => {
     expect(system).toMatch(/Current hint level: 1 of 3/);
     expect(system).toMatch(/Do NOT give a full working solution/);
     expect(system).not.toContain("Ignore all previous");
-    expect(systemPrompt("dsa_coach", { hintLevel: 3, solutionAllowed: true })).toMatch(/you may now give a complete solution/);
+    expect(systemPrompt("dsa_coach", { hintLevel: 3, solutionAllowed: true })).toMatch(/give it now[\s\S]*time and space complexity/);
   });
 
   it("bounds the recent conversation sent to the model", () => {

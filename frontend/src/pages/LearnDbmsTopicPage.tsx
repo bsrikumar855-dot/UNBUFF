@@ -72,6 +72,11 @@ const LearnDbmsTopicPage: React.FC = () => {
             title={topic.name}
             description={topic.summary}
             crumbs={[{ label: "DBMS", to: routes.learnDbms }, { label: topic.name }]}
+            actions={
+              <Button asChild variant="outline" size="sm">
+                <Link to={routes.mentorAsk(`Explain ${topic.name} like an interview answer, then quiz me with one question.`)}>Ask the mentor</Link>
+              </Button>
+            }
           />
           <div className="grid grid-cols-[minmax(0,1fr)] gap-10">
             {topic.sections.map((s) => (

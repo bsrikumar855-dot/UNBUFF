@@ -773,6 +773,7 @@ export interface MentorConversationSummary {
 }
 
 export interface MentorConversation extends MentorConversationSummary {
+  problem_text: string | null; // the pasted problem this conversation is about, if any
   messages: MentorMessage[]; // at most the latest 60
 }
 
@@ -835,6 +836,7 @@ export interface MentorChatRequest {
   client_message_id: string; // makes a retry safe: the same id returns the stored answer
   assist?: "hint" | "solution"; // graduated help: a full solution is only given after enough hints
   question_id?: string; // the DSA question being discussed (must exist in the catalogue)
+  problem_text?: string; // a problem the student pasted (at most 4000 characters); kept with the conversation, treated as data
   career_context?: boolean; // include the student's own best-matching job listings (computed by the app) as context
   leetcode_context?: boolean; // include a short summary of the LeetCode data the student imported (never live data)
   resume_context?: boolean; // include the saved résumé, its ATS score and the fixes (the score is a heuristic, never an employer verdict)
@@ -1788,6 +1790,7 @@ A chat mentor with persistent, student-controlled memory. All routes require a t
 
 - A model-proposed memory is saved only if the student's own message contains the supporting quote verbatim; the backend, not the model, sets provenance. Goals the application can verify (`track`) are completed by application events (counted judged submissions, completed revision), never by the model.
 - If an answer succeeds but storage fails, the response says so (`degraded`, `persistence`). If the model call fails, nothing is stored and no memory is created.
+- Pasted problem: `problem_text` (20 to 4000 characters) is stored on the conversation at the first turn that supplies it and sent to the model as untrusted data on every turn; the hint ladder and the solution gate apply unchanged.
 - Hint ladder: `assist: "hint"` raises `hint_level` (max 3); `assist: "solution"` is only answered by the model once `hint_level >= 2`.
 - Deleting memories or conversations never touches submissions, progress, analytics statistics, revision items or interview results. `404 CONVERSATION_NOT_FOUND` / `404 MEMORY_NOT_FOUND` cover unknown and other students' ids alike. Chat is rate limited per user (`429 RATE_LIMITED`), one reply in flight per user.
 
