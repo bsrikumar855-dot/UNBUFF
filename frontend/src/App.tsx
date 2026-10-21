@@ -88,7 +88,7 @@ export const App: React.FC<{ authClient?: AuthClient }> = ({ authClient }) => (
   <AuthProvider client={authClient}>
     <SessionProvider>
       <InterrogationProvider>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <BrowserRouter>
           {/* Unit tests mock the API per test, so the wake-up ping only runs in the real app. */}
           {import.meta.env.MODE !== "test" && <ServerWakeGate />}
           <MotionProvider>
