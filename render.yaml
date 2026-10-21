@@ -33,6 +33,10 @@ services:
         sync: false # REQUIRED in production (the server refuses to start without it, and rejects "*").
         # Enter the exact deployed frontend origin(s) in the Render dashboard, comma-separated,
         # e.g. https://<your-frontend-origin> (scheme + host, no path, no trailing slash).
+      - key: TRUST_PROXY
+        value: "1" # Render sits behind one proxy hop; keeps rate limits keyed to the real client IP
+      - key: EXECUTION_PROVIDER
+        value: none # code Run/Submit reports "unavailable" until a verified Judge0 is configured
       - key: LOG_LEVEL
         value: info
       - key: GEMINI_API_KEY

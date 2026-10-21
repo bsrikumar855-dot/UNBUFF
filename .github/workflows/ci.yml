@@ -25,6 +25,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:coverage
       - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high
 
   frontend:
     runs-on: ubuntu-latest
@@ -52,3 +53,7 @@ jobs:
         run: npm test -- --run
       - if: steps.detect.outputs.present == 'true'
         run: npm run build
+      # Known: Tailwind 3 build tooling (not shipped) reports highs until the Tailwind 4 migration, so this is informational.
+      - if: steps.detect.outputs.present == 'true'
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high

@@ -1,6 +1,6 @@
 # UNBLUFF
 
-![CI](https://github.com/Spyro007-06/H2S/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/bsrikumar855-dot/UNBUFF/actions/workflows/ci.yml/badge.svg)
 
 **Your resume says you're ready. Let's prove it.** UNBLUFF is a mock placement interviewer that
 checks every claim on a student's resume against a target role and shows, with evidence from their
