@@ -15,6 +15,16 @@ import { CountUp } from "@/components/motion/CountUp";
 import { ScanReveal } from "@/components/motion/ScanReveal";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import {
+  CalendarCheck,
+  CheckCircle2,
+  Lightbulb,
+  ListChecks,
+  Timer,
+  type LucideIcon,
+} from "lucide-react";
+import { TILE } from "@/components/ui/GlassCard";
+import { cn } from "@/lib/cn";
 import { Page, PageHeader } from "@/components/ui/Page";
 import type {
   PlacementDashboard,
@@ -108,12 +118,47 @@ const PlacementPage: React.FC = () => {
 
   const f = dash?.plan?.feasibility;
   return (
-    <Page width="wide">
-      <PageHeader
-        eyebrow="Plan"
-        title="Your placement plan"
-        description="One plan built from your goals, your available time and what your records really show across DSA practice, interviews, DBMS quizzes and, if you connect it, GitHub. It is a study plan, not a prediction: nothing here estimates your chance of an offer."
-      />
+    <Page width="fluid" className="sm:px-5 lg:pl-5 lg:pr-6">
+      {dash && profile && (dash.needs_profile || editing) ? (
+        <PageHeader
+          eyebrow={dash.needs_profile ? "Plan · Your baseline" : "Plan · Edit your goals"}
+          title={
+            dash.needs_profile ? (
+              <>
+                Build your <em>placement</em> plan.
+              </>
+            ) : (
+              <>
+                Edit your <em>goals</em> and availability.
+              </>
+            )
+          }
+          description="Tell us about your goals and availability. The plan is built from them and from what your records really show."
+          actions={
+            <p
+              role="note"
+              className="flex max-w-sm items-start gap-3 rounded-[1.25rem] bg-white/55 p-4 text-sm text-ink-secondary shadow-[inset_0_0_0_1px_rgba(24,24,27,0.07),inset_0_1px_0_rgba(255,255,255,0.95)]"
+            >
+              <Lightbulb
+                size={18}
+                strokeWidth={1.75}
+                aria-hidden="true"
+                className="mt-0.5 shrink-0 text-redline"
+              />
+              <span>
+                The plan only schedules work on the days and for the time you choose. You
+                can change this anytime; completed tasks are kept.
+              </span>
+            </p>
+          }
+        />
+      ) : (
+        <PageHeader
+          eyebrow="Plan"
+          title="Your placement plan"
+          description="One plan built from your goals, your available time and what your records really show across DSA practice, interviews, DBMS quizzes and, if you connect it, GitHub. It is a study plan, not a prediction: nothing here estimates your chance of an offer."
+        />
+      )}
 
       {error !== null && (
         <ErrorState
@@ -127,49 +172,23 @@ const PlacementPage: React.FC = () => {
       )}
 
       {dash && profile && (
-        <div className="flex flex-col gap-10">
+        <div className="flex flex-col gap-5">
           {dash.needs_profile || editing ? (
-            <section
-              aria-labelledby="goals-h"
-              className="max-w-4xl border border-line bg-surface p-5 sm:p-8"
-            >
-              <h2
-                id="goals-h"
-                className="serif text-heading font-medium text-ink-primary"
-              >
-                {dash.needs_profile
-                  ? "Start with your goals and availability"
-                  : "Edit your goals and availability"}
-              </h2>
-              <p className="mb-4 mt-1 text-sm text-ink-secondary">
-                The plan only schedules work on the days and for the time you choose. You
-                can change this at any time; completed tasks are kept.
-              </p>
-              <ProfileForm
-                data={profile}
-                saving={saving}
-                error={saveError}
-                onSave={(p) => void save(p)}
-              />
-              {editing && (
-                <Button
-                  className="mt-3"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditing(false)}
-                >
-                  Cancel
-                </Button>
-              )}
-            </section>
+            <ProfileForm
+              data={profile}
+              saving={saving}
+              error={saveError}
+              onSave={(p) => void save(p)}
+              onCancel={editing ? () => setEditing(false) : undefined}
+            />
           ) : (
             <>
               <section
                 aria-label="Plan status"
-                className="border border-ink-primary bg-surface p-4 sm:p-5"
+                className="rounded-[1.75rem] bg-white/55 p-5 shadow-[inset_0_0_0_1px_rgba(24,24,27,0.07),inset_0_1px_0_rgba(255,255,255,0.95),0_16px_32px_-24px_rgba(24,24,27,0.35)] backdrop-blur-sm sm:p-7"
               >
-                <ScanReveal className="mb-5">
-                  <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-b border-line pb-5 sm:grid-cols-4">
+                <ScanReveal className="mb-6">
+                  <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {[
                       dash.plan?.days_until_placement !== null &&
                       dash.plan?.days_until_placement !== undefined
@@ -177,34 +196,59 @@ const PlacementPage: React.FC = () => {
                             label: "Days to placement",
                             value: dash.plan.days_until_placement,
                             accent: true,
+                            icon: Timer,
                           }
                         : null,
                       {
                         label: "Due today",
                         value: dash.today_tasks.length,
                         accent: false,
+                        icon: CalendarCheck,
                       },
                       {
                         label: "Open tasks",
                         value: dash.counts.planned + dash.counts.in_progress,
                         accent: false,
+                        icon: ListChecks,
                       },
-                      { label: "Completed", value: dash.counts.completed, accent: false },
+                      {
+                        label: "Completed",
+                        value: dash.counts.completed,
+                        accent: false,
+                        icon: CheckCircle2,
+                      },
                     ]
                       .filter(
-                        (s): s is { label: string; value: number; accent: boolean } =>
-                          s !== null
+                        (
+                          s
+                        ): s is {
+                          label: string;
+                          value: number;
+                          accent: boolean;
+                          icon: LucideIcon;
+                        } => s !== null
                       )
                       .map((s) => (
-                        <div key={s.label} className="min-w-0">
-                          <dt className="eyebrow">{s.label}</dt>
-                          <dd
-                            className={`serif num mt-1 text-display font-medium leading-none ${
-                              s.accent ? "text-redline" : "text-ink-primary"
-                            }`}
+                        <div
+                          key={s.label}
+                          className={cn(TILE, "flex min-w-0 items-center gap-3 p-4")}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="grid size-11 shrink-0 place-items-center rounded-full bg-white text-redline shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08),0_6px_14px_-8px_rgba(24,24,27,0.35)]"
                           >
-                            <CountUp value={s.value} />
-                          </dd>
+                            <s.icon size={19} strokeWidth={1.75} />
+                          </span>
+                          <div className="min-w-0">
+                            <dt className="eyebrow">{s.label}</dt>
+                            <dd
+                              className={`serif num mt-0.5 text-display font-medium leading-none ${
+                                s.accent ? "text-redline" : "text-ink-primary"
+                              }`}
+                            >
+                              <CountUp value={s.value} />
+                            </dd>
+                          </div>
                         </div>
                       ))}
                   </dl>
@@ -241,6 +285,7 @@ const PlacementPage: React.FC = () => {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="rounded-full"
                       disabled={busy}
                       onClick={() => void run(() => api.refreshPlacement())}
                     >
@@ -249,6 +294,7 @@ const PlacementPage: React.FC = () => {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="rounded-full"
                       disabled={busy}
                       onClick={() => setEditing(true)}
                     >
@@ -257,6 +303,7 @@ const PlacementPage: React.FC = () => {
                     <Button
                       variant="ghost"
                       size="sm"
+                      className="rounded-full"
                       disabled={busy}
                       onClick={() => setConfirming("regenerate")}
                     >
@@ -301,12 +348,12 @@ const PlacementPage: React.FC = () => {
                 )}
               </section>
 
-              <div className="grid gap-x-12 gap-y-10 xl:grid-cols-[minmax(0,1fr)_22rem]">
-                <div className="flex min-w-0 flex-col gap-10">
+              <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_27rem]">
+                <div className="flex min-w-0 flex-col gap-5">
                   <TodaySection d={dash} busy={busy} onAction={onAction} />
                   <WeekSection d={dash} busy={busy} onAction={onAction} />
                 </div>
-                <div className="flex min-w-0 flex-col gap-10 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:self-start xl:overflow-y-auto xl:pr-1">
+                <div className="flex min-w-0 flex-col gap-5 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:self-start xl:overflow-y-auto xl:pr-1">
                   <AssistantPanel onDashboard={setDash} />
                   <LimitationsSection items={dash.limitations} />
                 </div>
@@ -331,8 +378,8 @@ const PlacementPage: React.FC = () => {
                     className="flex flex-wrap items-center gap-2 text-sm"
                   >
                     <span className="text-ink-secondary">
-                      Delete your goals, plan and task history? Your DSA, interview,
-                      DBMS quiz and mentor records are not touched.
+                      Delete your goals, plan and task history? Your DSA, interview, DBMS
+                      quiz and mentor records are not touched.
                     </span>
                     <Button size="sm" disabled={busy} onClick={wipe}>
                       Yes, delete them

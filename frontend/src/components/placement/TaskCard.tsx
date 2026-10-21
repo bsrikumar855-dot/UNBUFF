@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { ArrowUpRight } from "lucide-react";
 import { Enter } from "@/components/motion/Enter";
 import { CheckMark, Strike } from "@/components/motion/Marks";
 import { RISE } from "@/components/motion/tokens";
+import { TILE } from "@/components/ui/GlassCard";
+import { cn } from "@/lib/cn";
 import { Button } from "@/components/ui/button";
 import { PRIORITY_LABEL, TASK_TYPE_LABEL } from "@/lib/placement";
 import type { PlacementTask, PlacementTaskActionRequest } from "@/types/contract";
@@ -19,7 +22,8 @@ export interface TaskCardProps {
 }
 
 const field =
-  "min-h-10 rounded-md border border-line-strong bg-surface px-2 py-1 text-sm";
+  "min-h-10 rounded-xl border border-line-strong bg-white/70 px-2.5 py-1 text-sm";
+const pill = "rounded-full";
 
 /** One task with why it is suggested, how it completes and the controls to act on it. */
 export const TaskCard: React.FC<TaskCardProps> = ({
@@ -35,7 +39,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const [reason, setReason] = useState("");
   const open = task.status === "planned" || task.status === "in_progress";
   return (
-    <Enter as="li" index={index} y={RISE.sm} className="border-b border-line py-4">
+    <Enter as="li" index={index} y={RISE.sm} className={cn(TILE, "p-4 sm:p-5")}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="eyebrow">
@@ -48,16 +52,19 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             {task.status === "skipped" ? " · skipped" : ""}
           </p>
           <h4 className="mt-1 text-[17px] font-semibold leading-snug text-ink-primary">
-            {task.status === "completed" && <CheckMark className="mr-1.5 inline text-verified" />}
+            {task.status === "completed" && (
+              <CheckMark className="mr-1.5 inline text-verified" />
+            )}
             <Strike on={task.status === "completed"}>{task.title}</Strike>
           </h4>
         </div>
         {open && (
           <Link
             to={task.link}
-            className="inline-flex min-h-10 shrink-0 items-center text-sm font-medium text-redline underline underline-offset-4"
+            className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-full border border-line-strong bg-white/80 px-3.5 text-sm font-medium text-ink-primary transition-colors hover:border-ink-primary"
           >
             Open
+            <ArrowUpRight size={14} aria-hidden="true" />
           </Link>
         )}
       </div>
@@ -86,6 +93,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           {task.status === "planned" && !task.blocked && (
             <Button
               size="sm"
+              className={pill}
               variant="outline"
               disabled={busy}
               onClick={() => onAction(task, { action: "start" })}
@@ -96,6 +104,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           {!task.blocked && (
             <Button
               size="sm"
+              className={pill}
               disabled={busy}
               onClick={() => onAction(task, { action: "complete" })}
             >
@@ -105,6 +114,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           <Button
             size="sm"
             variant="ghost"
+            className={pill}
             disabled={busy}
             onClick={() => onAction(task, { action: "postpone", days: 1 })}
           >
@@ -113,6 +123,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           <Button
             size="sm"
             variant="ghost"
+            className={pill}
             disabled={busy}
             onClick={() => setMode(mode === "move" ? "none" : "move")}
           >
@@ -121,6 +132,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           <Button
             size="sm"
             variant="ghost"
+            className={pill}
             disabled={busy}
             onClick={() => setMode(mode === "skip" ? "none" : "skip")}
           >
@@ -143,6 +155,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           />
           <Button
             size="sm"
+            className={pill}
             disabled={busy || date === ""}
             onClick={() => {
               onAction(task, { action: "reschedule", date });
@@ -167,6 +180,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           />
           <Button
             size="sm"
+            className={pill}
             disabled={busy || reason.trim().length < 3}
             onClick={() => {
               onAction(task, { action: "skip", reason: reason.trim() });

@@ -275,7 +275,7 @@ describe("placement: goals", () => {
     renderPage();
     expect(
       await screen.findByRole("heading", {
-        name: "Start with your goals and availability",
+        name: "Build your placement plan.",
       })
     ).toBeInTheDocument();
     expect(
@@ -346,7 +346,7 @@ describe("placement: goals", () => {
     renderPage();
     fireEvent.click(await screen.findByRole("button", { name: "Edit goals" }));
     expect(
-      await screen.findByRole("heading", { name: "Edit your goals and availability" })
+      await screen.findByRole("heading", { name: "Edit your goals and availability." })
     ).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Study minutes on each available day"), {
       target: { value: "45" },
@@ -561,7 +561,7 @@ describe("placement: plan status", () => {
     await waitFor(() => expect(mocked.deletePlacementData).toHaveBeenCalledTimes(1));
     expect(
       await screen.findByRole("heading", {
-        name: "Start with your goals and availability",
+        name: "Build your placement plan.",
       })
     ).toBeInTheDocument();
   });

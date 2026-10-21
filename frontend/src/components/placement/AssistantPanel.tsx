@@ -1,8 +1,11 @@
 import React, { useState } from "react";
+import { MessageCircleQuestion } from "lucide-react";
 import { api } from "@/api/endpoints";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { GlassCard, TILE } from "@/components/ui/GlassCard";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { cn } from "@/lib/cn";
 import type {
   PlacementAssistantResponse,
   PlacementDashboard,
@@ -68,21 +71,19 @@ export const AssistantPanel: React.FC<{
   };
 
   return (
-    <section aria-labelledby="assistant-h" className="border-t border-ink-primary pt-4">
-      <h2 id="assistant-h" className="text-heading font-semibold text-ink-primary">
-        Ask about your plan
-      </h2>
-      <p className="mt-1 text-sm text-ink-secondary">
-        Answers use your stored plan and results. Nothing changes unless you apply a
-        proposed change.
-      </p>
-      <div className="mt-3 flex flex-col items-start gap-0.5">
+    <GlassCard
+      id="assistant"
+      icon={MessageCircleQuestion}
+      title="Ask about your plan"
+      sub="Answers use your stored plan and results. Nothing changes unless you apply a proposed change."
+    >
+      <div className="flex flex-wrap gap-2">
         {QUICK.map((q) => (
           <Button
             key={q}
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="h-auto min-h-9 justify-start whitespace-normal px-2 text-left font-normal underline decoration-line-strong underline-offset-4 hover:decoration-ink-primary"
+            className="h-auto min-h-9 max-w-full justify-start whitespace-normal rounded-full bg-white/70 px-3.5 py-1.5 text-left font-normal"
             disabled={busy}
             onClick={() => void ask(q)}
           >
@@ -102,13 +103,17 @@ export const AssistantPanel: React.FC<{
         </label>
         <input
           id="assistant-q"
-          className="min-h-10 min-w-40 flex-1 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm"
+          className="min-h-10 min-w-40 flex-1 rounded-full border border-line-strong bg-white/70 px-4 py-2 text-sm"
           maxLength={500}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="For example: I can only study 45 minutes a day"
         />
-        <Button type="submit" disabled={busy || message.trim() === ""}>
+        <Button
+          type="submit"
+          className="rounded-full px-6"
+          disabled={busy || message.trim() === ""}
+        >
           Ask
         </Button>
       </form>
@@ -123,14 +128,17 @@ export const AssistantPanel: React.FC<{
         <div className="mt-3 flex flex-col gap-3">
           <div
             aria-label="Answer from your plan"
-            className="whitespace-pre-wrap border-l-2 border-ink-primary bg-surface-100/60 p-3 text-sm text-ink-primary"
+            className={cn(
+              TILE,
+              "whitespace-pre-wrap border-l-2 border-ink-primary p-3.5 text-sm text-ink-primary"
+            )}
           >
             {answer.answer}
           </div>
           {answer.mentor_reply && (
             <div
               aria-label="AI mentor explanation"
-              className="border-l-2 border-line-strong p-3 text-sm"
+              className={cn(TILE, "border-l-2 border-line-strong p-3.5 text-sm")}
             >
               {answer.mentor.mock && (
                 <p className="mb-1 text-xs font-medium text-ink-muted">
@@ -154,11 +162,15 @@ export const AssistantPanel: React.FC<{
               {answer.proposed_changes.map((c, i) => (
                 <li
                   key={`${c.kind}-${i}`}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-line p-2 text-sm"
+                  className={cn(
+                    TILE,
+                    "flex flex-wrap items-center justify-between gap-2 p-3 text-sm"
+                  )}
                 >
                   <span className="text-ink-primary">{c.description}</span>
                   <Button
                     size="sm"
+                    className="rounded-full"
                     disabled={applying !== null}
                     onClick={() => void apply(c, i)}
                   >
@@ -177,6 +189,6 @@ export const AssistantPanel: React.FC<{
           )}
         </div>
       )}
-    </section>
+    </GlassCard>
   );
 };

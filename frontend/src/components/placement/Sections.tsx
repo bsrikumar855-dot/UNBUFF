@@ -2,6 +2,14 @@ import { Enter } from "@/components/motion/Enter";
 import { Strike } from "@/components/motion/Marks";
 import { RISE } from "@/components/motion/tokens";
 import React from "react";
+import {
+  CalendarCheck,
+  CalendarRange,
+  History,
+  Info,
+  Layers,
+  ListChecks,
+} from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
   CONFIDENCE_LABEL,
@@ -19,8 +27,8 @@ import type {
   SkillAssessment,
 } from "@/types/contract";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { GlassCard, TILE } from "@/components/ui/GlassCard";
 import { Meter } from "@/components/ui/Meter";
-import { Section } from "@/components/ui/Page";
 import { Tag, type TagTone } from "@/components/ui/Tag";
 import { TaskCard } from "./TaskCard";
 
@@ -31,10 +39,11 @@ export const TodaySection: React.FC<{
   busy: boolean;
   onAction: Act;
 }> = ({ d, busy, onAction }) => (
-  <Section
+  <GlassCard
     id="today"
+    icon={CalendarCheck}
     title="Today's plan"
-    description={
+    sub={
       <>
         {d.today_tasks.length} task(s), {minutesLabel(d.today_minutes)} planned of{" "}
         {minutesLabel(d.today_capacity_minutes)} available today ({d.today}).
@@ -55,7 +64,7 @@ export const TodaySection: React.FC<{
         Check the weekly roadmap, or refresh the plan after new results.
       </EmptyState>
     ) : (
-      <ul className="border-t border-line">
+      <ul className="flex flex-col gap-3">
         {d.today_tasks.map((t, i) => (
           <TaskCard
             key={t.id}
@@ -68,7 +77,7 @@ export const TodaySection: React.FC<{
         ))}
       </ul>
     )}
-  </Section>
+  </GlassCard>
 );
 
 export const WeekSection: React.FC<{
@@ -81,10 +90,11 @@ export const WeekSection: React.FC<{
     (t) => !d.today_tasks.some((x) => x.id === t.id)
   );
   return (
-    <Section
+    <GlassCard
       id="week"
+      icon={CalendarRange}
       title="Weekly roadmap"
-      description={
+      sub={
         <>
           {d.counts.planned + d.counts.in_progress} open, {d.counts.completed} completed,{" "}
           {d.counts.skipped} skipped. Outstanding high-priority tasks:{" "}
@@ -92,7 +102,7 @@ export const WeekSection: React.FC<{
         </>
       }
     >
-      <ol className="border-t border-line" aria-label="Next seven days">
+      <ol aria-label="Next seven days" className="grid gap-3 md:grid-cols-2">
         {d.week.map((day, di) => (
           <Enter
             as="li"
@@ -100,8 +110,9 @@ export const WeekSection: React.FC<{
             y={RISE.sm}
             key={day.date}
             className={cn(
-              "grid gap-x-6 gap-y-1 border-b border-line py-3 md:grid-cols-[11.5rem_minmax(0,1fr)]",
-              !day.available && "text-ink-muted"
+              TILE,
+              "flex flex-col gap-2 p-4",
+              !day.available && "bg-white/30 text-ink-muted"
             )}
           >
             <div>
@@ -140,7 +151,7 @@ export const WeekSection: React.FC<{
           <summary className="cursor-pointer text-sm font-medium text-ink-primary underline-offset-4 hover:underline">
             Later high-priority tasks and rescheduling ({later.length})
           </summary>
-          <ul className="mt-2 border-t border-line">
+          <ul className="mt-3 flex flex-col gap-3">
             {later.map((t) => (
               <TaskCard
                 key={t.id}
@@ -153,7 +164,7 @@ export const WeekSection: React.FC<{
           </ul>
         </details>
       )}
-    </Section>
+    </GlassCard>
   );
 };
 
@@ -193,10 +204,11 @@ export const SkillsSection: React.FC<{ d: PlacementDashboard }> = ({ d }) => {
     (s) => s.evidence.provenance === "verified" && s.evidence.count > 0
   ).length;
   return (
-    <Section
+    <GlassCard
       id="skills"
+      icon={Layers}
       title="Skills overview"
-      description={
+      sub={
         <>
           {d.skills.coverage.sufficient_evidence} of {d.skills.coverage.in_scope} skill
           areas have enough evidence for a confident reading (
@@ -209,58 +221,62 @@ export const SkillsSection: React.FC<{ d: PlacementDashboard }> = ({ d }) => {
         <Tag tone="verified">{assessed} with verified results</Tag>
         <Tag tone="none">{d.skills.skills.length - assessed} without</Tag>
       </p>
-      {groups.map((g) => (
-        <div key={g.title} className="mt-6 first:mt-0">
-          <h3 className="eyebrow border-b border-ink-primary pb-2">{g.title}</h3>
-          <ul>
-            {g.items.map((s) => (
-              <li
-                key={s.area}
-                className="grid gap-x-6 gap-y-1 border-b border-line py-3 text-sm md:grid-cols-[13rem_10rem_minmax(0,1fr)]"
-              >
-                <span className="font-medium text-ink-primary">{s.label}</span>
-                <span className="text-ink-secondary">
-                  {SKILL_STATUS_LABEL[s.status]}
-                  {s.estimate !== null ? `: ${percent(s.estimate)}` : ""}
-                </span>
-                <div className="space-y-1">
-                  <div className="flex items-start gap-2">
-                    {s.evidence.provenance !== "unavailable" && (
-                      <Tag
-                        tone={PROVENANCE_TONE[s.evidence.provenance]}
-                        className="shrink-0"
-                      >
-                        {s.evidence.provenance === "verified"
-                          ? "Verified"
-                          : s.evidence.provenance === "self_reported"
-                            ? "Self-reported"
-                            : "Demo only"}
-                      </Tag>
+      <div className="flex flex-col gap-4">
+        {groups.map((g) => (
+          <div key={g.title} className={cn(TILE, "p-4 sm:p-5")}>
+            <h3 className="eyebrow border-b border-line-strong/60 pb-2">
+              {g.title} <span className="text-ink-muted">· {g.items.length}</span>
+            </h3>
+            <ul>
+              {g.items.map((s) => (
+                <li
+                  key={s.area}
+                  className="grid gap-x-6 gap-y-1 border-b border-line py-3 text-sm last:border-b-0 md:grid-cols-[13rem_10rem_minmax(0,1fr)]"
+                >
+                  <span className="font-medium text-ink-primary">{s.label}</span>
+                  <span className="text-ink-secondary">
+                    {SKILL_STATUS_LABEL[s.status]}
+                    {s.estimate !== null ? `: ${percent(s.estimate)}` : ""}
+                  </span>
+                  <div className="space-y-1">
+                    <div className="flex items-start gap-2">
+                      {s.evidence.provenance !== "unavailable" && (
+                        <Tag
+                          tone={PROVENANCE_TONE[s.evidence.provenance]}
+                          className="shrink-0"
+                        >
+                          {s.evidence.provenance === "verified"
+                            ? "Verified"
+                            : s.evidence.provenance === "self_reported"
+                              ? "Self-reported"
+                              : "Demo only"}
+                        </Tag>
+                      )}
+                      <EvidenceLine s={s} />
+                    </div>
+                    {s.note && <p className="text-xs text-ink-muted">{s.note}</p>}
+                    {s.self_reported && (
+                      <p className="text-xs text-ink-muted">
+                        {s.self_reported} (self-reported, not part of the reading)
+                      </p>
                     )}
-                    <EvidenceLine s={s} />
+                    {s.gaps.length > 0 && (
+                      <p className="text-xs text-ink-secondary">
+                        Gaps: {s.gaps.join("; ")}
+                      </p>
+                    )}
+                    {s.next_assessment && (
+                      <p className="text-xs text-ink-secondary">
+                        Next: {s.next_assessment.description}
+                      </p>
+                    )}
                   </div>
-                  {s.note && <p className="text-xs text-ink-muted">{s.note}</p>}
-                  {s.self_reported && (
-                    <p className="text-xs text-ink-muted">
-                      {s.self_reported} (self-reported, not part of the reading)
-                    </p>
-                  )}
-                  {s.gaps.length > 0 && (
-                    <p className="text-xs text-ink-secondary">
-                      Gaps: {s.gaps.join("; ")}
-                    </p>
-                  )}
-                  {s.next_assessment && (
-                    <p className="text-xs text-ink-secondary">
-                      Next: {s.next_assessment.description}
-                    </p>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
       <details className="mt-4 text-xs text-ink-muted">
         <summary className="cursor-pointer">How these readings are calculated</summary>
         <ul className="mt-1 list-disc pl-5">
@@ -269,16 +285,17 @@ export const SkillsSection: React.FC<{ d: PlacementDashboard }> = ({ d }) => {
           ))}
         </ul>
       </details>
-    </Section>
+    </GlassCard>
   );
 };
 
+/** One titled tile inside a card. */
 const Block: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,
   children,
 }) => (
-  <div>
-    <h3 className="eyebrow border-b border-ink-primary pb-2">{title}</h3>
+  <div className={cn(TILE, "p-4 sm:p-5")}>
+    <h3 className="eyebrow border-b border-line-strong/60 pb-2">{title}</h3>
     <div className="pt-3 text-sm text-ink-secondary">{children}</div>
   </div>
 );
@@ -286,8 +303,13 @@ const Block: React.FC<{ title: string; children: React.ReactNode }> = ({
 export const HistorySection: React.FC<{ d: PlacementDashboard }> = ({ d }) => {
   const h = d.history;
   return (
-    <Section id="history" title="Progress history">
-      <div className="grid gap-x-10 gap-y-8 md:grid-cols-2">
+    <GlassCard
+      id="history"
+      icon={History}
+      title="Progress history"
+      sub="What you finished, what your results confirm, and how the plan changed."
+    >
+      <div className="grid gap-4 md:grid-cols-2">
         <Block title="Completed tasks">
           {h.recent_completed.length === 0 ? (
             <p>Nothing completed yet.</p>
@@ -355,7 +377,7 @@ export const HistorySection: React.FC<{ d: PlacementDashboard }> = ({ d }) => {
           )}
         </Block>
       </div>
-    </Section>
+    </GlassCard>
   );
 };
 
@@ -366,23 +388,27 @@ export const ReadinessSection: React.FC<{ d: PlacementDashboard }> = ({ d }) => 
     items,
     empty,
   }) => (
-    <div>
-      <h3 className="eyebrow border-b border-ink-primary pb-2">{title}</h3>
+    <Block title={title}>
       {items.length === 0 ? (
-        <p className="pt-3 text-sm text-ink-secondary">{empty}</p>
+        <p>{empty}</p>
       ) : (
-        <ul className="list-disc pl-5 pt-3 text-sm text-ink-secondary">
+        <ul className="list-disc pl-5">
           {items.slice(0, 8).map((i) => (
             <li key={i}>{i}</li>
           ))}
           {items.length > 8 ? <li>and {items.length - 8} more</li> : null}
         </ul>
       )}
-    </div>
+    </Block>
   );
   return (
-    <Section id="readiness" title="Readiness and next steps" description={r.note}>
-      <div className="grid gap-x-8 gap-y-6 lg:grid-cols-3">
+    <GlassCard
+      id="readiness"
+      icon={ListChecks}
+      title="Readiness and next steps"
+      sub={r.note}
+    >
+      <div className="grid gap-4 lg:grid-cols-3">
         <List
           title="Enough evidence"
           items={r.sufficient_evidence}
@@ -400,20 +426,19 @@ export const ReadinessSection: React.FC<{ d: PlacementDashboard }> = ({ d }) => 
         />
       </div>
       {r.next_diagnostics.length > 0 && (
-        <div className="mt-6">
-          <h3 className="eyebrow border-b border-ink-primary pb-2">
-            Recommended next assessments
-          </h3>
-          <ul className="list-disc pl-5 pt-3 text-sm text-ink-secondary">
-            {r.next_diagnostics.map((n) => (
-              <li key={n.area}>
-                {n.area}: {n.description}
-              </li>
-            ))}
-          </ul>
+        <div className="mt-4">
+          <Block title="Recommended next assessments">
+            <ul className="list-disc pl-5">
+              {r.next_diagnostics.map((n) => (
+                <li key={n.area}>
+                  {n.area}: {n.description}
+                </li>
+              ))}
+            </ul>
+          </Block>
         </div>
       )}
-    </Section>
+    </GlassCard>
   );
 };
 
@@ -423,16 +448,15 @@ export const LimitationsSection: React.FC<{ items: EvidenceLimitation[] }> = ({
   if (items.length === 0) return null;
   const limiting = items.filter((i) => i.severity === "limits_accuracy");
   return (
-    <section
-      aria-labelledby="limits-h"
-      className="border border-line bg-surface-100/60 p-4"
+    <GlassCard
+      id="limits"
+      icon={Info}
+      title="What limits these results"
+      className="p-5 sm:p-6"
     >
-      <h2 id="limits-h" className="eyebrow text-ink-primary">
-        What limits these results
-      </h2>
-      <ul className="mt-3 flex flex-col gap-2 text-sm text-ink-secondary">
+      <ul className="flex flex-col gap-2.5 text-sm text-ink-secondary">
         {[...limiting, ...items.filter((i) => i.severity === "info")].map((i, idx) => (
-          <li key={idx}>
+          <li key={idx} className={cn(TILE, "px-3.5 py-2.5")}>
             <span className="font-medium text-ink-primary">
               {i.severity === "limits_accuracy" ? "Limits accuracy: " : "Note: "}
             </span>
@@ -440,6 +464,6 @@ export const LimitationsSection: React.FC<{ items: EvidenceLimitation[] }> = ({
           </li>
         ))}
       </ul>
-    </section>
+    </GlassCard>
   );
 };
