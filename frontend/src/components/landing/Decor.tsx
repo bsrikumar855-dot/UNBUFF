@@ -40,8 +40,8 @@ export const Ruler: React.FC<{ className?: string }> = ({ className }) => (
     aria-hidden="true"
     className={cn(
       "pointer-events-none absolute inset-y-0 w-3 opacity-60",
-      "[background-image:repeating-linear-gradient(to_bottom,currentColor_0,currentColor_1px,transparent_1px,transparent_8px)]",
-      "[mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)]",
+      "bg-[repeating-linear-gradient(to_bottom,currentColor_0,currentColor_1px,transparent_1px,transparent_8px)]",
+      "mask-[linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)]",
       className
     )}
   />

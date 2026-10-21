@@ -52,7 +52,7 @@ const Output: React.FC<{ title: string; text: string }> = ({ title, text }) =>
   text ? (
     <div className="mt-3">
       <h4 className="eyebrow mb-1">{title}</h4>
-      <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words border border-line bg-surface-50 p-3 font-mono text-[13px] leading-relaxed text-ink-primary">
+      <pre className="max-h-56 overflow-auto whitespace-pre-wrap wrap-break-word border border-line bg-surface-50 p-3 font-mono text-[13px] leading-relaxed text-ink-primary">
         {text}
       </pre>
     </div>
@@ -442,12 +442,12 @@ const CodeWorkspacePage: React.FC = () => {
                       You can read the problem, but Run and Submit are disabled.
                     </p>
                   )}
-                  <div className="h-[56vh] min-h-[22rem] lg:h-auto lg:min-h-0 lg:flex-1">
+                  <div className="h-[56vh] min-h-88 lg:h-auto lg:min-h-0 lg:flex-1">
                     {language ? (
                       plain ? (
                         <textarea
                           aria-label={`Code editor, ${language.name}`}
-                          className="block h-full w-full resize-none border-0 bg-surface p-4 font-mono text-sm leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-redline"
+                          className="block h-full w-full resize-none border-0 bg-surface p-4 font-mono text-sm leading-relaxed outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-redline"
                           spellCheck={false}
                           value={source}
                           onChange={(e) => setSource(e.target.value)}
@@ -727,7 +727,7 @@ const CodeWorkspacePage: React.FC = () => {
                               </Button>
                             </div>
                           </div>
-                          <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words border border-line bg-surface-50 p-3 font-mono text-xs">
+                          <pre className="max-h-72 overflow-auto whitespace-pre-wrap wrap-break-word border border-line bg-surface-50 p-3 font-mono text-xs">
                             {viewing.source}
                           </pre>
                         </div>

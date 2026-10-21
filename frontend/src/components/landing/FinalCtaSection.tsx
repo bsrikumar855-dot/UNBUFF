@@ -19,7 +19,7 @@ export const FinalCtaSection: React.FC = () => {
       aria-labelledby="cta-title"
       className="relative overflow-hidden bg-foreground text-background"
     >
-      <div className="mx-auto max-w-[96rem] px-6 pt-20 sm:px-14 sm:pt-32">
+      <div className="mx-auto max-w-384 px-6 pt-20 sm:px-14 sm:pt-32">
         <h2
           id="cta-title"
           className="serif max-w-5xl text-[clamp(2.6rem,7.4vw,7rem)] font-medium leading-[0.98] tracking-[-0.035em]"
@@ -48,7 +48,7 @@ export const FinalCtaSection: React.FC = () => {
         </div>
       </div>
       <div ref={markRef} aria-hidden="true" className="mt-16 select-none overflow-hidden pb-0 sm:mt-24">
-        <div className="mx-auto flex max-w-[96rem] justify-between px-4 sm:px-10">
+        <div className="mx-auto flex max-w-384 justify-between px-4 sm:px-10">
           {letters.map((l, i) => (
             <span
               key={`${l}-${i}`}

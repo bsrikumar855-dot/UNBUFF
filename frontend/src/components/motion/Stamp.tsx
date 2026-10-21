@@ -31,7 +31,7 @@ export const Stamp: React.FC<{
       transition={SPRING_LAND}
       className={cn(
         "pointer-events-none inline-flex select-none items-center justify-center border-[3px] px-3 py-1.5 font-mono text-sm font-semibold uppercase tracking-[0.18em]",
-        "shadow-[inset_0_0_0_2px_var(--stamp-gap,transparent)] outline outline-1 -outline-offset-[7px] outline-current",
+        "shadow-[inset_0_0_0_2px_var(--stamp-gap,transparent)] outline-solid outline-1 outline-offset-[-7px] outline-current",
         "after:content-[attr(data-label)]",
         TONE[tone],
         className

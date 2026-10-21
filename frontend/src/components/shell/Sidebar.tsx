@@ -6,8 +6,8 @@ import { AccountMenu } from "./AccountMenu";
 
 /** Desktop navigation rail (lg and up): wordmark, command search, grouped routes, account. It scrolls on its own. */
 export const Sidebar: React.FC<{ onSearch: () => void }> = ({ onSearch }) => (
-  <aside className="sticky top-0 hidden h-screen w-[var(--sidebar-w)] shrink-0 flex-col border-r border-line bg-surface lg:flex">
-    <div className="flex h-[var(--topbar-h)] items-center border-b border-line px-5">
+  <aside className="sticky top-0 hidden h-screen w-(--sidebar-w) shrink-0 flex-col border-r border-line bg-surface lg:flex">
+    <div className="flex h-(--topbar-h) items-center border-b border-line px-5">
       <Wordmark />
     </div>
     <div className="px-3 pt-3">

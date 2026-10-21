@@ -67,7 +67,7 @@ export const ResumeHeatmap: React.FC<ResumeHeatmapProps> = ({
                 className="flex w-full flex-wrap items-center justify-between gap-2 rounded-md border-l-4 px-3 py-2 text-left text-sm text-ink-primary hover:brightness-95"
                 style={{ borderLeftColor: cfg.fg, backgroundColor: cfg.bg }}
               >
-                <span className="min-w-0 flex-1 break-words">{row.text}</span>
+                <span className="min-w-0 flex-1 wrap-break-word">{row.text}</span>
                 <VerdictBadge verdict={row.verdict} className="bg-surface/70" />
               </button>
             </li>

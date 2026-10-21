@@ -18,7 +18,7 @@ export const RouteProgress: React.FC = () => {
       initial={{ scaleX: 0, opacity: 1 }}
       animate={{ scaleX: 1, opacity: [1, 1, 0] }}
       transition={{ duration: 0.7, ease: EASE, opacity: { duration: 0.7, times: [0, 0.7, 1] } }}
-      className="pointer-events-none fixed inset-x-0 top-0 z-[70] h-[3px] origin-left bg-redline"
+      className="pointer-events-none fixed inset-x-0 top-0 z-70 h-[3px] origin-left bg-redline"
     />
   );
 };

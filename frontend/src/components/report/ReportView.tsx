@@ -34,7 +34,7 @@ export const ReportView: React.FC<ReportViewProps> = ({ report, isDemo, onChange
     : [];
 
   return (
-    <div className="mx-auto grid max-w-[88rem] gap-8 px-4 py-8 sm:px-8 sm:py-10">
+    <div className="mx-auto grid max-w-352 gap-8 px-4 py-8 sm:px-8 sm:py-10">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="serif text-title font-medium text-ink-primary">
           Readiness report

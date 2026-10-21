@@ -107,7 +107,7 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({ value, onChange }) => 
           }}
           placeholder="Paste your resume text here, or drag a PDF onto this box…"
           rows={10}
-          className="w-full resize-y rounded-md bg-transparent p-4 text-sm leading-relaxed text-ink-primary placeholder:text-ink-subtle focus:outline-none"
+          className="w-full resize-y rounded-md bg-transparent p-4 text-sm leading-relaxed text-ink-primary placeholder:text-ink-subtle focus:outline-hidden"
         />
       </div>
 

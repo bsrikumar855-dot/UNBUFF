@@ -131,7 +131,7 @@ const WorkspacePage: React.FC = () => {
   const nextMode = progress?.next_mode ?? null;
 
   return (
-    <div className="mx-auto max-w-[88rem] px-4 py-8 sm:px-8 sm:py-10">
+    <div className="mx-auto max-w-352 px-4 py-8 sm:px-8 sm:py-10">
       <h1 className="mb-2 serif text-title font-medium text-ink-primary">
         Interrogation
       </h1>

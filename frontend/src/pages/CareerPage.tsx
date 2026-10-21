@@ -244,7 +244,7 @@ const CareerPage: React.FC = () => {
 
       <section
         aria-label="Your career profile"
-        className="mb-8 grid gap-x-10 gap-y-3 border-b border-line pb-6 text-sm sm:grid-cols-[repeat(4,minmax(0,1fr))]"
+        className="mb-8 grid gap-x-10 gap-y-3 border-b border-line pb-6 text-sm sm:grid-cols-4"
       >
         {prefsError !== null ? (
           <ErrorState className="sm:col-span-4" error={prefsError} />
@@ -376,7 +376,7 @@ const CareerPage: React.FC = () => {
           ))}
         </TabsList>
 
-        <TabsContent value={tab} className="mt-0 focus-visible:outline-none">
+        <TabsContent value={tab} className="mt-0 focus-visible:outline-hidden">
           {feedTab && (
             <section aria-label={FEED_TABS.find((t) => t.value === feedTab)?.label}>
               <p className="mb-4 text-sm text-ink-secondary">

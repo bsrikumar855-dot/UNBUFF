@@ -31,7 +31,7 @@ const STATE_TEXT: Record<string, string> = {
 
 /** The score as a plain number with its confidence in words: never a probability, never colour alone. */
 export const MatchFigure: React.FC<{ match: CareerMatch }> = ({ match }) => (
-  <div className="w-[4.5rem] shrink-0 text-right sm:w-24">
+  <div className="w-18 shrink-0 text-right sm:w-24">
     <p
       className={cn(
         "serif num text-[1.75rem] font-medium leading-none",
@@ -193,7 +193,7 @@ export const JobRow: React.FC<{
               onClick={() => setOpen((v) => !v)}
               className="group flex w-full items-start gap-1.5 text-left underline-offset-4 hover:underline"
             >
-              <span className="min-w-0 break-words">{job.title}</span>
+              <span className="min-w-0 wrap-break-word">{job.title}</span>
               <ChevronDown
                 size={16}
                 aria-hidden="true"
@@ -232,7 +232,7 @@ export const JobRow: React.FC<{
               .join(" · ") || "No posting date given"}
           </p>
         </div>
-        <div className="flex w-full shrink-0 flex-wrap items-stretch gap-2 sm:w-auto sm:flex-nowrap sm:items-center [&>*]:flex-1 sm:[&>*]:flex-none">
+        <div className="flex w-full shrink-0 flex-wrap items-stretch gap-2 sm:w-auto sm:flex-nowrap sm:items-center *:flex-1 sm:*:flex-none">
           <button
             type="button"
             onClick={() => void toggleSave()}
@@ -283,7 +283,7 @@ export const JobRow: React.FC<{
           aria-label={`Details for ${job.title}`}
           y={RISE.sm}
           duration={DUR.fast}
-          className="mb-5 flex flex-col gap-6 border-l-2 border-line-strong bg-surface-100/50 p-4 sm:ml-[6.5rem] sm:p-5"
+          className="mb-5 flex flex-col gap-6 border-l-2 border-line-strong bg-surface-100/50 p-4 sm:ml-26 sm:p-5"
         >
           {(job.summary || job.preview) && (
             <div>
