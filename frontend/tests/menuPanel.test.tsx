@@ -21,12 +21,12 @@ vi.mock("@/api/endpoints", () => ({
 }));
 
 describe("the floating menu panel", () => {
-  it("opens from the More pill with the main places in large type, and closes with the Close pill", async () => {
+  it("opens from the More pill as pills, and closes with the Close pill", async () => {
     window.history.pushState({}, "", "/dsa");
     render(<App authClient={signedIn} />);
     await screen.findByRole("link", { name: "Mentor" }); // the signed-in pills have replaced the public ones
     fireEvent.click(await screen.findByRole("button", { name: "More" }));
-    const dialog = await screen.findByRole("dialog", { name: "Navigation" });
+    const dialog = await screen.findByRole("dialog", { name: "All pages" });
     for (const name of [
       "Placement plan",
       "DSA Arena",
@@ -40,9 +40,7 @@ describe("the floating menu panel", () => {
       "aria-current",
       "page"
     );
-    expect(
-      screen.getByRole("link", { name: /Paste it\. Get hints, not spoilers/ })
-    ).toHaveAttribute("href", "/mentor");
+    expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument(); // the rest of the routes are all here too
     expect(screen.queryByText("GraphQL Lab")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Close/ }));
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
@@ -74,7 +72,7 @@ describe("the same header for visitors who are not signed in", () => {
       (await screen.findAllByRole("link", { name: "Audit My Readiness" })).length
     ).toBeGreaterThan(0);
     fireEvent.click(await screen.findByRole("button", { name: "More" }));
-    const dialog = await screen.findByRole("dialog", { name: "Navigation" });
+    const dialog = await screen.findByRole("dialog", { name: "All pages" });
     for (const name of ["DSA Arena", "DSA patterns", "DBMS", "Roadmap", "Sign in"]) {
       expect(dialog).toContainElement(screen.getAllByRole("link", { name })[0]!);
     }
