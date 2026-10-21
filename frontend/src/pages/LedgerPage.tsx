@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { EyeOff } from "lucide-react";
+import { ArrowRight, EyeOff } from "lucide-react";
 import type { ClaimInput, RoleSkill } from "@/types/contract";
 import { api } from "@/api/endpoints";
 import { useSessionState } from "@/state/useSession";
 import { ClaimRow } from "@/components/ledger/ClaimRow";
+import { FlowShell } from "@/components/common/FlowShell";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { GlassCard } from "@/components/ui/GlassCard";
 import { buttonClasses } from "@/lib/buttonClasses";
 import { routes } from "@/lib/routes";
 
@@ -35,17 +37,22 @@ export const LedgerPage: React.FC = () => {
 
   if (!state.sessionId) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-10">
-        <h1 className="mb-3 serif text-title font-medium text-ink-primary">
-          Claim ledger
-        </h1>
+      <FlowShell
+        current={2}
+        eyebrow="Evidence"
+        title={
+          <>
+            Claim <em>ledger</em>
+          </>
+        }
+      >
         <p className="mb-4 text-ink-secondary">
           No session yet. Start by adding your resume.
         </p>
-        <Link to={routes.setup} className={buttonClasses("primary")}>
+        <Link to={routes.setup} className={buttonClasses("primary", "md", "rounded-full")}>
           Go to setup
         </Link>
-      </div>
+      </FlowShell>
     );
   }
   const sessionId = state.sessionId;
@@ -74,33 +81,40 @@ export const LedgerPage: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-8 sm:py-14">
-      <h1 className="mb-3 serif text-title font-medium text-ink-primary">Claim ledger</h1>
-      <p className="mb-8 max-w-xl leading-relaxed text-ink-secondary">
-        Check what we extracted. Edit wording, fix the skill, or delete anything you
-        don&apos;t want probed.
-      </p>
+    <FlowShell
+      current={2}
+      eyebrow="Evidence"
+      title={
+        <>
+          Claim <em>ledger</em>
+        </>
+      }
+      description="Check what we extracted. Edit wording, fix the skill, or delete anything you don’t want probed."
+    >
 
       {state.blindSpots.length > 0 && (
-        <section aria-labelledby="blind-heading" className="mb-6">
-          <h2 id="blind-heading" className="eyebrow mb-3">
-            Required by the role but never claimed
-          </h2>
+        <GlassCard
+          id="blind"
+          icon={EyeOff}
+          title="Required by the role but never claimed"
+          sub="Skills the role needs that your resume does not mention."
+          className="mb-5"
+        >
           <ul className="flex flex-wrap gap-2">
             {state.blindSpots.map((b) => (
               <li
                 key={b.skill_id}
-                className="inline-flex items-center gap-1.5 rounded-sm bg-skill-blind_spot-bg px-2 py-1 text-xs font-medium text-skill-blind_spot-fg"
+                className="inline-flex items-center gap-1.5 rounded-full bg-skill-blind_spot-bg px-3 py-1 text-xs font-medium text-skill-blind_spot-fg"
               >
                 <EyeOff size={14} aria-hidden="true" />
                 Blind spot: {b.name}
               </li>
             ))}
           </ul>
-        </section>
+        </GlassCard>
       )}
 
-      <ul className="mb-8 grid gap-4" aria-label="Claims">
+      <ul className="mb-6 grid gap-3" aria-label="Claims">
         {rows.map((row, i) => (
           <ClaimRow
             key={row.id ?? `new-${i}`}
@@ -122,10 +136,11 @@ export const LedgerPage: React.FC = () => {
         onClick={confirm}
         disabled={!canStart}
         aria-busy={busy}
-        className={buttonClasses("primary")}
+        className={buttonClasses("primary", "md", "rounded-full bg-redline px-6 text-surface-50 hover:bg-redline-dark")}
       >
         {busy ? "Saving your claims…" : "Start interrogation"}
+        {!busy && <ArrowRight aria-hidden="true" />}
       </button>
-    </div>
+    </FlowShell>
   );
 };

@@ -37,12 +37,12 @@ const ReportPage: React.FC<{ demo?: boolean }> = ({ demo = false }) => {
 
   if (error !== null && !report) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-10">
+      <div className="w-full px-4 py-10 sm:px-5 lg:pl-5 lg:pr-6">
         <h1 className="mb-4 serif text-title font-medium text-ink-primary">
           Readiness report
         </h1>
         <ErrorState error={error} onRetry={refresh} />
-        <Link to={routes.setup} className={buttonClasses("secondary", "md", "mt-4")}>
+        <Link to={routes.setup} className={buttonClasses("secondary", "md", "mt-4 rounded-full")}>
           Start a new audit
         </Link>
       </div>
@@ -50,7 +50,7 @@ const ReportPage: React.FC<{ demo?: boolean }> = ({ demo = false }) => {
   }
   if (!report) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-10">
+      <div className="w-full px-4 py-10 sm:px-5 lg:pl-5 lg:pr-6">
         <h1 className="mb-4 serif text-title font-medium text-ink-primary">
           Readiness report
         </h1>

@@ -37,7 +37,7 @@ export const RetestStatus: React.FC<RetestStatusProps> = ({ claim, sessionId }) 
     return (
       <Link
         to={routes.workspace(sessionId, claim.id, "retest")}
-        className={buttonClasses("primary", "sm")}
+        className={buttonClasses("primary", "sm", "rounded-full")}
       >
         <RotateCcw size={14} aria-hidden="true" />
         Retest ready

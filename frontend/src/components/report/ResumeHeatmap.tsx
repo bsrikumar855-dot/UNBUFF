@@ -2,6 +2,8 @@ import React from "react";
 import type { Claim, ResumeLine } from "@/types/contract";
 import { VerdictBadge } from "@/components/ui/StatusBadge";
 import { VERDICT_CONFIG } from "@/styles/tokens";
+import { GLASS } from "@/components/ui/GlassCard";
+import { cn } from "@/lib/cn";
 
 interface ResumeHeatmapProps {
   lines: ResumeLine[];
@@ -35,13 +37,10 @@ export const ResumeHeatmap: React.FC<ResumeHeatmapProps> = ({
         }));
 
   return (
-    <section
-      aria-labelledby="heatmap-heading"
-      className="border-t border-ink-primary pt-4"
-    >
+    <section aria-labelledby="heatmap-heading" className={cn(GLASS, "p-5 sm:p-6")}>
       <h2
         id="heatmap-heading"
-        className="mb-1 text-heading font-semibold text-ink-primary"
+        className="mb-1 serif text-heading font-medium text-ink-primary"
       >
         {lines.length > 0 ? "Resume heatmap" : "Claims"}
       </h2>
@@ -64,7 +63,7 @@ export const ResumeHeatmap: React.FC<ResumeHeatmapProps> = ({
                 type="button"
                 onClick={() => onOpen(row.text, row.claimIds)}
                 aria-label={`Resume line: ${row.text}. Verdict: ${cfg.label}. Open evidence.`}
-                className="flex w-full flex-wrap items-center justify-between gap-2 rounded-md border-l-4 px-3 py-2 text-left text-sm text-ink-primary hover:brightness-95"
+                className="flex w-full flex-wrap items-center justify-between gap-2 rounded-2xl border-l-4 px-4 py-2.5 text-left text-sm text-ink-primary hover:brightness-95"
                 style={{ borderLeftColor: cfg.fg, backgroundColor: cfg.bg }}
               >
                 <span className="min-w-0 flex-1 wrap-break-word">{row.text}</span>

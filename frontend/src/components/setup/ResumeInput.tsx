@@ -78,7 +78,7 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({ value, onChange }) => 
           />
           <label
             htmlFor="resume-pdf-upload"
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-line-strong bg-surface px-3 py-1.5 text-xs font-medium text-ink-primary transition-colors hover:bg-surface-100"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-line-strong bg-white/70 px-3.5 py-1.5 text-xs font-medium text-ink-primary transition-colors hover:bg-white"
           >
             <Upload size={14} aria-hidden="true" />
             Upload PDF
@@ -94,7 +94,7 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({ value, onChange }) => 
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         className={cn(
-          "rounded-md border transition-colors",
+          "rounded-2xl border border-dashed bg-white/50 transition-colors",
           isDragging ? "border-redline bg-redline-soft" : "border-line-strong"
         )}
       >
@@ -107,7 +107,7 @@ export const ResumeInput: React.FC<ResumeInputProps> = ({ value, onChange }) => 
           }}
           placeholder="Paste your resume text here, or drag a PDF onto this box…"
           rows={10}
-          className="w-full resize-y rounded-md bg-transparent p-4 text-sm leading-relaxed text-ink-primary placeholder:text-ink-subtle focus:outline-hidden"
+          className="w-full resize-y rounded-2xl bg-transparent p-4 text-sm leading-relaxed text-ink-primary placeholder:text-ink-subtle focus:outline-hidden"
         />
       </div>
 

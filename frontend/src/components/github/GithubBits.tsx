@@ -8,6 +8,7 @@ import {
   heatLevel,
   monthLabel,
 } from "@/lib/github";
+import { TILE } from "@/components/ui/GlassCard";
 import { cn } from "@/lib/cn";
 import type {
   GithubCalendarWeek,
@@ -73,7 +74,7 @@ export const Heatmap: React.FC<{
                 key={d.date}
                 title={`${d.date}: ${d.count} contribution${d.count === 1 ? "" : "s"}`}
                 className={cn(
-                  "aspect-square w-full rounded-[1px]",
+                  "aspect-square w-full rounded-[3px]",
                   LEVEL[heatLevel(d.count, max)]
                 )}
               />
@@ -101,9 +102,9 @@ export const PeriodBars: React.FC<{
           <span className="w-24 shrink-0 text-ink-secondary">
             {month ? monthLabel(r.period) : r.period.slice(5)}
           </span>
-          <div className="h-1.5 flex-1 overflow-hidden bg-surface-200" aria-hidden="true">
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-200" aria-hidden="true">
             <div
-              className="h-full bg-ink-primary"
+              className="h-full rounded-full bg-ink-primary"
               style={{ width: `${(r.total / max) * 100}%` }}
             />
           </div>
@@ -122,12 +123,12 @@ export const Checklist: React.FC<{ items: GithubChecklistItem[] }> = ({ items })
   for (const i of items)
     byRepo.set(i.repository, [...(byRepo.get(i.repository) ?? []), i]);
   return (
-    <div className="flex flex-col gap-6">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-2">
       {[...byRepo.entries()].map(([repo, list]) => (
         <section
           key={repo}
           aria-label={`Checklist for ${repo}`}
-          className="border-t border-line pt-3"
+          className={cn(TILE, "p-4")}
         >
           <h3 className="text-[15px] font-semibold text-ink-primary">{repo}</h3>
           <ul className="mt-2 flex flex-col gap-1.5">

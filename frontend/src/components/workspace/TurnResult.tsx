@@ -20,7 +20,7 @@ export const TurnResult: React.FC<{ turn: TurnResponse }> = ({ turn }) => {
         <span className="text-sm text-ink-muted">Levels passed {claim.levels_passed}/3</span>
       </div>
       {claim.root_cause && (
-        <p className="mb-3 rounded-md border-l-4 border-verdict-shaky-fg bg-verdict-shaky-bg px-3 py-2 text-sm text-verdict-shaky-fg">
+        <p className="mb-3 rounded-2xl border-l-4 border-verdict-shaky-fg bg-verdict-shaky-bg px-4 py-2.5 text-sm text-verdict-shaky-fg">
           <span className="font-bold">Root cause: </span>
           {claim.root_cause}
         </p>

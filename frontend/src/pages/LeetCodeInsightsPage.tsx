@@ -1,7 +1,22 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  BarChart3,
+  Code2,
+  FileStack,
+  Gauge,
+  GitCompare,
+  History,
+  Layers,
+  ListChecks,
+  MessageCircle,
+  ShieldCheck,
+  TrendingUp,
+  Trophy,
+  type LucideIcon,
+} from "lucide-react";
 import { api } from "@/api/endpoints";
-import { Stat } from "@/components/dsa/AnalyticsBits";
+import { StatTile } from "@/components/dsa/AnalyticsBits";
 import {
   DifficultyBars,
   HistoryBars,
@@ -15,7 +30,9 @@ import { ImportPanel } from "@/components/leetcode/ImportPanel";
 import { LeetCodeConnectionPanel } from "@/components/leetcode/LeetCodeConnectionPanel";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { GLASS, GlassCard, TILE } from "@/components/ui/GlassCard";
 import { Page, PageHeader } from "@/components/ui/Page";
+import { cn } from "@/lib/cn";
 import { formatDay, LEETCODE_STARTERS } from "@/lib/leetcode";
 import { routes } from "@/lib/routes";
 import type {
@@ -24,20 +41,28 @@ import type {
   LeetCodeInsightsResponse,
 } from "@/types/contract";
 
+const BLOCK_ICON: Record<string, LucideIcon> = {
+  "lc-empty": BarChart3,
+  "lc-totals": ListChecks,
+  "lc-sep": GitCompare,
+  "lc-diff": Layers,
+  "lc-topics": Code2,
+  "lc-contest": Trophy,
+  "lc-activity": Gauge,
+  "lc-trend": TrendingUp,
+  "lc-ask": MessageCircle,
+  "lc-history": History,
+};
+
 const Block: React.FC<{
   id: string;
   title: string;
   intro?: string;
   children: React.ReactNode;
 }> = ({ id, title, intro, children }) => (
-  <section aria-labelledby={id} className="border-t border-ink-primary pt-4">
-    <h2 id={id} className="mb-1 text-heading font-semibold text-ink-primary">
-      {title}
-    </h2>
-    {intro && <p className="mb-4 text-sm text-ink-secondary">{intro}</p>}
-    {!intro && <div className="mb-3" />}
+  <GlassCard id={id} icon={BLOCK_ICON[id] ?? FileStack} title={title} sub={intro}>
     {children}
-  </section>
+  </GlassCard>
 );
 
 /**
@@ -97,10 +122,32 @@ const LeetCodeInsightsPage: React.FC = () => {
   );
 
   return (
-    <Page width="default">
+    <Page width="fluid" className="sm:px-5 lg:pl-5 lg:pr-6">
       <PageHeader
         eyebrow="Evidence"
-        title="LeetCode"
+        title={
+          <>
+            LeetCode <em>insights</em>
+          </>
+        }
+        actions={
+          <div className={cn(GLASS, "flex max-w-sm items-center gap-3.5 px-5 py-4")}>
+            <span
+              aria-hidden="true"
+              className="grid size-12 shrink-0 place-items-center rounded-full bg-white text-redline shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08)]"
+            >
+              <ShieldCheck size={22} strokeWidth={1.75} />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-ink-primary">Self-reported data only</p>
+              <p className="mt-0.5 text-xs leading-snug text-ink-secondary">
+                {lookupAvailable
+                  ? "Numbers are not kept in sync with LeetCode and are not verified as yours."
+                  : "UNBLUFF never connects to LeetCode. No live sync, no verification, and no contact with LeetCode."}
+              </p>
+            </div>
+          </div>
+        }
         description={
           <>
             {lookupAvailable
@@ -124,8 +171,8 @@ const LeetCodeInsightsPage: React.FC = () => {
       )}
 
       {data && (
-        <div className="flex flex-col gap-12">
-          <div className="grid gap-6 lg:grid-cols-2">
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-2">
             <LeetCodeConnectionPanel
               initial={data.connection}
               onChanged={onConnectionChanged}
@@ -151,13 +198,13 @@ const LeetCodeInsightsPage: React.FC = () => {
             <>
               <Block id="lc-totals" title="Problems solved, as you reported them">
                 <SourceBanner source={data.source} />
-                <div className="mt-4 grid grid-cols-2 border-y border-ink-primary sm:grid-cols-4 sm:divide-x sm:divide-line">
-                  <Stat label="Total solved" hint="the total you supplied">
+                <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <StatTile icon={ListChecks} label="Total solved" hint="the total you supplied">
                     {data.totals.solved}
-                  </Stat>
-                  <Stat label="Easy">{data.totals.easy ?? "–"}</Stat>
-                  <Stat label="Medium">{data.totals.medium ?? "–"}</Stat>
-                  <Stat label="Hard">{data.totals.hard ?? "–"}</Stat>
+                  </StatTile>
+                  <StatTile icon={Gauge} label="Easy">{data.totals.easy ?? "–"}</StatTile>
+                  <StatTile icon={Gauge} label="Medium">{data.totals.medium ?? "–"}</StatTile>
+                  <StatTile icon={Gauge} label="Hard">{data.totals.hard ?? "–"}</StatTile>
                 </div>
                 {data.connection.profile_url && (
                   <p className="mt-3 text-sm text-ink-secondary">
@@ -208,10 +255,10 @@ const LeetCodeInsightsPage: React.FC = () => {
 
               <Block id="lc-contest" title="Contests">
                 {data.contest ? (
-                  <div className="grid grid-cols-3 border-y border-ink-primary divide-x divide-line">
-                    <Stat label="Rating">{data.contest.rating ?? "–"}</Stat>
-                    <Stat label="Global rank">{data.contest.global_rank ?? "–"}</Stat>
-                    <Stat label="Attended">{data.contest.attended ?? "–"}</Stat>
+                  <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-3">
+                    <StatTile icon={Trophy} label="Rating">{data.contest.rating ?? "–"}</StatTile>
+                    <StatTile icon={TrendingUp} label="Global rank">{data.contest.global_rank ?? "–"}</StatTile>
+                    <StatTile icon={ListChecks} label="Attended">{data.contest.attended ?? "–"}</StatTile>
                   </div>
                 ) : (
                   <Unavailable
@@ -233,7 +280,7 @@ const LeetCodeInsightsPage: React.FC = () => {
                     </p>
                     <ul
                       aria-label="Activity you supplied"
-                      className="mt-3 grid gap-x-10 border-t border-line text-sm sm:grid-cols-2 [&>li]:flex [&>li]:justify-between [&>li]:border-b [&>li]:border-line [&>li]:py-1.5"
+                      className="mt-3 grid gap-2 text-sm sm:grid-cols-2 [&>li]:flex [&>li]:justify-between [&>li]:rounded-xl [&>li]:bg-white/60 [&>li]:px-3.5 [&>li]:py-2 [&>li]:shadow-[inset_0_0_0_1px_rgba(24,24,27,0.06)]"
                     >
                       {[...data.activity.items]
                         .reverse()
@@ -318,7 +365,7 @@ const LeetCodeInsightsPage: React.FC = () => {
             </Block>
           )}
 
-          <ul className="list-disc pl-5 text-xs text-ink-muted">
+          <ul className={cn(TILE, "list-disc px-9 py-3 text-xs text-ink-muted")}>
             {data.notes.map((n) => (
               <li key={n}>{n}</li>
             ))}

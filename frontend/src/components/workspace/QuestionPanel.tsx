@@ -32,12 +32,12 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({ turn, busy, onSubm
       <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
         <span>Level {turn.level}</span>
         {turn.turn === "clarify" && (
-          <span className="rounded-sm bg-verdict-shaky-bg px-2 py-0.5 normal-case text-verdict-shaky-fg">
+          <span className="rounded-full bg-verdict-shaky-bg px-2.5 py-0.5 normal-case text-verdict-shaky-fg">
             Follow-up — be more specific
           </span>
         )}
         {turn.mode === "retest" && (
-          <span className="rounded-sm bg-redline-soft px-2 py-0.5 normal-case text-redline-dark">Retest</span>
+          <span className="rounded-full bg-redline-soft px-2.5 py-0.5 normal-case text-redline-dark">Retest</span>
         )}
       </div>
       <h2 ref={headingRef} tabIndex={-1} className="mb-4 text-lg font-semibold text-ink-primary">
@@ -54,13 +54,13 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({ turn, busy, onSubm
           rows={7}
           maxLength={4000}
           disabled={busy}
-          className="w-full rounded-md border border-line-strong p-3 text-sm"
+          className="w-full rounded-2xl border border-line-strong bg-white/70 p-3.5 text-sm"
         />
         <div className="flex flex-wrap gap-2">
-          <Button type="submit" disabled={busy || !answer.trim()}>
+          <Button type="submit" className="rounded-full" disabled={busy || !answer.trim()}>
             Submit answer
           </Button>
-          <Button type="button" variant="outline" disabled={busy} onClick={() => onSubmit(IDK)}>
+          <Button type="button" variant="outline" className="rounded-full bg-white/70" disabled={busy} onClick={() => onSubmit(IDK)}>
             I don&apos;t know
           </Button>
         </div>

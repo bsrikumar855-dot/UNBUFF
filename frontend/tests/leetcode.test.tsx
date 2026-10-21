@@ -181,7 +181,7 @@ describe("the connection panel (Settings)", () => {
     expect(screen.queryByText(/Connected as/)).not.toBeInTheDocument();
     expect(screen.getByText(/Never enter a LeetCode password, cookie or session token/)).toBeInTheDocument();
     expect(screen.getByText("No numbers imported yet. A saved link alone shows no statistics.")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "GitHub" })).toBeInTheDocument(); // beside the GitHub panel
+    expect(screen.getByRole("heading", { name: /GitHub/ })).toBeInTheDocument(); // beside the GitHub panel
   });
 
   it("previews the profile address while typing, validates, and only links a valid one", async () => {
@@ -321,7 +321,7 @@ describe("the LeetCode page: empty and loading", () => {
     renderAt("/leetcode");
     expect(await screen.findByRole("heading", { name: "Your LeetCode insights" })).toBeInTheDocument();
     expect(screen.getByText(/Nothing to show yet/)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 1, name: "LeetCode" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "LeetCode insights" })).toBeInTheDocument();
     expect(screen.getByText(/They are your own reported data: not live, not synchronised, not verified/)).toBeInTheDocument();
     expect(screen.queryByText("Total solved")).not.toBeInTheDocument();
     expect(screen.queryByText("Compared with UNBLUFF, kept separate")).not.toBeInTheDocument();

@@ -8,6 +8,8 @@ import { VerdictBadge } from "@/components/ui/StatusBadge";
 import { FixTaskCard } from "@/components/common/FixTaskCard";
 import { isWeak } from "@/lib/format";
 import { RetestStatus } from "./RetestStatus";
+import { GLASS, TILE } from "@/components/ui/GlassCard";
+import { cn } from "@/lib/cn";
 
 interface PracticeSectionProps {
   claims: Claim[];
@@ -41,7 +43,7 @@ const PracticeRow: React.FC<{
 
   const shown = task ?? (claim.retest_status !== "none" ? claim.fix_task : null);
   return (
-    <li className="border-b border-line py-5">
+    <li className={cn(TILE, "p-4")}>
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <VerdictBadge verdict={claim.verdict} />
         <span className="text-sm font-medium text-ink-primary">{claim.text}</span>
@@ -54,7 +56,7 @@ const PracticeRow: React.FC<{
       <div className="flex flex-wrap items-center gap-2">
         <RetestStatus claim={claim} sessionId={sessionId} />
         {sessionId && isWeak(claim) && !shown && (
-          <Button variant="outline" size="sm" onClick={openTask} disabled={loading}>
+          <Button variant="outline" size="sm" className="rounded-full bg-white/70" onClick={openTask} disabled={loading}>
             Open fix task
           </Button>
         )}
@@ -79,17 +81,14 @@ export const PracticeSection: React.FC<PracticeSectionProps> = ({
   const rows = claims.filter((c) => isWeak(c) || c.retest !== null);
   if (rows.length === 0) return null;
   return (
-    <section
-      aria-labelledby="practice-heading"
-      className="border-t border-ink-primary pt-4"
-    >
+    <section aria-labelledby="practice-heading" className={cn(GLASS, "p-5 sm:p-6")}>
       <h2
         id="practice-heading"
-        className="mb-4 text-heading font-semibold text-ink-primary"
+        className="mb-4 serif text-heading font-medium text-ink-primary"
       >
         Practice &amp; retest
       </h2>
-      <ul className="border-t border-line">
+      <ul className="grid gap-3">
         {rows.map((c) => (
           <PracticeRow key={c.id} claim={c} sessionId={sessionId} onChanged={onChanged} />
         ))}

@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { GrowBar } from "@/components/motion/GrowBar";
 import { Button } from "@/components/ui/button";
+import { TILE } from "@/components/ui/GlassCard";
 import { Tag } from "@/components/ui/Tag";
+import { cn } from "@/lib/cn";
 import { FRESHNESS_LABEL, SOURCE_LABEL, formatDay, formatWhen } from "@/lib/leetcode";
 import type { LeetCodeInsightsResponse, LeetCodeSnapshotSummary } from "@/types/contract";
 
@@ -14,7 +16,7 @@ export const SourceBanner: React.FC<{
 }> = ({ source }) => (
   <div
     role="note"
-    className="border-l-2 border-line-strong pl-3 text-sm text-ink-secondary"
+    className={cn(TILE, "px-4 py-3 text-sm text-ink-secondary")}
   >
     <p>
       <span className="font-medium text-ink-primary">{source.label}.</span> Captured{" "}
@@ -66,7 +68,7 @@ export const DifficultyBars: React.FC<{
         <GrowBar
           value={r.share_of_solved}
           delay={i * 0.06}
-          className="mt-2 h-2 bg-surface-100"
+          className="mt-2 h-2.5 overflow-hidden rounded-full bg-surface-200"
           barClassName="bg-ink-primary/80"
         />
       </li>
@@ -91,7 +93,7 @@ export const TopicList: React.FC<{
           </div>
           <GrowBar
             value={t.solved / top}
-            className="mt-1.5 h-1.5 bg-surface-100"
+            className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-200"
             barClassName="bg-ink-primary/60"
           />
         </li>
@@ -119,7 +121,7 @@ export const HistoryBars: React.FC<{ rows: LeetCodeInsightsResponse["history"] }
           <GrowBar
             value={r.solved / max}
             delay={i * 0.05}
-            className="mt-1.5 h-2 bg-surface-100"
+            className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-surface-200"
             barClassName="bg-redline/70"
           />
         </li>
@@ -133,10 +135,10 @@ export const SeparationPanel: React.FC<{ data: LeetCodeInsightsResponse }> = ({
   data,
 }) => (
   <div
-    className="grid gap-px border border-line bg-line sm:grid-cols-2"
+    className="grid gap-3 sm:grid-cols-2"
     aria-label="Imported numbers compared with UNBLUFF's judged results, kept separate"
   >
-    <div className="bg-surface p-4">
+    <div className={cn(TILE, "p-4")}>
       <p className="eyebrow">Reported by you from LeetCode</p>
       <p className="num mt-2 text-3xl font-medium leading-none text-ink-primary">
         {data.totals?.solved ?? "–"}
@@ -145,7 +147,7 @@ export const SeparationPanel: React.FC<{ data: LeetCodeInsightsResponse }> = ({
         Imported, unverified, as of {formatDay(data.source?.captured_at ?? null)}.
       </p>
     </div>
-    <div className="bg-surface p-4">
+    <div className={cn(TILE, "p-4")}>
       <p className="eyebrow">Judged in UNBLUFF</p>
       <p className="num mt-2 text-3xl font-medium leading-none text-ink-primary">
         {data.unbluff.judged_solved_unique ?? "–"}
@@ -158,7 +160,7 @@ export const SeparationPanel: React.FC<{ data: LeetCodeInsightsResponse }> = ({
             : "Nothing counted yet: UNBLUFF counts only submissions its own judge verified."}
       </p>
     </div>
-    <p className="col-span-full bg-surface px-4 py-3 text-xs text-ink-secondary">
+    <p className="col-span-full px-1 text-xs text-ink-secondary">
       These are two different things and are never added together. Imported numbers do not
       mark any UNBLUFF question as solved, create submissions, or change your DSA
       analytics, revision queue or acceptance rates.
@@ -174,11 +176,11 @@ export const SnapshotList: React.FC<{
   const [asking, setAsking] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   return (
-    <ul aria-label="Imported snapshots" className="border-t border-line text-sm">
+    <ul aria-label="Imported snapshots" className="flex flex-col gap-2 text-sm">
       {snapshots.map((s) => (
         <li
           key={s.id}
-          className="flex flex-wrap items-center justify-between gap-2 border-b border-line py-2.5"
+          className={cn(TILE, "flex flex-wrap items-center justify-between gap-2 px-4 py-3")}
         >
           <span className="text-ink-primary">
             <span className="num font-medium">{s.solved}</span> solved · captured{" "}
@@ -198,6 +200,7 @@ export const SnapshotList: React.FC<{
             >
               <Button
                 size="sm"
+                className="rounded-full"
                 disabled={busy !== null}
                 onClick={() => {
                   setBusy(s.id);
@@ -209,7 +212,7 @@ export const SnapshotList: React.FC<{
               >
                 {busy === s.id ? "Removing…" : "Yes, remove"}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setAsking(null)}>
+              <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setAsking(null)}>
                 Keep
               </Button>
             </span>
@@ -217,6 +220,7 @@ export const SnapshotList: React.FC<{
             <Button
               size="sm"
               variant="ghost"
+              className="rounded-full"
               onClick={() => setAsking(s.id)}
               aria-label={`Remove the snapshot captured ${formatDay(s.captured_at)}`}
             >

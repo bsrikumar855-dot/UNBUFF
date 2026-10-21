@@ -1,12 +1,28 @@
+import {
+  BarChart3,
+  Info,
+  Lightbulb,
+  MessageSquare,
+  Pencil,
+  Save,
+  ShieldCheck,
+  Trash2,
+  User,
+  FileText,
+  ListChecks,
+  type LucideIcon,
+} from "lucide-react";
 import { ResumeSkillsSection } from "@/components/career/ResumeSkills";
 import React, { useCallback, useEffect, useState } from "react";
 import { api } from "@/api/endpoints";
 import { Pager } from "@/components/dsa/DsaBits";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { GLASS, TILE } from "@/components/ui/GlassCard";
 import { Page, PageHeader } from "@/components/ui/Page";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { PROVENANCE_LABEL, TYPE_EXPLAIN, TYPE_LABEL } from "@/lib/mentor";
+import { cn } from "@/lib/cn";
 import { routes } from "@/lib/routes";
 import type {
   CodeLanguageId,
@@ -25,7 +41,7 @@ const LANGS: { id: CodeLanguageId; label: string }[] = [
   { id: "cpp", label: "C++" },
   { id: "java", label: "Java" },
 ];
-const field = "w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm";
+const field = "w-full rounded-xl border border-line-strong bg-white/70 px-3 py-2 text-sm";
 const csv = (s: string) =>
   s
     .split(",")
@@ -67,138 +83,304 @@ const MentorMemoryPage: React.FC = () => {
   };
 
   return (
-    <Page className="max-w-4xl">
+    <Page width="fluid" className="sm:px-5 lg:pl-5 lg:pr-6">
       <PageHeader
         crumbs={[{ label: "AI Mentor", to: routes.mentor() }, { label: "Memory" }]}
         eyebrow="Account"
-        title="What your mentor remembers"
-      />
-
-      <section
-        aria-labelledby="why-heading"
-        className="border-l-2 border-ink-primary bg-surface-100/60 py-4 pl-5 pr-4 text-sm leading-relaxed text-ink-secondary"
-      >
-        <h2 id="why-heading" className="mb-2 text-heading font-semibold text-ink-primary">
-          What is kept, and why
-        </h2>
-        <p>
-          The mentor saves a few things so it does not start from zero each time: your
-          profile and goals, notes about what you say you understand or find hard, and
-          short summaries of longer conversations. Only things you actually said are saved
-          as notes. Your practice results are never copied here: the mentor reads them
-          live from your verified submissions, so they cannot go stale.
-        </p>
-        {data && (
-          <ul className="mt-2 list-disc pl-5">
-            <li>
-              Conversations are deleted {data.retention.conversation_days} days after
-              their last message.
-            </li>
-            <li>
-              Learning notes expire after {data.retention.learning_days} days; summaries
-              after {data.retention.summary_days} days.
-            </li>
-            <li>Profile and goals stay {data.retention.profile_and_goals}.</li>
-          </ul>
-        )}
-        <p className="mt-2">
-          Deleting memory here never deletes your submissions, progress, analytics or
-          interview results. Messages are sent to the AI model to produce answers; avoid
-          sharing passwords or personal identifiers.
-        </p>
-      </section>
-
-      <ProfileForm onSaved={reload} />
-
-      <ResumeSkillsSection />
-
-      <section
-        aria-labelledby="memories-heading"
-        className="mt-10 border-t border-ink-primary pt-4"
-      >
-        <h2
-          id="memories-heading"
-          className="mb-4 text-heading font-semibold text-ink-primary"
-        >
-          Saved memories
-        </h2>
-        <div
-          role="tablist"
-          aria-label="Memory type"
-          className="mb-3 flex flex-wrap gap-2"
-        >
-          {(["all", ...TYPES] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              role="tab"
-              aria-selected={tab === t}
-              onClick={() => {
-                setTab(t);
-                setPage(1);
-              }}
-              className={`rounded-md border px-3 py-1.5 text-sm font-medium ${tab === t ? "border-redline bg-redline-soft text-redline-dark" : "border-line-strong bg-surface text-ink-primary hover:bg-surface-100"}`}
-            >
-              {t === "all" ? "All" : TYPE_LABEL[t]}
-              {data &&
-                ` (${t === "all" ? Object.values(data.counts).reduce((a, b) => a + b, 0) : data.counts[t]})`}
-            </button>
-          ))}
-        </div>
-        {tab !== "all" && (
-          <p className="mb-3 text-sm text-ink-secondary">{TYPE_EXPLAIN[tab]}</p>
-        )}
-
-        {error !== null && <ErrorState error={error} onRetry={reload} />}
-        {actionError !== null && <ErrorState error={actionError} className="mb-3" />}
-        {error === null && data === null && (
-          <LoadingState message="Loading your memories…" />
-        )}
-        {data && data.memories.length === 0 && (
-          <p className="rounded-md border border-line bg-surface p-4 text-sm text-ink-secondary">
-            Nothing saved here.
-          </p>
-        )}
-        {data && data.memories.length > 0 && (
-          <ul className="flex flex-col gap-3">
-            {data.memories.map((m) => (
-              <MemoryItem
-                key={m.id}
-                memory={m}
-                onSave={(body) => run(() => api.patchMentorMemory(m.id, body))}
-                onDelete={() => run(() => api.deleteMentorMemory(m.id))}
-              />
-            ))}
-          </ul>
-        )}
-        {data && (
-          <Pager page={data.page} totalPages={data.total_pages} onPage={setPage} />
-        )}
-        <AddGoal
-          onAdd={(content, questionId) =>
-            run(() =>
-              api.createMentorMemory({
-                type: "goal",
-                content,
-                ...(questionId
-                  ? {
-                      track: {
-                        kind: "question_solved" as const,
-                        question_id: questionId,
-                      },
-                    }
-                  : {}),
-              })
-            )
-          }
-        />
-      </section>
-
-      <ClearAll
-        onClear={(withConversations) =>
-          run(() => api.clearMentorMemories(withConversations))
+        title={
+          <>
+            What your mentor <em>remembers</em>
+          </>
         }
+        description="Manage your profile, learning notes and conversation summaries that help the mentor give you better, personalised advice."
       />
+
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 xl:grid-cols-[minmax(0,1fr)_21rem]">
+        <div className="flex min-w-0 flex-col">
+          <section
+            aria-labelledby="why-heading"
+            className={cn(
+              GLASS,
+              "flex gap-4 p-5 text-sm leading-relaxed text-ink-secondary sm:p-6"
+            )}
+          >
+            <span
+              aria-hidden="true"
+              className="hidden size-14 shrink-0 place-items-center rounded-full bg-redline-soft/70 text-redline sm:grid"
+            >
+              <ShieldCheck size={26} strokeWidth={1.6} />
+            </span>
+            <div>
+              <h2
+                id="why-heading"
+                className="mb-2 serif text-heading font-medium text-ink-primary"
+              >
+                What is kept, and why
+              </h2>
+              <p>
+                The mentor saves a few things so it does not start from zero each time:
+                your profile and goals, notes about what you say you understand or find
+                hard, and short summaries of longer conversations. Only things you
+                actually said are saved as notes. Your practice results are never copied
+                here: the mentor reads them live from your verified submissions, so they
+                cannot go stale.
+              </p>
+            </div>
+          </section>
+
+          {data && (
+            <ul className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-3">
+              {(
+                [
+                  [
+                    MessageSquare,
+                    "Conversations",
+                    `Conversations are deleted ${data.retention.conversation_days} days after their last message.`,
+                  ],
+                  [
+                    FileText,
+                    "Learning notes",
+                    `Learning notes expire after ${data.retention.learning_days} days; summaries after ${data.retention.summary_days} days.`,
+                  ],
+                  [
+                    User,
+                    "Profile and goals",
+                    `Profile and goals stay ${data.retention.profile_and_goals}.`,
+                  ],
+                ] as [LucideIcon, string, string][]
+              ).map(([Icon, title, text]) => (
+                <li key={title} className={cn(TILE, "flex items-start gap-3 p-4")}>
+                  <span
+                    aria-hidden="true"
+                    className="grid size-11 shrink-0 place-items-center rounded-2xl bg-redline-soft/70 text-redline"
+                  >
+                    <Icon size={20} strokeWidth={1.7} />
+                  </span>
+                  <div>
+                    <p className="font-semibold text-ink-primary">{title}</p>
+                    <p className="mt-0.5 text-xs leading-snug text-ink-secondary">
+                      {text}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <p
+            className={cn(
+              TILE,
+              "mt-4 flex items-start gap-3 px-4 py-3 text-sm text-ink-secondary"
+            )}
+          >
+            <Info
+              size={18}
+              aria-hidden="true"
+              className="mt-0.5 shrink-0 text-ink-muted"
+            />
+            <span>
+              Deleting memory here never deletes your submissions, progress, analytics or
+              interview results. Messages are sent to the AI model to produce answers;
+              avoid sharing passwords or personal identifiers.
+            </span>
+          </p>
+
+          <ProfileForm onSaved={reload} />
+
+          <ResumeSkillsSection />
+
+          <section
+            aria-labelledby="memories-heading"
+            className={cn(GLASS, "mt-5 p-5 sm:p-6")}
+          >
+            <h2
+              id="memories-heading"
+              className="mb-4 serif text-heading font-medium text-ink-primary"
+            >
+              Saved memories
+            </h2>
+            <div
+              role="tablist"
+              aria-label="Memory type"
+              className="mb-3 flex flex-wrap gap-2"
+            >
+              {(["all", ...TYPES] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t}
+                  onClick={() => {
+                    setTab(t);
+                    setPage(1);
+                  }}
+                  className={`rounded-full px-4 py-1.5 text-sm font-medium ${tab === t ? "bg-ink-primary text-surface-50" : "bg-white/70 text-ink-primary shadow-[inset_0_0_0_1px_rgba(24,24,27,0.1)] hover:bg-white"}`}
+                >
+                  {t === "all" ? "All" : TYPE_LABEL[t]}
+                  {data &&
+                    ` (${t === "all" ? Object.values(data.counts).reduce((a, b) => a + b, 0) : data.counts[t]})`}
+                </button>
+              ))}
+            </div>
+            {tab !== "all" && (
+              <p className="mb-3 text-sm text-ink-secondary">{TYPE_EXPLAIN[tab]}</p>
+            )}
+
+            {error !== null && <ErrorState error={error} onRetry={reload} />}
+            {actionError !== null && <ErrorState error={actionError} className="mb-3" />}
+            {error === null && data === null && (
+              <LoadingState message="Loading your memories…" />
+            )}
+            {data && data.memories.length === 0 && (
+              <p className={cn(TILE, "p-4 text-sm text-ink-secondary")}>
+                Nothing saved here.
+              </p>
+            )}
+            {data && data.memories.length > 0 && (
+              <ul className="flex flex-col gap-3">
+                {data.memories.map((m) => (
+                  <MemoryItem
+                    key={m.id}
+                    memory={m}
+                    onSave={(body) => run(() => api.patchMentorMemory(m.id, body))}
+                    onDelete={() => run(() => api.deleteMentorMemory(m.id))}
+                  />
+                ))}
+              </ul>
+            )}
+            {data && (
+              <Pager page={data.page} totalPages={data.total_pages} onPage={setPage} />
+            )}
+            <AddGoal
+              onAdd={(content, questionId) =>
+                run(() =>
+                  api.createMentorMemory({
+                    type: "goal",
+                    content,
+                    ...(questionId
+                      ? {
+                          track: {
+                            kind: "question_solved" as const,
+                            question_id: questionId,
+                          },
+                        }
+                      : {}),
+                  })
+                )
+              }
+            />
+          </section>
+
+          <ClearAll
+            onClear={(withConversations) =>
+              run(() => api.clearMentorMemories(withConversations))
+            }
+          />
+        </div>
+
+        <aside className="flex min-w-0 flex-col gap-5 xl:sticky xl:top-4">
+          <section className={cn(GLASS, "p-5")} aria-labelledby="glance-title">
+            <div className="flex items-start gap-3.5">
+              <span
+                aria-hidden="true"
+                className="grid size-11 shrink-0 place-items-center rounded-full bg-white text-redline shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08)]"
+              >
+                <BarChart3 size={20} strokeWidth={1.75} />
+              </span>
+              <div>
+                <h2
+                  id="glance-title"
+                  className="serif text-heading font-medium text-ink-primary"
+                >
+                  Memory at a glance
+                </h2>
+                <p className="mt-0.5 text-sm text-ink-secondary">
+                  A quick overview of what is saved and what you can edit.
+                </p>
+              </div>
+            </div>
+            <ul className="mt-4 flex flex-col divide-y divide-black/5">
+              {(
+                [
+                  [
+                    ShieldCheck,
+                    "Used to personalise answers",
+                    "Memory only helps the mentor tailor its advice to you.",
+                  ],
+                  [
+                    Pencil,
+                    "You can edit anything here",
+                    "Update your profile, goals or preferences any time.",
+                  ],
+                  [
+                    Trash2,
+                    "Delete your memory",
+                    "Remove saved profile, notes and summaries whenever you want.",
+                  ],
+                  [
+                    ListChecks,
+                    "Practice results are not stored",
+                    "The mentor reads your latest verified submissions live.",
+                  ],
+                ] as [LucideIcon, string, string][]
+              ).map(([Icon, title, text]) => (
+                <li
+                  key={title}
+                  className="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="grid size-9 shrink-0 place-items-center rounded-full bg-redline-soft/70 text-redline"
+                  >
+                    <Icon size={16} strokeWidth={1.8} />
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-ink-primary">{title}</p>
+                    <p className="text-xs leading-snug text-ink-secondary">{text}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className={cn(GLASS, "p-5")} aria-labelledby="tips-title">
+            <div className="flex items-start gap-3.5">
+              <span
+                aria-hidden="true"
+                className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-redline shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08)]"
+              >
+                <Lightbulb size={18} strokeWidth={1.75} />
+              </span>
+              <div>
+                <h2
+                  id="tips-title"
+                  className="serif text-heading font-medium text-ink-primary"
+                >
+                  Tips for better advice
+                </h2>
+                <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-ink-secondary">
+                  <li>Be specific about your target roles and companies.</li>
+                  <li>Mention the technologies you are most comfortable with.</li>
+                  <li>Keep your study time and timeline realistic.</li>
+                  <li>Choose an explanation style that works for you.</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <Button
+            type="submit"
+            form="mentor-profile-form"
+            className="w-full rounded-full bg-redline text-surface-50 hover:bg-redline-dark"
+          >
+            <Save aria-hidden="true" />
+            Save changes
+          </Button>
+          <p className="-mt-3 text-center text-xs text-ink-muted">
+            Saves the profile form on this page.
+          </p>
+        </aside>
+      </div>
     </Page>
   );
 };
@@ -216,7 +398,7 @@ const MemoryItem: React.FC<{
   const [confirm, setConfirm] = useState(false);
   const expires = when(m.expires_at);
   return (
-    <li className="rounded-lg border border-line bg-surface p-4 text-sm">
+    <li className={cn(TILE, "p-4 text-sm")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-medium text-ink-primary">
           {TYPE_LABEL[m.type]}
@@ -323,7 +505,7 @@ const AddGoal: React.FC<{
   const [questionId, setQuestionId] = useState("");
   return (
     <form
-      className="mt-4 flex flex-col gap-2 rounded-lg border border-line bg-surface p-4"
+      className={cn(TILE, "mt-4 flex flex-col gap-2 p-4")}
       onSubmit={async (e) => {
         e.preventDefault();
         if (!content.trim()) return;
@@ -415,11 +597,15 @@ const ProfileForm: React.FC<{ onSaved: () => void }> = ({ onSaved }) => {
 
   return (
     <form
+      id="mentor-profile-form"
       onSubmit={(e) => void save(e)}
       aria-labelledby="profile-heading"
-      className="mt-8 flex flex-col gap-4 rounded-lg border border-line bg-surface p-4"
+      className={cn(GLASS, "mt-5 flex flex-col gap-4 p-5 sm:p-6")}
     >
-      <h2 id="profile-heading" className="text-lg font-semibold text-ink-primary">
+      <h2
+        id="profile-heading"
+        className="serif text-heading font-medium text-ink-primary"
+      >
         Your profile
       </h2>
       <p className="text-sm text-ink-secondary">
@@ -592,11 +778,8 @@ const ClearAll: React.FC<{
   const [withConversations, setWithConversations] = useState(false);
   const [confirm, setConfirm] = useState(false);
   return (
-    <section
-      aria-labelledby="clear-heading"
-      className="mt-8 rounded-lg border border-line bg-surface p-4"
-    >
-      <h2 id="clear-heading" className="text-lg font-semibold text-ink-primary">
+    <section aria-labelledby="clear-heading" className={cn(GLASS, "mt-5 p-5 sm:p-6")}>
+      <h2 id="clear-heading" className="serif text-heading font-medium text-ink-primary">
         Clear everything
       </h2>
       <p className="mt-1 text-sm text-ink-secondary">

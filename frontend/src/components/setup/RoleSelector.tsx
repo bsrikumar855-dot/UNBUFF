@@ -12,7 +12,7 @@ function RoleSkeleton() {
   return (
     <div className="grid gap-3" aria-hidden="true">
       {[0, 1].map((i) => (
-        <div key={i} className="h-[72px] animate-pulse rounded-md border border-line bg-surface-100" />
+        <div key={i} className="h-[72px] animate-pulse rounded-2xl bg-white/60" />
       ))}
     </div>
   );

@@ -1,4 +1,6 @@
 import React from "react";
+import { GLASS } from "@/components/ui/GlassCard";
+import { cn } from "@/lib/cn";
 
 interface ScoreBlockProps {
   readiness: number;
@@ -12,11 +14,8 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 export const ScoreBlock: React.FC<ScoreBlockProps> = ({ readiness, coverage }) => {
   const dash = (Math.max(0, Math.min(100, readiness)) / 100) * CIRCUMFERENCE;
   return (
-    <section
-      aria-labelledby="score-heading"
-      className="rounded-lg border border-line bg-surface p-5"
-    >
-      <h2 id="score-heading" className="mb-4 text-heading font-semibold text-ink-primary">
+    <section aria-labelledby="score-heading" className={cn(GLASS, "p-5 sm:p-6")}>
+      <h2 id="score-heading" className="mb-4 serif text-heading font-medium text-ink-primary">
         Score
       </h2>
       <div className="flex flex-wrap items-center gap-6">
@@ -32,7 +31,7 @@ export const ScoreBlock: React.FC<ScoreBlockProps> = ({ readiness, coverage }) =
             cy="64"
             r={RADIUS}
             fill="none"
-            stroke="#E2DDCF"
+            stroke="#E7DFD2"
             strokeWidth="12"
           />
           <circle
@@ -40,9 +39,9 @@ export const ScoreBlock: React.FC<ScoreBlockProps> = ({ readiness, coverage }) =
             cy="64"
             r={RADIUS}
             fill="none"
-            stroke="#15130F"
+            stroke="#b3291a"
             strokeWidth="12"
-            strokeLinecap="butt"
+            strokeLinecap="round"
             strokeDasharray={`${dash} ${CIRCUMFERENCE}`}
             transform="rotate(-90 64 64)"
           />

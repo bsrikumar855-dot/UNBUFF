@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useId, useState } from "react";
 import { Link } from "react-router-dom";
+import { Link2 } from "lucide-react";
 import { api } from "@/api/endpoints";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { CardHead, GLASS, TILE } from "@/components/ui/GlassCard";
 import { LoadingState } from "@/components/ui/LoadingState";
 import {
   FRESHNESS_LABEL,
@@ -11,6 +13,7 @@ import {
   formatWhen,
   stateRows,
 } from "@/lib/leetcode";
+import { cn } from "@/lib/cn";
 import { routes } from "@/lib/routes";
 import type { LeetCodeConnection } from "@/types/contract";
 
@@ -169,11 +172,15 @@ export const LeetCodeConnectionPanel: React.FC<LeetCodeConnectionPanelProps> = (
   return (
     <section
       aria-labelledby="leetcode-conn-heading"
-      className="border border-ink-primary bg-surface p-5 sm:p-6"
+      className={cn(GLASS, "p-5 sm:p-7")}
     >
-      <h2 id="leetcode-conn-heading" className="eyebrow text-ink-primary">
-        LeetCode
-      </h2>
+      <CardHead
+        icon={Link2}
+        id="leetcode-conn-heading"
+        title="Link your public profile"
+        sub="Connect your public LeetCode profile using only your username."
+        className="mb-4"
+      />
       {lookupAvailable ? (
         <p className="mt-2 text-sm text-ink-primary">
           <strong>This is not an official connection.</strong> LeetCode has no official
@@ -191,16 +198,26 @@ export const LeetCodeConnectionPanel: React.FC<LeetCodeConnectionPanelProps> = (
 
       <ul
         aria-label="What is and is not true about this link"
-        className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2"
+        className="mt-4 grid gap-2.5 text-sm sm:grid-cols-2"
       >
         {stateRows(conn, lookupAvailable).map((r) => (
-          <li key={r.key} className="flex gap-2" data-state={r.key} data-on={r.on}>
+          <li
+            key={r.key}
+            className={cn(TILE, "flex gap-3 px-3.5 py-3")}
+            data-state={r.key}
+            data-on={r.on}
+          >
             <span
               aria-hidden="true"
-              className="mt-0.5 w-4 shrink-0 text-center font-mono text-xs text-ink-muted"
-            >
-              {r.key === "official" ? "–" : r.on ? "●" : "○"}
-            </span>
+              className={cn(
+                "mt-1.5 size-2.5 shrink-0 rounded-full",
+                r.on && r.key === "unverified"
+                  ? "bg-amber-500"
+                  : r.on && (r.key === "linked" || r.key === "imported")
+                    ? "bg-verified"
+                    : "bg-ink-muted/50"
+              )}
+            />
             <span>
               <span className="font-medium text-ink-primary">{r.label}</span>
               <span className="block text-xs leading-snug text-ink-muted">
@@ -245,12 +262,14 @@ export const LeetCodeConnectionPanel: React.FC<LeetCodeConnectionPanelProps> = (
             placeholder="for example lee215 or https://leetcode.com/u/lee215/"
             aria-describedby={`${inputId}-hint`}
             aria-invalid={touched && check.state === "invalid"}
-            className="min-h-10 w-full max-w-md rounded-md border border-line-strong bg-surface px-3 py-2 text-sm text-ink-primary"
+            className="min-h-11 w-full rounded-xl border border-line-strong bg-white/70 px-3.5 py-2 text-sm text-ink-primary"
           />
           <Button
             type="submit"
+            className="rounded-full"
             disabled={busy !== null || check.state !== "valid" || Boolean(unchanged)}
           >
+            <Link2 aria-hidden="true" />
             {busy === "link" ? "Saving…" : conn.linked ? "Update link" : "Link profile"}
           </Button>
         </div>
@@ -277,7 +296,7 @@ export const LeetCodeConnectionPanel: React.FC<LeetCodeConnectionPanelProps> = (
         </p>
       </form>
 
-      <div className="mt-4 border-t border-line pt-3 text-sm text-ink-secondary">
+      <div className="mt-4 border-t border-black/5 pt-3 text-sm text-ink-secondary">
         {imp.snapshot_count > 0 ? (
           <p>
             <strong className="text-ink-primary">Imported data:</strong>{" "}
@@ -312,7 +331,7 @@ export const LeetCodeConnectionPanel: React.FC<LeetCodeConnectionPanelProps> = (
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {lookupAvailable && conn.linked && !confirming && (
-          <Button size="sm" onClick={() => void refresh()} disabled={busy !== null}>
+          <Button size="sm" className="rounded-full" onClick={() => void refresh()} disabled={busy !== null}>
             {busy === "lookup" ? "Fetching…" : "Fetch my numbers from LeetCode"}
           </Button>
         )}
@@ -320,6 +339,7 @@ export const LeetCodeConnectionPanel: React.FC<LeetCodeConnectionPanelProps> = (
           <Button
             variant="ghost"
             size="sm"
+            className="rounded-full"
             onClick={() => setConfirming(true)}
             disabled={busy !== null}
           >
@@ -341,20 +361,21 @@ export const LeetCodeConnectionPanel: React.FC<LeetCodeConnectionPanelProps> = (
               <Button
                 size="sm"
                 variant="outline"
+                className="rounded-full bg-white/70"
                 onClick={() => void unlink("link")}
                 disabled={busy !== null}
               >
                 Keep my imported numbers
               </Button>
             )}
-            <Button size="sm" onClick={() => void unlink("all")} disabled={busy !== null}>
+            <Button size="sm" className="rounded-full" onClick={() => void unlink("all")} disabled={busy !== null}>
               {busy === "unlink"
                 ? "Removing…"
                 : conn.linked
                   ? "Delete them too"
                   : "Yes, delete them"}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
+            <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setConfirming(false)}>
               Cancel
             </Button>
           </span>

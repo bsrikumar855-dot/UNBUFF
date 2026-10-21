@@ -1,7 +1,9 @@
 import React, { useId, useRef, useState } from "react";
+import { FileUp } from "lucide-react";
 import { api } from "@/api/endpoints";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { CardHead, GLASS } from "@/components/ui/GlassCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   EMPTY_FORM,
@@ -14,6 +16,7 @@ import {
   readImportFile,
   type ManualForm,
 } from "@/lib/leetcode";
+import { cn } from "@/lib/cn";
 import type {
   LeetCodeConnection,
   LeetCodeImportConfirmResponse,
@@ -22,7 +25,7 @@ import type {
 } from "@/types/contract";
 
 const field =
-  "min-h-10 w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm text-ink-primary";
+  "min-h-10 w-full rounded-xl border border-line-strong bg-white/70 px-3 py-2 text-sm text-ink-primary";
 
 function download(name: string, text: string, type: string) {
   const url = URL.createObjectURL(new Blob([text], { type }));
@@ -186,12 +189,10 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({ connection, onImported
   return (
     <section
       aria-labelledby={`${id}-h`}
-      className="border border-ink-primary bg-surface p-5 sm:p-6"
+      className={cn(GLASS, "p-5 sm:p-7")}
     >
-      <h2 id={`${id}-h`} className="eyebrow text-ink-primary">
-        Import your own numbers
-      </h2>
-      <p className="mt-2 text-sm text-ink-secondary">
+      <CardHead icon={FileUp} id={`${id}-h`} title="Import your own numbers" className="mb-3" />
+      <p className="text-sm text-ink-secondary">
         Supply progress you have the right to use, from your own LeetCode profile or
         records. UNBLUFF checks it, shows it back, and stores it only after you confirm.
         It is saved as numbers{" "}
@@ -225,7 +226,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({ connection, onImported
             accept=".json,.csv,application/json,text/csv"
             onChange={(e) => void onFile(e.target.files?.[0])}
             disabled={busy !== null}
-            className="mt-1.5 block w-full max-w-md text-sm text-ink-secondary file:mr-3 file:min-h-9 file:rounded-md file:border file:border-line-strong file:bg-surface file:px-3 file:text-sm file:text-ink-primary"
+            className="mt-1.5 block w-full max-w-md rounded-2xl border-2 border-dashed border-line-strong bg-white/50 p-5 text-sm text-ink-secondary file:mr-3 file:min-h-9 file:rounded-full file:border file:border-line-strong file:bg-white file:px-4 file:text-sm file:text-ink-primary"
           />
           {fileError && (
             <p role="alert" className="mt-2 text-sm text-ink-primary">
@@ -399,7 +400,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({ connection, onImported
               />
             </label>
             <div className="sm:col-span-4">
-              <Button type="submit" variant="outline" disabled={busy !== null}>
+              <Button type="submit" variant="outline" className="rounded-full bg-white/70" disabled={busy !== null}>
                 {busy === "preview" ? "Checking…" : "Check these numbers"}
               </Button>
             </div>
@@ -416,7 +417,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({ connection, onImported
       {preview && !preview.valid && (
         <div
           role="alert"
-          className="mt-4 border-l-2 border-redline bg-surface-100/60 p-3 text-sm text-ink-primary"
+          className="mt-4 rounded-2xl bg-redline-soft/60 p-4 text-sm text-ink-primary shadow-[inset_0_0_0_1px_rgba(179,41,26,0.18)]"
         >
           <p className="font-medium">This data was not accepted. Nothing was stored.</p>
           <ul className="mt-2 list-disc pl-5">
@@ -427,7 +428,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({ connection, onImported
               </li>
             ))}
           </ul>
-          <Button variant="ghost" size="sm" className="mt-2" onClick={reset}>
+          <Button variant="ghost" size="sm" className="mt-2 rounded-full" onClick={reset}>
             Clear
           </Button>
         </div>
@@ -435,7 +436,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({ connection, onImported
 
       {preview?.valid && preview.snapshot && (
         <div
-          className="mt-4 border-t border-line pt-4"
+          className="mt-4 border-t border-black/5 pt-4"
           aria-label="Preview of what would be stored"
         >
           <h3 className="text-sm font-semibold text-ink-primary">
@@ -462,10 +463,10 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({ connection, onImported
             </p>
           ) : (
             <div className="mt-4 flex flex-wrap gap-2">
-              <Button onClick={() => void confirm()} disabled={busy !== null}>
+              <Button className="rounded-full" onClick={() => void confirm()} disabled={busy !== null}>
                 {busy === "confirm" ? "Importing…" : "Import these numbers"}
               </Button>
-              <Button variant="ghost" onClick={reset} disabled={busy !== null}>
+              <Button variant="ghost" className="rounded-full" onClick={reset} disabled={busy !== null}>
                 Discard
               </Button>
             </div>

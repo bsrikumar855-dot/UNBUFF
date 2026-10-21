@@ -62,23 +62,27 @@ export function CardRadioGroup<T extends string>({
             onClick={() => onChange(option.value)}
             onKeyDown={(event) => handleKeyDown(event, index)}
             className={cn(
-              "min-h-14 rounded-md border p-4 text-left transition-colors",
+              "min-h-14 rounded-2xl p-4 text-left transition-colors",
               selected
-                ? "border-ink-primary bg-surface-100 shadow-[inset_3px_0_0_0_var(--color-accent)]"
-                : "border-line-strong bg-surface hover:border-ink-primary"
+                ? "bg-redline-soft/60 shadow-[inset_0_0_0_1.5px_rgba(179,41,26,0.55)]"
+                : "bg-white/60 shadow-[inset_0_0_0_1px_rgba(24,24,27,0.1)] hover:bg-white"
             )}
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-semibold text-ink-primary">
                 {option.title}
               </span>
-              {selected && (
-                <Check
-                  size={16}
-                  className="shrink-0 text-ink-primary"
-                  aria-hidden="true"
-                />
-              )}
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "grid size-5 shrink-0 place-items-center rounded-full",
+                  selected
+                    ? "bg-redline text-surface-50"
+                    : "bg-white shadow-[inset_0_0_0_1.5px_rgba(24,24,27,0.25)]"
+                )}
+              >
+                {selected && <Check size={12} strokeWidth={3} />}
+              </span>
             </div>
             <p className="mt-1 text-sm leading-relaxed text-ink-secondary">
               {option.description}

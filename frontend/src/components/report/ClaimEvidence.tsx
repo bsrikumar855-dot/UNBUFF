@@ -20,7 +20,7 @@ const CRITERION_LABEL: Record<Criterion, string> = {
 };
 
 const Turn: React.FC<{ qa: QA }> = ({ qa }) => (
-  <li className="rounded-md border border-line p-3">
+  <li className="rounded-2xl border border-line p-3.5">
     <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-muted">
       L{qa.level} ·{" "}
       {qa.mode === "retest" ? "Retest" : qa.kind === "clarify" ? "Follow-up" : "Question"}
@@ -82,7 +82,7 @@ export const ClaimEvidence: React.FC<{ claim: Claim }> = ({ claim }) => (
     <h3 className="mb-3 font-semibold text-ink-primary">{claim.text}</h3>
 
     {claim.root_cause && (
-      <p className="mb-3 rounded-md border-l-4 border-verdict-shaky-fg bg-verdict-shaky-bg px-3 py-2 text-verdict-shaky-fg">
+      <p className="mb-3 rounded-2xl border-l-4 border-verdict-shaky-fg bg-verdict-shaky-bg px-4 py-2.5 text-verdict-shaky-fg">
         <span className="font-bold">Root cause: </span>
         {claim.root_cause}
       </p>
@@ -106,7 +106,7 @@ export const ClaimEvidence: React.FC<{ claim: Claim }> = ({ claim }) => (
     )}
 
     {claim.rewrite && (
-      <div className="rounded-md border border-line bg-surface-50 px-3 py-2">
+      <div className="rounded-2xl border border-line bg-surface-50 px-4 py-2.5">
         <p className="font-semibold text-ink-primary">Honest rewrite suggestion</p>
         <p className="text-ink-secondary">{claim.rewrite}</p>
       </div>

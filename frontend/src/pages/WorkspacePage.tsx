@@ -12,7 +12,9 @@ import { ClaimList } from "@/components/workspace/ClaimList";
 import { LevelTracker } from "@/components/workspace/LevelTracker";
 import { QuestionPanel } from "@/components/workspace/QuestionPanel";
 import { TurnResult } from "@/components/workspace/TurnResult";
+import { GLASS } from "@/components/ui/GlassCard";
 import { buttonClasses } from "@/lib/buttonClasses";
+import { cn } from "@/lib/cn";
 import { getErrorMessage } from "@/lib/errors";
 import { isWeak } from "@/lib/format";
 import { routes } from "@/lib/routes";
@@ -131,25 +133,26 @@ const WorkspacePage: React.FC = () => {
   const nextMode = progress?.next_mode ?? null;
 
   return (
-    <div className="mx-auto max-w-352 px-4 py-8 sm:px-8 sm:py-10">
+    <div className="w-full px-4 py-8 sm:px-5 sm:py-10 lg:pl-5 lg:pr-6">
+      <p className="eyebrow mb-2 text-redline">Evidence · Step 3 of 4</p>
       <h1 className="mb-2 serif text-title font-medium text-ink-primary">
-        Interrogation
+        <em>Interrogation</em>
       </h1>
       {progress && (
-        <p className="mb-4 text-sm text-ink-muted">
+        <p className="mb-5 text-sm text-ink-muted">
           {progress.claims_done} of {progress.claims_total} claims assessed
         </p>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[16rem_minmax(0,1fr)_14rem]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[17rem_minmax(0,1fr)_15rem]">
         <ClaimList claims={state.claims} activeId={turn?.claim_id ?? null} />
 
         <section
           aria-label="Question"
-          className="border border-line bg-surface p-5 sm:p-6"
+          className={cn(GLASS, "p-5 sm:p-7")}
         >
           {turn?.mode === "retest" && !done && (
-            <p className="mb-4 flex items-center gap-2 border-l-2 border-redline bg-surface-100/60 px-3 py-2 text-sm text-ink-primary">
+            <p className="mb-4 flex items-center gap-2 rounded-2xl bg-redline-soft/60 px-4 py-2.5 text-sm text-ink-primary">
               <RotateCcw size={16} aria-hidden="true" />
               {RETEST_BANNER}
             </p>
@@ -169,7 +172,7 @@ const WorkspacePage: React.FC = () => {
           {error !== null && turn && (
             <div
               role="alert"
-              className="mt-4 rounded-md border border-verdict-bluff-fg/30 bg-verdict-bluff-bg px-3 py-2 text-sm text-verdict-bluff-fg"
+              className="mt-4 rounded-2xl border border-verdict-bluff-fg/30 bg-verdict-bluff-bg px-4 py-2.5 text-sm text-verdict-bluff-fg"
             >
               {getErrorMessage(error)}
             </div>
@@ -182,7 +185,7 @@ const WorkspacePage: React.FC = () => {
             <div className="mt-5 grid gap-4">
               {fixTask ? (
                 <FixTaskCard task={fixTask}>
-                  <Button className="mt-4" onClick={() => setFixTask(null)}>
+                  <Button className="mt-4 rounded-full" onClick={() => setFixTask(null)}>
                     Got it, continue →
                   </Button>
                 </FixTaskCard>
@@ -192,6 +195,7 @@ const WorkspacePage: React.FC = () => {
                 turn.claim.retest_status === "none" && (
                   <Button
                     variant="outline"
+                    className="rounded-full bg-white/70"
                     onClick={() => openFixTask(turn.claim.id)}
                     disabled={busy !== null}
                   >
@@ -202,20 +206,21 @@ const WorkspacePage: React.FC = () => {
               {!fixTask && (
                 <div className="grid gap-2">
                   {nextMode === "retest" && (
-                    <p className="flex items-center gap-2 rounded-md bg-redline-soft px-3 py-2 text-sm text-redline-dark">
+                    <p className="flex items-center gap-2 rounded-2xl bg-redline-soft px-4 py-2.5 text-sm text-redline-dark">
                       <RotateCcw size={16} aria-hidden="true" />
                       {RETEST_BANNER}
                     </p>
                   )}
                   {nextId ? (
                     <Button
+                      className="rounded-full"
                       onClick={() => startClaim(nextId, nextMode ?? "assess")}
                       disabled={busy !== null}
                     >
                       {nextMode === "retest" ? "Start retest →" : "Next claim →"}
                     </Button>
                   ) : (
-                    <Button onClick={() => navigate(routes.report(sessionId))}>
+                    <Button className="rounded-full" onClick={() => navigate(routes.report(sessionId))}>
                       See my report →
                     </Button>
                   )}
@@ -228,7 +233,7 @@ const WorkspacePage: React.FC = () => {
               <ErrorState error={error} />
               <Link
                 to={routes.setup}
-                className={buttonClasses("secondary", "sm", "mt-3")}
+                className={buttonClasses("secondary", "sm", "mt-3 rounded-full")}
               >
                 Start over
               </Link>

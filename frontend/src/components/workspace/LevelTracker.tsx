@@ -1,5 +1,6 @@
 import React from "react";
 import { Check } from "lucide-react";
+import { GLASS } from "@/components/ui/GlassCard";
 import { cn } from "@/lib/cn";
 
 const LEVELS = [
@@ -18,7 +19,7 @@ interface LevelTrackerProps {
 export const LevelTracker: React.FC<LevelTrackerProps> = ({ current, levelsPassed }) => (
   <section
     aria-labelledby="levels-heading"
-    className="rounded-lg border border-line bg-surface p-4"
+    className={cn(GLASS, "p-4")}
   >
     <h2
       id="levels-heading"
@@ -36,8 +37,10 @@ export const LevelTracker: React.FC<LevelTrackerProps> = ({ current, levelsPasse
             key={l.n}
             aria-current={active ? "step" : undefined}
             className={cn(
-              "flex items-center gap-3 rounded-md border p-2 text-sm",
-              active ? "border-ink-primary bg-surface-100" : "border-line"
+              "flex items-center gap-3 rounded-2xl p-2.5 text-sm",
+              active
+                ? "bg-white shadow-[inset_0_0_0_1.5px_rgba(24,24,27,0.5)]"
+                : "bg-white/60 shadow-[inset_0_0_0_1px_rgba(24,24,27,0.07)]"
             )}
           >
             <span
