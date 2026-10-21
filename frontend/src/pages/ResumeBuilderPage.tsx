@@ -1,12 +1,30 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Download, Hammer, MessagesSquare, Save, Upload, X } from "lucide-react";
+import { m } from "motion/react";
+import {
+  Download,
+  FileText,
+  Gauge,
+  Hammer,
+  LayoutGrid,
+  MessagesSquare,
+  Save,
+  Settings,
+  Sparkles,
+  Target,
+  Upload,
+  X,
+  type LucideIcon,
+} from "lucide-react";
+import { SPRING_GLIDE } from "@/components/motion/ease";
 import { api } from "@/api/endpoints";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { PdfPreview } from "@/components/resume/PdfPreview";
+import { GLASS, GlassCard, TILE } from "@/components/ui/GlassCard";
 import { Page } from "@/components/ui/Page";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePdfExtractor } from "@/hooks/usePdfExtractor";
 import { cn } from "@/lib/cn";
 import {
@@ -37,11 +55,19 @@ const STATUS_STYLE = {
   fail: "border-verdict-bluff-fg text-ink-primary",
 } as const;
 
-const ScoreRing: React.FC<{ score: number }> = ({ score }) => {
+const ScoreRing: React.FC<{ score: number; className?: string }> = ({
+  score,
+  className,
+}) => {
   const r = 44;
   const c = 2 * Math.PI * r;
   return (
-    <svg viewBox="0 0 100 100" className="size-24 shrink-0" role="img" aria-label={`ATS score ${score} out of 100`}>
+    <svg
+      viewBox="0 0 100 100"
+      className={cn("size-24 shrink-0", className)}
+      role="img"
+      aria-label={`ATS score ${score} out of 100`}
+    >
       <circle cx="50" cy="50" r={r} fill="none" strokeWidth="9" className="stroke-line" />
       <circle
         cx="50"
@@ -54,7 +80,12 @@ const ScoreRing: React.FC<{ score: number }> = ({ score }) => {
         transform="rotate(-90 50 50)"
         className={cn("stroke-current", TONE[scoreTone(score)])}
       />
-      <text x="50" y="52" textAnchor="middle" className="fill-ink-primary font-mono text-[26px] font-semibold">
+      <text
+        x="50"
+        y="52"
+        textAnchor="middle"
+        className="fill-ink-primary font-mono text-[26px] font-semibold"
+      >
         {score}
       </text>
       <text x="50" y="68" textAnchor="middle" className="fill-ink-muted text-[9px]">
@@ -64,7 +95,11 @@ const ScoreRing: React.FC<{ score: number }> = ({ score }) => {
   );
 };
 
-const Chips: React.FC<{ items: string[]; tone: "have" | "miss"; empty: string }> = ({ items, tone, empty }) =>
+const Chips: React.FC<{ items: string[]; tone: "have" | "miss"; empty: string }> = ({
+  items,
+  tone,
+  empty,
+}) =>
   items.length === 0 ? (
     <p className="text-xs text-ink-muted">{empty}</p>
   ) : (
@@ -74,7 +109,9 @@ const Chips: React.FC<{ items: string[]; tone: "have" | "miss"; empty: string }>
           key={k}
           className={cn(
             "rounded-full border px-2 py-0.5 text-xs",
-            tone === "have" ? "border-verdict-defended-fg text-ink-primary" : "border-line-strong text-ink-secondary"
+            tone === "have"
+              ? "border-verdict-defended-fg text-ink-primary"
+              : "border-line-strong text-ink-secondary"
           )}
         >
           {k}
@@ -83,7 +120,11 @@ const Chips: React.FC<{ items: string[]; tone: "have" | "miss"; empty: string }>
     </ul>
   );
 
-const AtsPanel: React.FC<{ ats: AtsResult | null; scoring: boolean; error: unknown }> = ({ ats, scoring, error }) => {
+const AtsPanel: React.FC<{ ats: AtsResult | null; scoring: boolean; error: unknown }> = ({
+  ats,
+  scoring,
+  error,
+}) => {
   if (error !== null && ats === null) return <ErrorState error={error} />;
   if (ats === null) return <LoadingState message="Scoring your résumé…" />;
   return (
@@ -99,16 +140,26 @@ const AtsPanel: React.FC<{ ats: AtsResult | null; scoring: boolean; error: unkno
         </div>
       </div>
 
-      <ul aria-label="ATS checks" className="mt-4 divide-y divide-line border-y border-line">
+      <ul aria-label="ATS checks" className="mt-4 flex flex-col gap-2.5">
         {ats.checks.map((c) => (
-          <li key={c.id} className="py-2.5" data-check={c.id} data-status={c.status}>
+          <li
+            key={c.id}
+            className={cn(TILE, "p-3.5")}
+            data-check={c.id}
+            data-status={c.status}
+          >
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <span className="font-medium text-ink-primary">{c.label}</span>
               <span className="flex items-center gap-2 text-sm">
                 <span className="font-mono text-ink-secondary">
                   {c.score}/{c.max}
                 </span>
-                <span className={cn("rounded-full border px-2 py-0.5 text-xs", STATUS_STYLE[c.status])}>
+                <span
+                  className={cn(
+                    "rounded-full border px-2 py-0.5 text-xs",
+                    STATUS_STYLE[c.status]
+                  )}
+                >
                   {STATUS_LABEL[c.status]}
                 </span>
               </span>
@@ -123,15 +174,52 @@ const AtsPanel: React.FC<{ ats: AtsResult | null; scoring: boolean; error: unkno
         <h3 id="kw-heading" className="eyebrow text-ink-primary">
           Keywords
         </h3>
-        <p className="mt-0.5 text-xs text-ink-muted">Add a missing keyword only where it is true, in a project or role that shows it.</p>
+        <p className="mt-0.5 text-xs text-ink-muted">
+          Add a missing keyword only where it is true, in a project or role that shows it.
+        </p>
         <p className="mt-2 text-xs font-medium text-ink-secondary">Found</p>
-        <Chips items={ats.keywords.matched} tone="have" empty="None measured yet. Pick a target role or paste a job description." />
+        <Chips
+          items={ats.keywords.matched}
+          tone="have"
+          empty="None measured yet. Pick a target role or paste a job description."
+        />
         <p className="mt-2 text-xs font-medium text-ink-secondary">Not found</p>
         <Chips items={ats.keywords.missing} tone="miss" empty="Nothing missing." />
       </section>
     </div>
   );
 };
+
+const TABS: { value: string; label: string; icon: LucideIcon }[] = [
+  { value: "editor", label: "LaTeX Editor", icon: FileText },
+  { value: "templates", label: "Templates", icon: LayoutGrid },
+  { value: "ai", label: "AI Suggestions", icon: Sparkles },
+  { value: "ats", label: "ATS Score", icon: Gauge },
+  { value: "settings", label: "Settings", icon: Settings },
+];
+
+/** The target role. It is used by both the editor and the settings view, but only one of them is on screen at a time. */
+const RoleSelect: React.FC<{
+  roles: RoleSummary[];
+  value: string;
+  onChange: (v: string) => void;
+}> = ({ roles, value, onChange }) => (
+  <label className="block text-sm font-medium text-ink-primary">
+    Target role
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="mt-1.5 block min-h-10 w-full rounded-xl border border-line-strong bg-white/70 px-3 text-sm font-normal"
+    >
+      <option value="">No target role</option>
+      {roles.map((r) => (
+        <option key={r.id} value={r.id}>
+          {r.name}
+        </option>
+      ))}
+    </select>
+  </label>
+);
 
 interface Pdf {
   url: string;
@@ -149,6 +237,8 @@ export const ResumeBuilderPage: React.FC = () => {
   const navigate = useNavigate();
   const { extractText, isExtracting, error: pdfError, clearError } = usePdfExtractor();
   const fileInput = useRef<HTMLInputElement>(null);
+  const gutter = useRef<HTMLDivElement>(null);
+  const [tab, setTab] = useState("editor");
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<unknown>(null);
@@ -162,7 +252,12 @@ export const ResumeBuilderPage: React.FC = () => {
   const [latex, setLatex] = useState("");
   const [roleId, setRoleId] = useState("");
   const [jd, setJd] = useState("");
-  const [saved, setSaved] = useState<{ latex: string; roleId: string; jd: string; at: string } | null>(null);
+  const [saved, setSaved] = useState<{
+    latex: string;
+    roleId: string;
+    jd: string;
+    at: string;
+  } | null>(null);
   const [fromTemplate, setFromTemplate] = useState(false);
 
   const [ats, setAts] = useState<AtsResult | null>(null);
@@ -200,7 +295,12 @@ export const ResumeBuilderPage: React.FC = () => {
           setLatex(r.document.latex);
           setRoleId(r.document.role_id ?? "");
           setJd(r.document.job_description ?? "");
-          setSaved({ latex: r.document.latex, roleId: r.document.role_id ?? "", jd: r.document.job_description ?? "", at: r.document.updated_at });
+          setSaved({
+            latex: r.document.latex,
+            roleId: r.document.role_id ?? "",
+            jd: r.document.job_description ?? "",
+            at: r.document.updated_at,
+          });
           setAts(r.ats);
         } else if (t.templates[0]) {
           setLatex(t.templates[0].latex);
@@ -229,7 +329,11 @@ export const ResumeBuilderPage: React.FC = () => {
     setScoring(true);
     const id = setTimeout(() => {
       api
-        .scoreResume({ latex, role_id: roleId || null, job_description: jd.trim() || null })
+        .scoreResume({
+          latex,
+          role_id: roleId || null,
+          job_description: jd.trim() || null,
+        })
         .then((r) => {
           if (cancelled) return;
           setAts(r);
@@ -249,7 +353,8 @@ export const ResumeBuilderPage: React.FC = () => {
 
   const bytes = useMemo(() => new TextEncoder().encode(latex).length, [latex]);
   const tooLarge = bytes > maxBytes;
-  const dirty = saved === null || saved.latex !== latex || saved.roleId !== roleId || saved.jd !== jd;
+  const dirty =
+    saved === null || saved.latex !== latex || saved.roleId !== roleId || saved.jd !== jd;
 
   // ---- the PDF preview: built automatically, so it is always the current résumé. A failed build keeps the last good PDF.
   const runBuild = useCallback(async (source: string) => {
@@ -295,7 +400,11 @@ export const ResumeBuilderPage: React.FC = () => {
     setSaving(true);
     setSaveError(null);
     try {
-      const r = await api.saveResume({ latex, role_id: roleId || null, job_description: jd.trim() || null });
+      const r = await api.saveResume({
+        latex,
+        role_id: roleId || null,
+        job_description: jd.trim() || null,
+      });
       if (r.document) setSaved({ latex, roleId, jd, at: r.document.updated_at });
       if (r.ats) setAts(r.ats);
       setFromTemplate(false);
@@ -308,15 +417,19 @@ export const ResumeBuilderPage: React.FC = () => {
     }
   }, [latex, roleId, jd]);
 
-  const askMentor = async () => {
+  const askMentor = async (starter?: string) => {
     if (dirty && !(await save())) return; // the mentor reads the saved résumé, so save first
-    navigate(mentorResumeUrl(RESUME_STARTERS[0]));
+    navigate(mentorResumeUrl(starter ?? RESUME_STARTERS[0]));
   };
 
   /** Replacing the editor is only silent when it holds nothing the student could lose. */
   const okToReplace = (): boolean => {
-    const untouched = latex.trim() === "" || fromTemplate || (saved !== null && saved.latex === latex);
-    return untouched || window.confirm("Replace what is in the editor? Your unsaved changes will be lost.");
+    const untouched =
+      latex.trim() === "" || fromTemplate || (saved !== null && saved.latex === latex);
+    return (
+      untouched ||
+      window.confirm("Replace what is in the editor? Your unsaved changes will be lost.")
+    );
   };
 
   const applyTemplate = (id: string) => {
@@ -336,10 +449,22 @@ export const ResumeBuilderPage: React.FC = () => {
     clearError();
     const name = file.name;
     const lower = name.toLowerCase();
-    const kind = lower.endsWith(".pdf") || file.type === "application/pdf" ? "pdf" : lower.endsWith(".tex") ? "tex" : lower.endsWith(".txt") ? "txt" : null;
-    if (kind === null) return setImportMessage("Choose a PDF, a .tex file or a .txt file.");
+    const kind =
+      lower.endsWith(".pdf") || file.type === "application/pdf"
+        ? "pdf"
+        : lower.endsWith(".tex")
+          ? "tex"
+          : lower.endsWith(".txt")
+            ? "txt"
+            : null;
+    if (kind === null)
+      return setImportMessage("Choose a PDF, a .tex file or a .txt file.");
     if (file.size > (kind === "pdf" ? MAX_PDF_BYTES : MAX_TEXT_FILE_BYTES)) {
-      return setImportMessage(kind === "pdf" ? "That PDF is larger than 5 MB." : "That file is larger than 100 KB.");
+      return setImportMessage(
+        kind === "pdf"
+          ? "That PDF is larger than 5 MB."
+          : "That file is larger than 100 KB."
+      );
     }
     if (!okToReplace()) return;
 
@@ -347,7 +472,8 @@ export const ResumeBuilderPage: React.FC = () => {
     try {
       if (kind === "tex") {
         const source = await readTextFile(file);
-        if (new TextEncoder().encode(source).length > maxBytes) return setImportMessage("That LaTeX file is too large to open here.");
+        if (new TextEncoder().encode(source).length > maxBytes)
+          return setImportMessage("That LaTeX file is too large to open here.");
         setLatex(source);
         setNotice({ filename: name, sections: [], warnings: [] });
       } else {
@@ -375,19 +501,35 @@ export const ResumeBuilderPage: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  if (loadError !== null) return <Page><ErrorState error={loadError} onRetry={() => setAttempt((a) => a + 1)} /></Page>;
-  if (loading) return <Page><LoadingState message="Opening your résumé…" /></Page>;
+  if (loadError !== null)
+    return (
+      <Page width="fluid">
+        <ErrorState error={loadError} onRetry={() => setAttempt((a) => a + 1)} />
+      </Page>
+    );
+  if (loading)
+    return (
+      <Page width="fluid">
+        <LoadingState message="Opening your résumé…" />
+      </Page>
+    );
 
   const uploadMessage = importMessage ?? pdfError; // wording we wrote ourselves
   const uploadError = importError ?? (uploadMessage ? new Error(uploadMessage) : null);
+  const lineCount = latex.split("\n").length;
+  const canBuild = !compiling && latex.trim() !== "" && !tooLarge;
 
   return (
-    <Page width="wide" className="py-5 sm:py-6">
-      {/* ---------------- compact header and toolbar ---------------- */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line pb-3">
+    <Page width="fluid" className="py-5 sm:px-5 sm:py-6 lg:pl-5 lg:pr-6">
+      {/* ---------------- header and toolbar ---------------- */}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <div className="min-w-0">
-          <h1 className="serif text-2xl font-medium text-ink-primary">Résumé builder</h1>
-          <p className="text-sm text-ink-secondary">Edit the LaTeX, watch the PDF update, and fix what the ATS score flags.</p>
+          <h1 className="serif text-title font-medium leading-tight text-ink-primary">
+            Résumé <em>builder</em>
+          </h1>
+          <p className="mt-1 text-ink-secondary">
+            Edit the LaTeX, watch the PDF update, and fix what the ATS score flags.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <input
@@ -399,17 +541,22 @@ export const ResumeBuilderPage: React.FC = () => {
             tabIndex={-1}
             onChange={(e) => void onFile(e.target.files?.[0])}
           />
-          <Button variant="outline" size="sm" onClick={() => fileInput.current?.click()} disabled={importing || isExtracting}>
+          <Button
+            variant="outline"
+            className="rounded-full bg-white/70"
+            onClick={() => fileInput.current?.click()}
+            disabled={importing || isExtracting}
+          >
             <Upload size={15} aria-hidden="true" />
             {importing || isExtracting ? "Reading…" : "Upload existing résumé"}
           </Button>
-          <label className="flex items-center gap-1.5 text-sm text-ink-secondary">
+          <label className="flex items-center gap-2 text-sm text-ink-secondary">
             <span className="sr-only sm:not-sr-only">Template</span>
             <select
               aria-label="Start from a template"
               value=""
               onChange={(e) => applyTemplate(e.target.value)}
-              className="min-h-8 rounded-md border border-line-strong bg-surface px-2 text-sm text-ink-primary"
+              className="min-h-10 rounded-full border border-line-strong bg-white/70 px-4 text-sm text-ink-primary"
             >
               <option value="">Template…</option>
               {templates.map((t) => (
@@ -419,8 +566,12 @@ export const ResumeBuilderPage: React.FC = () => {
               ))}
             </select>
           </label>
-          <Button size="sm" onClick={() => void askMentor()} disabled={saving || latex.trim() === "" || tooLarge}>
-            <MessagesSquare size={15} aria-hidden="true" />
+          <Button
+            className="rounded-full"
+            onClick={() => void askMentor()}
+            disabled={saving || latex.trim() === "" || tooLarge}
+          >
+            <Sparkles size={15} aria-hidden="true" />
             {dirty ? "Save and ask the AI mentor" : "Ask the AI mentor"}
           </Button>
         </div>
@@ -440,12 +591,13 @@ export const ResumeBuilderPage: React.FC = () => {
       )}
 
       {notice && (
-        <section aria-label="Upload result" className="mb-3 rounded-md border border-line-strong bg-surface p-3 text-sm">
+        <section aria-label="Upload result" className={cn(TILE, "mb-4 p-4 text-sm")}>
           <div className="flex items-start justify-between gap-3">
             <p className="text-ink-primary">
               {notice.sections.length > 0 ? (
                 <>
-                  <strong>{notice.filename}</strong> was converted to LaTeX. Sections found: {notice.sections.join(", ")}.
+                  <strong>{notice.filename}</strong> was converted to LaTeX. Sections
+                  found: {notice.sections.join(", ")}.
                 </>
               ) : notice.warnings.length === 0 ? (
                 <>
@@ -458,7 +610,12 @@ export const ResumeBuilderPage: React.FC = () => {
               )}{" "}
               Edit anything below, then save.
             </p>
-            <button type="button" aria-label="Dismiss" onClick={() => setNotice(null)} className="rounded-sm p-1 text-ink-muted hover:text-ink-primary">
+            <button
+              type="button"
+              aria-label="Dismiss"
+              onClick={() => setNotice(null)}
+              className="rounded-full p-1.5 text-ink-muted hover:text-ink-primary"
+            >
               <X size={14} aria-hidden="true" />
             </button>
           </div>
@@ -472,138 +629,416 @@ export const ResumeBuilderPage: React.FC = () => {
         </section>
       )}
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_auto]">
-        {/* ---------------- left: editor, then the score ---------------- */}
-        <div className="min-w-0 space-y-4">
-          <section aria-labelledby="editor-heading">
-            <div className="flex items-baseline justify-between gap-3">
-              <h2 id="editor-heading" className="eyebrow text-ink-primary">
-                LaTeX source
-              </h2>
-              <p className={cn("text-xs", tooLarge ? "text-verdict-bluff-fg" : "text-ink-muted")}>
-                {bytes.toLocaleString()} / {maxBytes.toLocaleString()} bytes
-                {tooLarge ? ": too large to save or build." : ""}
-              </p>
-            </div>
-            {fromTemplate && (
-              <p className="mt-1 text-xs text-ink-muted">
-                This is a starter template with placeholder details. Replace them with your own, or upload your existing résumé above.
-              </p>
-            )}
-            <textarea
-              aria-label="LaTeX source"
-              value={latex}
-              onChange={(e) => {
-                setLatex(e.target.value);
-                setFromTemplate(false); // it is the student's text now: replacing it must ask
-              }}
-              spellCheck={false}
-              className="mt-1.5 block h-[26rem] w-full resize-y rounded-md border border-line-strong bg-surface p-3 font-mono text-sm leading-relaxed text-ink-primary lg:h-[calc(100vh-17rem)] lg:min-h-[24rem]"
-            />
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList
+          aria-label="Résumé builder sections"
+          className={cn(
+            GLASS,
+            "mb-5 flex h-auto w-full flex-wrap justify-start gap-1 p-2 text-ink-secondary"
+          )}
+        >
+          {TABS.map((t) => (
+            <TabsTrigger
+              key={t.value}
+              value={t.value}
+              className="relative isolate min-h-11 gap-2 rounded-full px-5 text-sm data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:text-ink-primary data-[state=active]:shadow-none"
+            >
+              {tab === t.value && (
+                <m.span
+                  aria-hidden="true"
+                  layoutId="resume-tab-pill"
+                  transition={SPRING_GLIDE}
+                  className="absolute inset-0 -z-10 rounded-full bg-white shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08),0_6px_14px_-8px_rgba(24,24,27,0.35)]"
+                />
+              )}
+              <t.icon
+                size={17}
+                strokeWidth={1.75}
+                aria-hidden="true"
+                className={tab === t.value ? "text-redline" : "text-ink-muted"}
+              />
+              {t.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <Button onClick={() => void save()} disabled={saving || !dirty || latex.trim() === "" || tooLarge} variant="outline" size="sm">
-                <Save size={15} aria-hidden="true" />
-                {saving ? "Saving…" : "Save"}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={downloadTex} disabled={latex.trim() === ""}>
-                <Download size={15} aria-hidden="true" />
-                Download .tex
-              </Button>
-              <span role="status" className="text-xs text-ink-muted">
-                {saved ? (dirty ? "Unsaved changes" : `Saved ${new Date(saved.at).toLocaleString()}`) : "Not saved yet"}
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_auto]">
+          {/* ---------------- left: the section chosen above ---------------- */}
+          <div className="min-w-0">
+            <TabsContent
+              value="editor"
+              className="mt-0 space-y-5 focus-visible:outline-hidden"
+            >
+              <GlassCard
+                id="editor"
+                icon={FileText}
+                title="LaTeX Source"
+                sub="Edit your LaTeX code. Use the templates or upload your existing résumé to get started."
+                actions={
+                  <p
+                    className={cn(
+                      "text-xs",
+                      tooLarge ? "text-verdict-bluff-fg" : "text-ink-muted"
+                    )}
+                  >
+                    {bytes.toLocaleString()} / {maxBytes.toLocaleString()} bytes
+                    {tooLarge ? ": too large to save or build." : ""}
+                  </p>
+                }
+              >
+                {fromTemplate && (
+                  <p className="mb-3 text-xs text-ink-muted">
+                    This is a starter template with placeholder details. Replace them with
+                    your own, or upload your existing résumé above.
+                  </p>
+                )}
+                <div className="flex h-[26rem] overflow-hidden rounded-2xl border border-line-strong bg-white/75 lg:h-[calc(100vh-27rem)] lg:min-h-[22rem]">
+                  <div
+                    ref={gutter}
+                    aria-hidden="true"
+                    className="select-none overflow-hidden border-r border-line bg-white/60 py-3 pl-3 pr-3 text-right font-mono text-[13px] leading-5 text-ink-muted"
+                  >
+                    {Array.from({ length: lineCount }, (_v, i) => (
+                      <div key={i}>{i + 1}</div>
+                    ))}
+                  </div>
+                  <textarea
+                    aria-label="LaTeX source"
+                    value={latex}
+                    onChange={(e) => {
+                      setLatex(e.target.value);
+                      setFromTemplate(false); // it is the student's text now: replacing it must ask
+                    }}
+                    onScroll={(e) => {
+                      if (gutter.current)
+                        gutter.current.scrollTop = e.currentTarget.scrollTop;
+                    }}
+                    wrap="off"
+                    spellCheck={false}
+                    className="block h-full min-w-0 flex-1 resize-none whitespace-pre bg-transparent p-3 font-mono text-[13px] leading-5 text-ink-primary outline-none"
+                  />
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Button
+                    onClick={() => void save()}
+                    disabled={saving || !dirty || latex.trim() === "" || tooLarge}
+                    className="rounded-full"
+                  >
+                    <Save size={15} aria-hidden="true" />
+                    {saving ? "Saving…" : "Save"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-full bg-white/70"
+                    onClick={downloadTex}
+                    disabled={latex.trim() === ""}
+                  >
+                    <Download size={15} aria-hidden="true" />
+                    Download .tex
+                  </Button>
+                  <span role="status" className="text-xs text-ink-muted">
+                    {saved
+                      ? dirty
+                        ? "Unsaved changes"
+                        : `Saved ${new Date(saved.at).toLocaleString()}`
+                      : "Not saved yet"}
+                  </span>
+                </div>
+                {saveError !== null && <ErrorState className="mt-3" error={saveError} />}
+              </GlassCard>
+
+              <section
+                aria-label="Target and score"
+                className="grid items-stretch gap-4 sm:grid-cols-2"
+              >
+                <div className={cn(GLASS, "p-5")}>
+                  <RoleSelect roles={roles} value={roleId} onChange={setRoleId} />
+                  {roleId === "" && (
+                    <p className="mt-2 flex items-start gap-2 text-xs text-ink-muted">
+                      <Target
+                        size={14}
+                        aria-hidden="true"
+                        className="mt-0.5 shrink-0 text-redline"
+                      />
+                      <span>
+                        Set a target role to get personalised AI suggestions and ATS
+                        feedback.
+                      </span>
+                    </p>
+                  )}
+                </div>
+                <div className={cn(GLASS, "p-5")}>
+                  {ats ? (
+                    <div className="flex items-center gap-4" aria-busy={scoring}>
+                      <ScoreRing score={ats.score} className="size-[4.5rem]" />
+                      <div className="min-w-0">
+                        <p className="eyebrow text-ink-muted">Your UNBLUFF ATS score</p>
+                        <p className="serif text-xl text-ink-primary" aria-live="polite">
+                          {RATING_LABEL[ats.rating]}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setTab("ats")}
+                          className="mt-0.5 text-sm text-redline underline underline-offset-4"
+                        >
+                          See every check →
+                        </button>
+                      </div>
+                    </div>
+                  ) : atsError !== null ? (
+                    <ErrorState error={atsError} />
+                  ) : (
+                    <p className="text-sm text-ink-secondary">Scoring your résumé…</p>
+                  )}
+                  {ats && (
+                    <p className="mt-3 text-[11px] leading-snug text-ink-muted">
+                      {ats.disclaimer}
+                    </p>
+                  )}
+                </div>
+              </section>
+            </TabsContent>
+
+            <TabsContent value="templates" className="mt-0 focus-visible:outline-hidden">
+              <GlassCard
+                id="templates"
+                icon={LayoutGrid}
+                title="Templates"
+                sub="Start from a layout. It replaces what is in the editor, and asks first if you would lose unsaved work."
+              >
+                <ul aria-label="Templates" className="grid gap-3 md:grid-cols-2">
+                  {templates.map((t) => (
+                    <li key={t.id} className={cn(TILE, "flex flex-col gap-2 p-4")}>
+                      <p className="font-semibold text-ink-primary">{t.name}</p>
+                      <p className="text-sm text-ink-secondary">{t.description}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-auto w-fit rounded-full bg-white/80"
+                        onClick={() => {
+                          applyTemplate(t.id);
+                          setTab("editor");
+                        }}
+                      >
+                        Use this template
+                        <span className="sr-only">{`: ${t.name}`}</span>
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </GlassCard>
+            </TabsContent>
+
+            <TabsContent value="ai" className="mt-0 focus-visible:outline-hidden">
+              <GlassCard
+                id="ai"
+                icon={Sparkles}
+                title="AI suggestions"
+                sub="The AI mentor reads the résumé you saved (unsaved changes are saved first) and your ATS score. Pick a question to start."
+              >
+                <ul
+                  aria-label="Questions for the AI mentor"
+                  className="flex flex-col gap-3"
+                >
+                  {RESUME_STARTERS.map((q) => (
+                    <li
+                      key={q}
+                      className={cn(
+                        TILE,
+                        "flex flex-wrap items-center justify-between gap-3 p-4"
+                      )}
+                    >
+                      <p className="min-w-0 flex-1 text-sm text-ink-primary">{q}</p>
+                      <Button
+                        size="sm"
+                        className="rounded-full"
+                        disabled={saving || latex.trim() === "" || tooLarge}
+                        onClick={() => void askMentor(q)}
+                      >
+                        <MessagesSquare size={14} aria-hidden="true" />
+                        Ask the mentor
+                        <span className="sr-only">{`: ${q}`}</span>
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-xs text-ink-muted">
+                  The mentor suggests wording and keywords; it does not know any
+                  employer's system and cannot promise a result.
+                </p>
+              </GlassCard>
+            </TabsContent>
+
+            <TabsContent value="ats" className="mt-0 focus-visible:outline-hidden">
+              <GlassCard
+                id="ats"
+                icon={Gauge}
+                title="ATS score"
+                sub="Every check behind the score, what to fix, and which keywords were found."
+              >
+                <AtsPanel ats={ats} scoring={scoring} error={atsError} />
+              </GlassCard>
+            </TabsContent>
+
+            <TabsContent value="settings" className="mt-0 focus-visible:outline-hidden">
+              <GlassCard
+                id="settings"
+                icon={Settings}
+                title="Settings"
+                sub="What your résumé is scored against. Both are saved with your résumé and never shared."
+              >
+                <div className="grid gap-5">
+                  <RoleSelect roles={roles} value={roleId} onChange={setRoleId} />
+                  <div>
+                    <label className="text-sm font-medium text-ink-primary" htmlFor="jd">
+                      Job description (optional)
+                    </label>
+                    <p className="mb-1.5 mt-0.5 text-xs text-ink-muted" id="jd-help">
+                      Paste a job posting to score your keywords against it. It is saved
+                      with your résumé and never shared.
+                    </p>
+                    <textarea
+                      id="jd"
+                      aria-describedby="jd-help"
+                      value={jd}
+                      maxLength={MAX_JD}
+                      onChange={(e) => setJd(e.target.value)}
+                      rows={10}
+                      className="block w-full rounded-2xl border border-line-strong bg-white/70 p-3 text-sm text-ink-primary"
+                    />
+                  </div>
+                </div>
+              </GlassCard>
+            </TabsContent>
+          </div>
+
+          {/* ---------------- right: the PDF, always in view ---------------- */}
+          <section
+            aria-label="PDF preview"
+            className={cn(
+              GLASS,
+              "min-w-0 p-4 lg:sticky lg:top-4 lg:w-[max(24rem,calc((100vh-13rem)/1.4142+2rem))]"
+            )}
+          >
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <div className="flex min-w-0 items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-redline shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08),0_6px_14px_-8px_rgba(24,24,27,0.35)]"
+                >
+                  <FileText size={18} strokeWidth={1.75} />
+                </span>
+                <div className="min-w-0">
+                  <h2 className="serif text-lg font-medium leading-tight text-ink-primary">
+                    PDF Preview
+                  </h2>
+                  <p className="text-xs text-ink-muted" aria-live="polite">
+                    {compiling
+                      ? "Building…"
+                      : pdf
+                        ? `${pdf.pages ?? "?"} page${pdf.pages === 1 ? "" : "s"} · built in ${pdf.ms} ms`
+                        : "Updates as you edit"}
+                  </p>
+                </div>
+              </div>
+              <span className="flex items-center gap-2">
+                {compilerAvailable && (
+                  <button
+                    type="button"
+                    onClick={() => void runBuild(latex)}
+                    disabled={!canBuild}
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-line-strong bg-white/80 px-3 text-xs font-medium text-ink-primary hover:border-ink-primary disabled:opacity-50"
+                  >
+                    <Hammer size={13} aria-hidden="true" />
+                    Rebuild
+                  </button>
+                )}
+                {pdf && (
+                  <a
+                    href={pdf.url}
+                    download="resume.pdf"
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-line-strong bg-white/80 px-3 text-xs font-medium text-ink-primary hover:border-ink-primary"
+                  >
+                    <Download size={13} aria-hidden="true" />
+                    Download PDF
+                  </a>
+                )}
               </span>
             </div>
-            {saveError !== null && <ErrorState className="mt-2" error={saveError} />}
-          </section>
-
-          <section aria-label="Target" className="grid gap-2 sm:grid-cols-2">
-            <label className="text-sm font-medium text-ink-primary">
-              Target role
-              <select
-                value={roleId}
-                onChange={(e) => setRoleId(e.target.value)}
-                className="mt-1 block min-h-9 w-full rounded-md border border-line-strong bg-surface px-2 text-sm font-normal"
-              >
-                <option value="">No target role</option>
-                {roles.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <details className="sm:col-span-2" open={jd !== ""}>
-              <summary className="cursor-pointer text-sm font-medium text-ink-primary">Job description (optional)</summary>
-              <label className="mt-1.5 block text-xs text-ink-muted" htmlFor="jd">
-                Paste a job posting to score your keywords against it. It is saved with your résumé and never shared.
-              </label>
-              <textarea
-                id="jd"
-                value={jd}
-                maxLength={MAX_JD}
-                onChange={(e) => setJd(e.target.value)}
-                rows={5}
-                className="mt-1 block w-full rounded-md border border-line-strong bg-surface p-2 text-sm text-ink-primary"
-              />
-            </details>
-          </section>
-
-          <section aria-label="ATS score">
-            <AtsPanel ats={ats} scoring={scoring} error={atsError} />
-          </section>
-        </div>
-
-        {/* ---------------- right: the PDF, and nothing else ---------------- */}
-        {/* The column is as wide as an A4 page is at the pane's height, so the page fills it with no gutters; the editor gets the rest. */}
-        <section aria-label="PDF preview" className="min-w-0 lg:sticky lg:top-4 lg:w-[max(22rem,calc((100vh-9rem)/1.4142))]">
-          <div className="flex h-8 items-center justify-between gap-3 text-xs text-ink-muted">
-            <span aria-live="polite">
-              {compiling ? "Building…" : pdf ? `${pdf.pages ?? "?"} page${pdf.pages === 1 ? "" : "s"} · built in ${pdf.ms} ms` : "PDF preview"}
-            </span>
-            <span className="flex items-center gap-3">
-              {compilerAvailable && (
-                <button
-                  type="button"
-                  onClick={() => void runBuild(latex)}
-                  disabled={compiling || latex.trim() === "" || tooLarge}
-                  className="flex items-center gap-1 underline-offset-4 hover:text-ink-primary hover:underline disabled:opacity-50"
-                >
-                  <Hammer size={13} aria-hidden="true" />
-                  Rebuild
-                </button>
+            <div className="h-[34rem] overflow-hidden rounded-2xl border border-line bg-white lg:h-[calc(100vh-13rem)]">
+              {pdf ? (
+                <PdfPreview
+                  base64={pdf.base64}
+                  fallbackUrl={pdf.url}
+                  title="Résumé PDF preview"
+                />
+              ) : (
+                <div className="flex size-full flex-col items-center justify-center gap-4 p-6 text-center text-sm text-ink-secondary">
+                  <span
+                    aria-hidden="true"
+                    className="grid size-20 place-items-center rounded-full bg-surface-100 text-redline"
+                  >
+                    <FileText size={34} strokeWidth={1.4} />
+                  </span>
+                  {!compilerAvailable ? (
+                    <>
+                      <p className="text-base font-medium text-ink-primary">
+                        This server has no LaTeX compiler configured, so the PDF cannot be
+                        built here.
+                      </p>
+                      <p>
+                        You can still edit, save and check your ATS score, and download
+                        the .tex file to compile it yourself.
+                      </p>
+                      <div className="flex w-full max-w-xs flex-col gap-2">
+                        <Button
+                          className="rounded-full"
+                          onClick={downloadTex}
+                          disabled={latex.trim() === ""}
+                        >
+                          <Download size={15} aria-hidden="true" />
+                          Download .tex file
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="rounded-full bg-white"
+                          onClick={() => fileInput.current?.click()}
+                          disabled={importing || isExtracting}
+                        >
+                          <Upload size={15} aria-hidden="true" />
+                          Upload an existing résumé
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <p>
+                      {buildError !== null
+                        ? "The preview could not be built."
+                        : buildLog !== null
+                          ? "The PDF could not be built. The messages are below."
+                          : "Building your PDF…"}
+                    </p>
+                  )}
+                </div>
               )}
-              {pdf && (
-                <a href={pdf.url} download="resume.pdf" className="underline underline-offset-4 hover:text-redline">
-                  Download PDF
-                </a>
-              )}
-            </span>
-          </div>
-          <div className="h-[34rem] overflow-hidden rounded-md border border-line bg-white lg:h-[calc(100vh-9rem)]">
-            {pdf ? (
-              <PdfPreview base64={pdf.base64} fallbackUrl={pdf.url} title="Résumé PDF preview" />
-            ) : (
-              <div className="flex size-full items-center justify-center p-6 text-center text-sm text-ink-secondary">
-                {!compilerAvailable
-                  ? "This server has no LaTeX compiler configured, so the PDF cannot be built here. You can still edit, save and check your ATS score, and download the .tex to compile it yourself."
-                  : buildError !== null
-                    ? "The preview could not be built."
-                    : buildLog !== null
-                      ? "The PDF could not be built. The messages are below."
-                      : "Building your PDF…"}
+            </div>
+            {buildError !== null && <ErrorState className="mt-2" error={buildError} />}
+            {buildLog !== null && (
+              <div role="alert" className="mt-3">
+                <p className="text-sm font-medium text-ink-primary">
+                  {pdf
+                    ? "The last build failed; the preview above is the previous one."
+                    : "The PDF could not be built."}
+                </p>
+                <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap rounded-xl border border-line bg-white/70 p-2 font-mono text-xs text-ink-primary">
+                  {buildLog}
+                </pre>
               </div>
             )}
-          </div>
-          {buildError !== null && <ErrorState className="mt-2" error={buildError} />}
-          {buildLog !== null && (
-            <div role="alert" className="mt-2">
-              <p className="text-sm font-medium text-ink-primary">{pdf ? "The last build failed; the preview above is the previous one." : "The PDF could not be built."}</p>
-              <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-line bg-surface p-2 font-mono text-xs text-ink-primary">{buildLog}</pre>
-            </div>
-          )}
-        </section>
-      </div>
+          </section>
+        </div>
+      </Tabs>
     </Page>
   );
 };

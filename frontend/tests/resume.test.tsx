@@ -126,6 +126,11 @@ describe("helpers", () => {
 describe("the résumé builder page", () => {
   const editorOf = () => screen.findByLabelText("LaTeX source", { selector: "textarea" });
   const okBuild = { ok: true, pdf_base64: btoa("%PDF-1.5"), log: "", pages: 1, duration_ms: 312 };
+  const openTab = (name: string) => {
+    const tab = screen.getByRole("tab", { name });
+    fireEvent.mouseDown(tab, { button: 0 });
+    fireEvent.click(tab);
+  };
 
   it("starts from the first template when nothing is saved, and says so", async () => {
     renderAt("/resume");
@@ -145,18 +150,44 @@ describe("the résumé builder page", () => {
     expect(mocked.scoreResume).not.toHaveBeenCalled();
   });
 
-  it("shows the score and the PDF side by side, with no tabs", async () => {
+  it("shows the editor, the score summary and the PDF side by side, with the other sections as tabs", async () => {
     mocked.getResume.mockResolvedValue(resumeResponse({ document: saved(), ats: ats() }));
     renderAt("/resume");
     await editorOf();
-    expect(screen.queryByRole("tab")).not.toBeInTheDocument();
-    expect(screen.getByRole("list", { name: "ATS checks" })).toBeInTheDocument();
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["LaTeX Editor", "Templates", "AI Suggestions", "ATS Score", "Settings"]);
+    expect(screen.getByRole("tab", { name: "LaTeX Editor" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("img", { name: "ATS score 72 out of 100" })).toBeInTheDocument();
     expect(await screen.findByTitle("Résumé PDF preview")).toBeInTheDocument();
+    openTab("ATS Score");
+    expect(await screen.findByRole("list", { name: "ATS checks" })).toBeInTheDocument();
+    expect(screen.getByTitle("Résumé PDF preview")).toBeInTheDocument(); // the PDF stays in view on every tab
+  });
+
+  it("lists the templates as a tab, applies one, and returns to the editor", async () => {
+    renderAt("/resume");
+    await editorOf();
+    openTab("Templates");
+    const list = await screen.findByRole("list", { name: "Templates" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(2);
+    fireEvent.click(within(list).getByRole("button", { name: /Use this template.*Template compact/ }));
+    expect(await editorOf()).toHaveValue("\\documentclass{article} compact");
+  });
+
+  it("offers the three mentor questions in the AI Suggestions tab and saves before asking", async () => {
+    mocked.getResume.mockResolvedValue(resumeResponse({ document: saved(), ats: ats() }));
+    renderAt("/resume");
+    await editorOf();
+    openTab("AI Suggestions");
+    const list = await screen.findByRole("list", { name: "Questions for the AI mentor" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
+    expect(mocked.saveResume).not.toHaveBeenCalled();
   });
 
   it("shows each check with its score, status and fix, and the keywords found and missing", async () => {
     mocked.getResume.mockResolvedValue(resumeResponse({ document: saved(), ats: ats() }));
     renderAt("/resume");
+    await editorOf();
+    openTab("ATS Score");
     const list = await screen.findByRole("list", { name: "ATS checks" });
     const rows = within(list).getAllByRole("listitem");
     expect(rows.map((r) => r.getAttribute("data-status"))).toEqual(["pass", "warn", "fail"]);
@@ -192,8 +223,10 @@ describe("the résumé builder page", () => {
     renderAt("/resume");
     await editorOf();
     fireEvent.change(screen.getByLabelText("Target role"), { target: { value: "frontend_developer" } });
-    fireEvent.change(screen.getByLabelText(/Paste a job posting/), { target: { value: "  React and Node  " } });
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    openTab("Settings");
+    fireEvent.change(await screen.findByLabelText("Job description (optional)"), { target: { value: "  React and Node  " } });
+    openTab("LaTeX Editor");
+    fireEvent.click(await screen.findByRole("button", { name: "Save" }));
     await waitFor(() => expect(mocked.saveResume).toHaveBeenCalledWith({ latex: "\\documentclass{article} classic", role_id: "frontend_developer", job_description: "React and Node" }));
     expect(await screen.findByText(/^Saved /)).toBeInTheDocument();
   });
