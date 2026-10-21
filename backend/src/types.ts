@@ -45,6 +45,7 @@ export type ErrorCode =
   | "LEETCODE_IMPORT_INVALID"
   | "LEETCODE_IMPORT_CONFLICT"
   | "LEETCODE_UNAVAILABLE"
+  | "LATEX_UNAVAILABLE"
   | "LLM_INVALID_OUTPUT"
   | "LLM_TIMEOUT"
   | "INTERNAL";
@@ -746,6 +747,7 @@ export interface MentorChatRequest {
   question_id?: string; // the DSA question being discussed (must exist in the catalogue)
   career_context?: boolean; // include the student's own best-matching job listings (computed by the app) as context
   leetcode_context?: boolean; // include a short summary of the LeetCode data the student imported (never live data)
+  resume_context?: boolean; // include the saved résumé, its ATS score and the fixes (the score is a heuristic, never an employer verdict)
 }
 
 export interface MentorReference {
@@ -776,6 +778,7 @@ export interface MentorChatResponse {
   mock: boolean; // true when the answer came from the built-in mock mentor, not a live model
   github_context?: { used: boolean; synced_at: string | null; stale: boolean }; // used: a short GitHub summary was given to the mentor
   leetcode_context?: { used: boolean; captured_at: string | null; stale: boolean }; // used: a summary of the student's imported LeetCode data was given to the mentor
+  resume_context?: { used: boolean; score: number | null; updated_at: string | null }; // used: a summary of the saved résumé and its ATS result went into the answer
 }
 
 // ---------- GitHub contribution insights (Phase 7) ----------
@@ -1621,6 +1624,71 @@ export interface LeetCodeImportConfirmResponse {
 /** GET /api/leetcode/lookup. True only when the operator enabled the unofficial public lookup (LEETCODE_PUBLIC_LOOKUP). */
 export interface LeetCodeLookupStatusResponse {
   available: boolean;
+}
+
+// ---------- Resume builder and ATS score ----------
+export type AtsCheckStatus = "pass" | "warn" | "fail";
+export interface AtsCheck {
+  id: string; // contact | sections | keywords | impact | verbs | length | format
+  label: string;
+  score: number; // points earned, at most `max`
+  max: number;
+  status: AtsCheckStatus;
+  detail: string; // what was found
+  fix: string | null; // what to change; null when the check passed
+}
+export interface AtsResult {
+  score: number; // 0 to 100, the sum of the check scores. A heuristic estimate, never an employer's real ATS verdict
+  rating: "strong" | "good" | "needs_work" | "weak";
+  checks: AtsCheck[];
+  keywords: { matched: string[]; missing: string[]; source: "role" | "job_description" | "both" };
+  stats: { words: number; bullets: number; sections: string[] };
+  role_id: string | null;
+  scored_at: string; // ISO 8601 UTC
+  disclaimer: string;
+}
+export interface ResumeDocument {
+  latex: string;
+  role_id: string | null; // the target role the score is measured against
+  job_description: string | null; // optional pasted job description, used for keyword matching
+  updated_at: string; // ISO 8601 UTC
+}
+/** GET /api/resume. The score is computed fresh from the saved LaTeX every time, so it can never be stale. */
+export interface ResumeResponse {
+  document: ResumeDocument | null;
+  ats: AtsResult | null;
+  compiler_available: boolean; // false when no LaTeX compiler is configured on this server
+  max_bytes: number;
+}
+export interface ResumeSaveRequest {
+  latex: string;
+  role_id?: string | null;
+  job_description?: string | null;
+}
+/** POST /api/resume/ats. Scores the given text without saving it. */
+export interface AtsRequest {
+  latex: string;
+  role_id?: string | null;
+  job_description?: string | null;
+}
+export interface ResumeCompileRequest {
+  latex: string;
+}
+export interface ResumeCompileResponse {
+  ok: boolean; // true when a PDF was produced
+  pdf_base64: string | null; // the compiled PDF, base64; null when compilation failed
+  log: string; // the compiler's own messages, trimmed (errors are listed here)
+  pages: number | null;
+  duration_ms: number;
+}
+export interface ResumeTemplate {
+  id: string;
+  name: string;
+  description: string;
+  latex: string;
+}
+export interface ResumeTemplatesResponse {
+  templates: ResumeTemplate[];
 }
 export interface LeetCodeHistoryResponse {
   snapshots: LeetCodeSnapshotSummary[]; // newest capture first

@@ -36,6 +36,7 @@ const ERROR_COPY: Record<ErrorCode, string> = {
   LEETCODE_IMPORT_INVALID: "That data could not be imported. Check the points listed and try again.",
   LEETCODE_IMPORT_CONFLICT: "That import clashes with a snapshot you already have, so nothing was changed.",
   LEETCODE_UNAVAILABLE: "LeetCode could not be reached right now. Try again in a few minutes, or type your numbers in.",
+  LATEX_UNAVAILABLE: "The LaTeX compiler is not available on this server, so the PDF could not be built. You can still edit and check your ATS score.",
   RATE_LIMITED: "Too many requests — wait a moment and try again.",
   LLM_INVALID_OUTPUT: "The model returned something we couldn't grade. Try again.",
   LLM_TIMEOUT: "The model took too long to respond. Try again.",

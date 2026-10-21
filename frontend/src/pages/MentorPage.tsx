@@ -11,6 +11,7 @@ import { useNewIds } from "@/components/motion/useNewIds";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { LEETCODE_STARTERS } from "@/lib/leetcode";
+import { RESUME_STARTERS } from "@/lib/resume";
 import { MODES, newClientMessageId, PROVENANCE_LABEL } from "@/lib/mentor";
 import { cn } from "@/lib/cn";
 import { routes } from "@/lib/routes";
@@ -123,8 +124,9 @@ const MentorPage: React.FC = () => {
 
   const careerContext = params.get("career") === "1";
   const leetcodeContext = params.get("leetcode") === "1";
+  const resumeContext = params.get("resume") === "1";
   const [mode, setMode] = useState<MentorMode>(
-    careerContext || leetcodeContext ? "placement_mentor" : "dsa_coach"
+    careerContext || leetcodeContext || resumeContext ? "placement_mentor" : "dsa_coach"
   );
   const [conversations, setConversations] = useState<MentorConversationSummary[] | null>(
     null
@@ -133,7 +135,7 @@ const MentorPage: React.FC = () => {
   const [active, setActive] = useState<MentorConversationSummary | null>(null);
   const [messages, setMessages] = useState<MentorMessage[]>([]);
   const [notice, setNotice] = useState<MentorChatResponse | null>(null);
-  const [draft, setDraft] = useState(() => (leetcodeContext ? (params.get("prompt") ?? "").slice(0, 300) : ""));
+  const [draft, setDraft] = useState(() => (leetcodeContext || resumeContext ? (params.get("prompt") ?? "").slice(0, 300) : ""));
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [retry, setRetry] = useState<Pending | null>(null);
@@ -202,6 +204,7 @@ const MentorPage: React.FC = () => {
         question_id: questionId ?? undefined,
         career_context: careerContext || undefined,
         leetcode_context: leetcodeContext || undefined,
+        resume_context: resumeContext || undefined,
       });
       setMessages((m) => [...m, res.reply]);
       setActive(res.conversation);
@@ -392,6 +395,18 @@ const MentorPage: React.FC = () => {
             </p>
           )}
 
+          {resumeContext && (
+            <p
+              role="note"
+              className="mt-3 max-w-2xl border-l-2 border-line-strong pl-3 text-sm text-ink-secondary"
+            >
+              <span className="font-semibold text-ink-primary">Résumé context is on.</span>{" "}
+              The mentor reads your saved résumé and its UNBLUFF ATS score, a heuristic
+              estimate and not any employer&apos;s system. It will mark rewritten bullets
+              as suggestions and will not invent numbers or experience for you.
+            </p>
+          )}
+
           {leetcodeContext && (
             <p
               role="note"
@@ -461,7 +476,7 @@ const MentorPage: React.FC = () => {
             <div className="max-w-xl text-sm text-ink-secondary">
               <p className="eyebrow mb-3">Start a conversation. For example:</p>
               <ul className="flex flex-col gap-1">
-                {(careerContext ? CAREER_STARTERS : leetcodeContext ? LEETCODE_STARTERS : STARTERS[mode]).map((s) => (
+                {(careerContext ? CAREER_STARTERS : leetcodeContext ? LEETCODE_STARTERS : resumeContext ? RESUME_STARTERS : STARTERS[mode]).map((s) => (
                   <li key={s}>
                     <button
                       type="button"
@@ -639,6 +654,13 @@ const MentorNotices: React.FC<{ notice: MentorChatResponse }> = ({ notice }) => 
         {new Date(notice.github_context.synced_at ?? "").toLocaleString()}
         {notice.github_context.stale ? ", may be out of date" : ""}). It is partial
         evidence, not a skill score.
+      </p>
+    )}
+    {notice.resume_context && (
+      <p role="note" className="border-l-2 border-line-strong pl-3 text-ink-secondary">
+        {notice.resume_context.used
+          ? `This answer used your saved résumé and its UNBLUFF ATS score (${notice.resume_context.score ?? "unknown"}/100, a heuristic estimate, saved ${new Date(notice.resume_context.updated_at ?? "").toLocaleDateString()}).`
+          : "You have not saved a résumé, so the mentor had none to use. Save one in the Résumé builder."}
       </p>
     )}
     {notice.leetcode_context && (

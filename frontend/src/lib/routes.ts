@@ -21,6 +21,7 @@ export const routes = {
   career: "/career",
   github: "/github",
   leetcode: "/leetcode",
+  resume: "/resume",
   graphqlLab: "/graphql-lab",
   graphqlPlayground: "/graphql-lab/playground",
   graphqlModule: (moduleId: string, exerciseId?: string) => `/graphql-lab/modules/${encodeURIComponent(moduleId)}${exerciseId ? `?exercise=${encodeURIComponent(exerciseId)}` : ""}`,

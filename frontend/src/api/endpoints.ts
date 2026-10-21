@@ -15,6 +15,13 @@ import type {
   LeetCodeImportConfirmRequest,
   LeetCodeImportConfirmResponse,
   LeetCodeLookupStatusResponse,
+  AtsRequest,
+  AtsResult,
+  ResumeCompileRequest,
+  ResumeCompileResponse,
+  ResumeResponse,
+  ResumeSaveRequest,
+  ResumeTemplatesResponse,
   LeetCodeImportPreview,
   LeetCodeImportRequest,
   LeetCodeInsightsResponse,
@@ -150,6 +157,30 @@ export const api = {
   /** DELETE /api/leetcode/connection: removes the link, and with mode "all" every imported snapshot. */
   async unlinkLeetCode(mode: "link" | "all"): Promise<LeetCodeUnlinkResponse> {
     return apiClient<LeetCodeUnlinkResponse>(`/leetcode/connection?mode=${mode}`, { method: "DELETE" });
+  },
+  /** GET /api/resume: the saved LaTeX résumé, its freshly computed ATS score, and whether this server can build PDFs. */
+  getResume(): Promise<ResumeResponse> {
+    return apiClient<ResumeResponse>("/resume", { method: "GET" });
+  },
+  /** PUT /api/resume: saves the LaTeX, the target role and an optional job description. */
+  saveResume(body: ResumeSaveRequest): Promise<ResumeResponse> {
+    return apiClient<ResumeResponse>("/resume", { method: "PUT", body: JSON.stringify(body) });
+  },
+  /** DELETE /api/resume: removes the saved résumé. */
+  async deleteResume(): Promise<void> {
+    await apiClient<unknown>("/resume", { method: "DELETE" });
+  },
+  /** GET /api/resume/templates: ATS-friendly LaTeX starting points. */
+  getResumeTemplates(): Promise<ResumeTemplatesResponse> {
+    return apiClient<ResumeTemplatesResponse>("/resume/templates", { method: "GET" });
+  },
+  /** POST /api/resume/ats: scores the text without saving it (a heuristic estimate, not an employer's verdict). */
+  scoreResume(body: AtsRequest): Promise<AtsResult> {
+    return apiClient<AtsResult>("/resume/ats", { method: "POST", body: JSON.stringify(body) });
+  },
+  /** POST /api/resume/compile: builds the PDF in an isolated LaTeX container. A failed build is a normal result with the log. */
+  compileResume(body: ResumeCompileRequest): Promise<ResumeCompileResponse> {
+    return apiClient<ResumeCompileResponse>("/resume/compile", { method: "POST", body: JSON.stringify(body) });
   },
   /** GET /api/leetcode/lookup: whether the operator enabled the unofficial lookup of public solved counts by username. */
   getLeetCodeLookup(): Promise<LeetCodeLookupStatusResponse> {

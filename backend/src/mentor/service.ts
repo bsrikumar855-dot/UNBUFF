@@ -20,6 +20,7 @@ import type {
 } from "../types.js";
 import { githubBlock, NOT_CONNECTED_TEXT, wantsGithub, type CachedGithub } from "../github/context.js";
 import { wantsLeetcode } from "../leetcode/context.js";
+import { wantsResume } from "../resume/context.js";
 import { buildActivityContext, type ActivityDeps } from "./activity.js";
 import { evaluateGoals } from "./goals.js";
 import {
@@ -60,6 +61,8 @@ export interface MentorDeps extends ActivityDeps {
   career?: () => { mentorContext(uid: string): Promise<{ text: string; available: boolean }> } | undefined;
   /** Optional: a minimal summary of the numbers the student imported from LeetCode (never live data). The mentor works the same without it. */
   leetcode?: { mentorContext(uid: string): Promise<{ text: string; used: boolean; captured_at: string | null; stale: boolean }> };
+  /** The student's saved résumé and its freshly computed ATS result, as text for the model. */
+  resume?: { mentorContext(uid: string): Promise<{ text: string; used: boolean; score: number | null; updated_at: string | null }> };
 }
 
 const MAX_STORED_MESSAGES = 60;
@@ -184,6 +187,20 @@ export class MentorService {
       }
     }
 
+    // ---- the saved résumé and its ATS score: only when the message is about the résumé (or the student turned it on)
+    let resumeText: string | undefined;
+    let resumeMeta: { used: boolean; score: number | null; updated_at: string | null } | undefined;
+    if (this.deps.resume && (req.resume_context || wantsResume(message))) {
+      const c = await this.deps.resume.mentorContext(uid).catch(() => null);
+      if (c) {
+        resumeText = c.text;
+        resumeMeta = { used: c.used, score: c.score, updated_at: c.updated_at };
+      } else {
+        resumeText = "(The saved résumé could not be read right now. You have NO résumé text and NO ATS score; say so and do not guess either.)";
+        resumeMeta = { used: false, score: null, updated_at: null };
+      }
+    }
+
     // ---- the model (skipped when a full solution is requested too early)
     let replyText: string;
     let proposals: Parameters<typeof validateProposals>[0] = [];
@@ -192,8 +209,8 @@ export class MentorService {
     } else {
       try {
         const out = await llm.mentorChat({
-          system: systemPrompt(req.mode, { hintLevel, solutionAllowed: req.assist === "solution", github: githubText !== undefined, career: careerText !== undefined, leetcode: leetcodeText !== undefined }),
-          prompt: chatPrompt({ activity: activity.text, profile: nonEmptyProfileJson(profile), memories: selected, recent: conv?.messages ?? [], message, ...(githubText !== undefined ? { github: githubText } : {}), ...(careerText !== undefined ? { career: careerText } : {}), ...(leetcodeText !== undefined ? { leetcode: leetcodeText } : {}) }),
+          system: systemPrompt(req.mode, { hintLevel, solutionAllowed: req.assist === "solution", github: githubText !== undefined, career: careerText !== undefined, leetcode: leetcodeText !== undefined, resume: resumeText !== undefined }),
+          prompt: chatPrompt({ activity: activity.text, profile: nonEmptyProfileJson(profile), memories: selected, recent: conv?.messages ?? [], message, ...(githubText !== undefined ? { github: githubText } : {}), ...(careerText !== undefined ? { career: careerText } : {}), ...(leetcodeText !== undefined ? { leetcode: leetcodeText } : {}), ...(resumeText !== undefined ? { resume: resumeText } : {}) }),
         });
         replyText = stripControl(out.reply).trim().slice(0, 6000);
         proposals = out.memory_updates;
@@ -272,6 +289,7 @@ export class MentorService {
       mock: llm.mode === "mock",
       ...(githubMeta ? { github_context: githubMeta } : {}),
       ...(leetcodeMeta ? { leetcode_context: leetcodeMeta } : {}),
+      ...(resumeMeta ? { resume_context: resumeMeta } : {}),
     };
   }
 

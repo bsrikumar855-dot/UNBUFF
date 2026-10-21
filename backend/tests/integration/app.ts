@@ -30,6 +30,9 @@ import { FreehireError, type FreehireClient } from "../../src/careers/freehire.j
 import { MemoryCareerStore, type CareerStore } from "../../src/careers/store.js";
 import { LeetCodeService } from "../../src/leetcode/service.js";
 import { MemoryLeetCodeStore, type LeetCodeStore } from "../../src/leetcode/store.js";
+import { UnavailableLatex, type LatexCompiler } from "../../src/resume/latex.js";
+import { ResumeService } from "../../src/resume/service.js";
+import { MemoryResumeStore, type ResumeStore } from "../../src/resume/store.js";
 import { AssessmentService } from "../../src/services/assessment.js";
 import type { SessionStore } from "../../src/store/SessionStore.js";
 import { MemoryStore } from "../../src/store/memoryStore.js";
@@ -81,7 +84,7 @@ export const DEFAULT_TEST_UID = "student-a";
  * 401 behaviour. The wrapper only touches headers; the app under test is unchanged.
  */
 export function testApp(
-  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService; lab?: LabService; labStore?: LabStore; placement?: PlacementService; placementStore?: PlacementStore; career?: CareerService; careerStore?: CareerStore; leetcode?: LeetCodeService; leetcodeStore?: LeetCodeStore; freehire?: Pick<FreehireClient, "search" | "getJob" | "facets">; execution?: { configured: boolean; verified: boolean }; llmMode?: "live" | "mock"; now?: () => Date } = {},
+  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService; lab?: LabService; labStore?: LabStore; placement?: PlacementService; placementStore?: PlacementStore; career?: CareerService; careerStore?: CareerStore; leetcode?: LeetCodeService; leetcodeStore?: LeetCodeStore; resume?: ResumeService; resumeStore?: ResumeStore; latex?: LatexCompiler; freehire?: Pick<FreehireClient, "search" | "getJob" | "facets">; execution?: { configured: boolean; verified: boolean }; llmMode?: "live" | "mock"; now?: () => Date } = {},
 ): Express {
   const llm = opts.llm ?? new MockProvider();
   const catalogue = opts.catalogue ?? fixtureCatalogue();
@@ -116,6 +119,9 @@ export function testApp(
       },
       now: opts.now,
     });
+  const resume =
+    opts.resume ??
+    new ResumeService({ store: opts.resumeStore ?? new MemoryResumeStore(), compiler: opts.latex ?? new UnavailableLatex(), role: (id) => roles.get(id) ?? null, logger: silentLogger, now: opts.now });
   const careerHolder: { current?: CareerService } = {}; // the Career service needs the placement service, which needs the mentor
   const mentor =
     opts.mentor ??
@@ -132,6 +138,7 @@ export function testApp(
       logger: silentLogger,
       github,
       leetcode,
+      resume,
       career: () => careerHolder.current,
     });
   const lab = opts.lab ?? new LabService({ store: opts.labStore ?? new MemoryLabStore(), mentor, logger: silentLogger });
@@ -197,6 +204,7 @@ export function testApp(
     placement,
     career,
     leetcode,
+    resume,
     llm,
     logger: silentLogger,
     demoReportJson,

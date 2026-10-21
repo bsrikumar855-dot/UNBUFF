@@ -140,6 +140,7 @@ export type ErrorCode =
   | "LEETCODE_IMPORT_INVALID"
   | "LEETCODE_IMPORT_CONFLICT"
   | "LEETCODE_UNAVAILABLE"
+  | "LATEX_UNAVAILABLE"
   | "LLM_INVALID_OUTPUT"
   | "LLM_TIMEOUT"
   | "INTERNAL";
@@ -841,6 +842,7 @@ export interface MentorChatRequest {
   question_id?: string; // the DSA question being discussed (must exist in the catalogue)
   career_context?: boolean; // include the student's own best-matching job listings (computed by the app) as context
   leetcode_context?: boolean; // include a short summary of the LeetCode data the student imported (never live data)
+  resume_context?: boolean; // include the saved résumé, its ATS score and the fixes (the score is a heuristic, never an employer verdict)
 }
 
 export interface MentorReference {
@@ -871,6 +873,7 @@ export interface MentorChatResponse {
   mock: boolean; // true when the answer came from the built-in mock mentor, not a live model
   github_context?: { used: boolean; synced_at: string | null; stale: boolean }; // used: a short GitHub summary was given to the mentor
   leetcode_context?: { used: boolean; captured_at: string | null; stale: boolean }; // used: a summary of the student's imported LeetCode data was given to the mentor
+  resume_context?: { used: boolean; score: number | null; updated_at: string | null }; // used: a summary of the saved résumé and its ATS result went into the answer
 }
 
 // ---------- GitHub contribution insights (Phase 7) ----------
@@ -1717,6 +1720,71 @@ export interface LeetCodeImportConfirmResponse {
 export interface LeetCodeLookupStatusResponse {
   available: boolean;
 }
+
+// ---------- Resume builder and ATS score ----------
+export type AtsCheckStatus = "pass" | "warn" | "fail";
+export interface AtsCheck {
+  id: string; // contact | sections | keywords | impact | verbs | length | format
+  label: string;
+  score: number; // points earned, at most `max`
+  max: number;
+  status: AtsCheckStatus;
+  detail: string; // what was found
+  fix: string | null; // what to change; null when the check passed
+}
+export interface AtsResult {
+  score: number; // 0 to 100, the sum of the check scores. A heuristic estimate, never an employer's real ATS verdict
+  rating: "strong" | "good" | "needs_work" | "weak";
+  checks: AtsCheck[];
+  keywords: { matched: string[]; missing: string[]; source: "role" | "job_description" | "both" };
+  stats: { words: number; bullets: number; sections: string[] };
+  role_id: string | null;
+  scored_at: string; // ISO 8601 UTC
+  disclaimer: string;
+}
+export interface ResumeDocument {
+  latex: string;
+  role_id: string | null; // the target role the score is measured against
+  job_description: string | null; // optional pasted job description, used for keyword matching
+  updated_at: string; // ISO 8601 UTC
+}
+/** GET /api/resume. The score is computed fresh from the saved LaTeX every time, so it can never be stale. */
+export interface ResumeResponse {
+  document: ResumeDocument | null;
+  ats: AtsResult | null;
+  compiler_available: boolean; // false when no LaTeX compiler is configured on this server
+  max_bytes: number;
+}
+export interface ResumeSaveRequest {
+  latex: string;
+  role_id?: string | null;
+  job_description?: string | null;
+}
+/** POST /api/resume/ats. Scores the given text without saving it. */
+export interface AtsRequest {
+  latex: string;
+  role_id?: string | null;
+  job_description?: string | null;
+}
+export interface ResumeCompileRequest {
+  latex: string;
+}
+export interface ResumeCompileResponse {
+  ok: boolean; // true when a PDF was produced
+  pdf_base64: string | null; // the compiled PDF, base64; null when compilation failed
+  log: string; // the compiler's own messages, trimmed (errors are listed here)
+  pages: number | null;
+  duration_ms: number;
+}
+export interface ResumeTemplate {
+  id: string;
+  name: string;
+  description: string;
+  latex: string;
+}
+export interface ResumeTemplatesResponse {
+  templates: ResumeTemplate[];
+}
 export interface LeetCodeHistoryResponse {
   snapshots: LeetCodeSnapshotSummary[]; // newest capture first
   total: number;
@@ -1944,6 +2012,21 @@ A saved username and progress numbers the student imports themselves. LeetCode h
 | `DELETE /api/leetcode/import-history/:id` | 204. Removes one snapshot. 404 if it is not the caller's. |
 
 Import format: `docs/leetcode-integration.md` (schema `unbluff.leetcode-import/1`, JSON or key,value CSV, at most 64 KB). Errors: `LEETCODE_IMPORT_INVALID` (400), `LEETCODE_IMPORT_CONFLICT` (409), `BAD_REQUEST` (400), `NOT_FOUND` (404). `POST /api/mentor/chat` accepts `leetcode_context: boolean` and answers with `leetcode_context: { used, captured_at, stale }`.
+
+### Résumé builder and ATS score (`/api/resume*`)
+
+All routes need a verified student; the owner is always the token's uid. Details: `docs/resume-ats.md`.
+
+| Method and path | Purpose |
+|---|---|
+| `GET /api/resume` | `ResumeResponse`: the saved LaTeX (or `null`), its ATS score computed fresh, whether a compiler is available. |
+| `PUT /api/resume` | `ResumeSaveRequest` (strict) gives `ResumeResponse`. `400 BAD_REQUEST` (empty, over 60 KB, job description over 8,000 characters), `404 ROLE_NOT_FOUND`. |
+| `DELETE /api/resume` | 204. |
+| `GET /api/resume/templates` | `ResumeTemplatesResponse`: ATS-friendly single-column LaTeX starting points. |
+| `POST /api/resume/ats` | `AtsRequest` gives `AtsResult`. Scores without saving. A heuristic, never an employer's verdict. |
+| `POST /api/resume/compile` | `ResumeCompileRequest` gives `ResumeCompileResponse`. A failed build is `200` with `ok: false` and the compiler's messages. `503 LATEX_UNAVAILABLE` when no compiler is configured. |
+
+`POST /api/mentor/chat` accepts `resume_context: boolean` and answers with `resume_context: { used, score, updated_at }`.
 
 ### `POST /api/claims/extract`
 - *(added)* Optional `mode`: `"prepare"` (teach as you go) or `"defense"` (default, interview simulation). Stored on the session and echoed as `ClaimsResponse.mode` / `Report.mode`.

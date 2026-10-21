@@ -34,6 +34,7 @@ const GithubInsightsPage = lazy(() => import("@/pages/GithubInsightsPage"));
 const PlacementPage = lazy(() => import("@/pages/PlacementPage"));
 const CareerPage = lazy(() => import("@/pages/CareerPage"));
 const LeetCodeInsightsPage = lazy(() => import("@/pages/LeetCodeInsightsPage"));
+const ResumeBuilderPage = lazy(() => import("@/pages/ResumeBuilderPage"));
 const GraphqlLabPage = lazy(() => import("@/pages/GraphqlLabPage"));
 const GraphqlLabModulePage = lazy(() => import("@/pages/GraphqlLabModulePage"));
 const GraphqlPlaygroundPage = lazy(() => import("@/pages/GraphqlPlaygroundPage"));
@@ -73,6 +74,7 @@ export const AppRoutes: React.FC = () => (
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/github" element={<GithubInsightsPage />} />
         <Route path="/leetcode" element={<LeetCodeInsightsPage />} />
+        <Route path="/resume" element={<ResumeBuilderPage />} />
         <Route path="/placement" element={<PlacementPage />} />
         <Route path="/career" element={<CareerPage />} />
         <Route path="/graphql-lab" element={<GraphqlLabPage />} />
