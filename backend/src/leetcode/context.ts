@@ -31,7 +31,7 @@ export const wantsLeetcode = (message: string): boolean => TOPIC.test(message);
 export const NO_DATA_TEXT =
   "(The student has NOT imported any LeetCode data. You have NO LeetCode statistics. Say so, do not guess or estimate any number, and suggest they link their LeetCode profile and import their own numbers from the Settings or LeetCode page. Linking a profile alone provides no statistics.)";
 
-const KIND_TEXT: Record<LeetCodeSourceKind, string> = { manual_entry: "typed into UNBLUFF by the student", json_file: "a JSON file the student uploaded", csv_file: "a CSV file the student uploaded" };
+const KIND_TEXT: Record<LeetCodeSourceKind, string> = { manual_entry: "typed into UNBLUFF by the student", json_file: "a JSON file the student uploaded", csv_file: "a CSV file the student uploaded", public_lookup: "looked up by username from LeetCode's public profile data (ownership of the profile not verified)" };
 
 /** Topic names differ in plural and spacing between sources ("Array" and "Arrays"); this is the only matching UNBLUFF does, and it is exact after this. */
 export const normalizeTopic = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]+/g, "").replace(/s$/, "");

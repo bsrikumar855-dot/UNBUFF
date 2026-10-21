@@ -49,6 +49,18 @@ const LeetCodeInsightsPage: React.FC = () => {
   const [history, setHistory] = useState<LeetCodeHistoryResponse | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [attempt, setAttempt] = useState(0);
+  const [lookupAvailable, setLookupAvailable] = useState(false);
+  // Optional: if the operator enabled the lookup, the header must not claim UNBLUFF never contacts LeetCode.
+  useEffect(() => {
+    let cancelled = false;
+    Promise.resolve()
+      .then(() => api.getLeetCodeLookup())
+      .then((r) => !cancelled && setLookupAvailable(r.available === true))
+      .catch(() => !cancelled && setLookupAvailable(false));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [deleteError, setDeleteError] = useState<unknown>(null);
 
   useEffect(() => {
@@ -91,12 +103,17 @@ const LeetCodeInsightsPage: React.FC = () => {
         title="LeetCode"
         description={
           <>
-            Numbers you supply from your own LeetCode progress, kept separate from your
-            UNBLUFF results.{" "}
+            {lookupAvailable
+              ? "Numbers from your own LeetCode progress, typed in, imported, or looked up from your public profile when you ask, kept separate from your UNBLUFF results. "
+              : "Numbers you supply from your own LeetCode progress, kept separate from your UNBLUFF results. "}
             <strong>
-              They are your own reported data: not live, not synchronised, not verified.
+              {lookupAvailable
+                ? "They are not kept in sync and are not verified as yours."
+                : "They are your own reported data: not live, not synchronised, not verified."}
             </strong>{" "}
-            UNBLUFF never contacts LeetCode.
+            {lookupAvailable
+              ? "UNBLUFF contacts LeetCode only when you ask it to look your numbers up."
+              : "UNBLUFF never contacts LeetCode."}
           </>
         }
       />

@@ -127,3 +127,15 @@ When a student imported topic counts, a matching DSA topic in the plan's skill l
 * The username rule is ours, not LeetCode's.
 * A CSV/JSON import cannot carry the list of individual problems, so there is no problem-level matching.
 * Tested on the Firestore emulator, not a live Firebase project. The mentor was exercised with the built-in mock model, not Gemini.
+
+
+## 7. Optional username lookup (`LEETCODE_PUBLIC_LOOKUP=true`)
+
+**Off by default.** Section 1 still holds for a default deployment: there is no official API, so UNBLUFF never contacts LeetCode.
+
+An operator who accepts the risk can turn on a lookup. LeetCode's terms forbid automated access of this kind, and the endpoint is the unofficial `https://leetcode.com/graphql` one LeetCode's own site uses, so it can change or block without notice.
+
+- **Linking validates the name.** With the lookup on, a username must match a public LeetCode profile before it is saved. An unknown name is refused (`400`). If LeetCode is unreachable the link is saved unchecked.
+- **`POST /api/leetcode/lookup`** fetches the linked username's solved counts (easy, medium, hard) and the number of problems available, and stores them as a snapshot with source `public_lookup`, shown as "Looked up from your public LeetCode profile, not verified as yours". The total is recomputed from the three difficulties; implausible numbers are rejected. `GET /api/leetcode/lookup` returns `{ available }`.
+- **Limits.** One outgoing lookup per student per 10 minutes (a repeat inside that window returns the stored snapshot without contacting LeetCode); identical numbers are never stored twice; only the username is sent (no cookies, no credentials, no redirects); an outage returns `502 LEETCODE_UNAVAILABLE`.
+- **Still true:** ownership is never verified, the connection is never "official", and nothing is kept in sync. Topics, contest data and activity are not fetched, so those panels stay empty unless the student imports them.

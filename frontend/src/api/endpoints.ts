@@ -14,6 +14,7 @@ import type {
   LeetCodeHistoryResponse,
   LeetCodeImportConfirmRequest,
   LeetCodeImportConfirmResponse,
+  LeetCodeLookupStatusResponse,
   LeetCodeImportPreview,
   LeetCodeImportRequest,
   LeetCodeInsightsResponse,
@@ -149,6 +150,14 @@ export const api = {
   /** DELETE /api/leetcode/connection: removes the link, and with mode "all" every imported snapshot. */
   async unlinkLeetCode(mode: "link" | "all"): Promise<LeetCodeUnlinkResponse> {
     return apiClient<LeetCodeUnlinkResponse>(`/leetcode/connection?mode=${mode}`, { method: "DELETE" });
+  },
+  /** GET /api/leetcode/lookup: whether the operator enabled the unofficial lookup of public solved counts by username. */
+  getLeetCodeLookup(): Promise<LeetCodeLookupStatusResponse> {
+    return apiClient<LeetCodeLookupStatusResponse>("/leetcode/lookup", { method: "GET" });
+  },
+  /** POST /api/leetcode/lookup: fetches the linked username's public solved counts and stores them as a labelled snapshot. */
+  lookupLeetCode(): Promise<LeetCodeImportConfirmResponse> {
+    return apiClient<LeetCodeImportConfirmResponse>("/leetcode/lookup", { method: "POST" });
   },
   /** POST /api/leetcode/import/preview: validates the student's own data. Nothing is stored. */
   async previewLeetCodeImport(body: LeetCodeImportRequest): Promise<LeetCodeImportPreview> {

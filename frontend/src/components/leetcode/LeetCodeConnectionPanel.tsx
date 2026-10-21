@@ -37,7 +37,8 @@ export const LeetCodeConnectionPanel: React.FC<LeetCodeConnectionPanelProps> = (
   const [conn, setConn] = useState<LeetCodeConnection | null>(initial);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [actionError, setActionError] = useState<unknown>(null);
-  const [busy, setBusy] = useState<"link" | "unlink" | null>(null);
+  const [busy, setBusy] = useState<"link" | "unlink" | "lookup" | null>(null);
+  const [lookupAvailable, setLookupAvailable] = useState(false);
   const [text, setText] = useState("");
   const [touched, setTouched] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -60,11 +61,44 @@ export const LeetCodeConnectionPanel: React.FC<LeetCodeConnectionPanelProps> = (
     };
   }, [attempt]);
 
+  // Optional: the operator may enable looking numbers up by username. Any failure here just means "not available".
+  useEffect(() => {
+    let cancelled = false;
+    Promise.resolve()
+      .then(() => api.getLeetCodeLookup())
+      .then((r) => !cancelled && setLookupAvailable(r.available === true))
+      .catch(() => !cancelled && setLookupAvailable(false));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const check = checkProfileInput(text);
   const unchanged =
     conn?.linked &&
     check.state === "valid" &&
     check.username.toLowerCase() === conn.username?.toLowerCase();
+
+  /** Fetches the linked username's public numbers. Returns the refreshed connection, or null after showing why not. */
+  const fetchNumbers = useCallback(
+    async (prefix = ""): Promise<LeetCodeConnection | null> => {
+      try {
+        const r = await api.lookupLeetCode();
+        const s = r.snapshot;
+        setConn(r.connection);
+        setNote(
+          `${prefix}${r.status === "imported" ? "Saved" : "Already up to date:"} ${s.solved} solved` +
+            (s.easy !== null ? ` (easy ${s.easy}, medium ${s.medium}, hard ${s.hard})` : "") +
+            ", looked up from your public LeetCode profile. It is not verified as yours."
+        );
+        return r.connection;
+      } catch (err) {
+        setActionError(err);
+        return null;
+      }
+    },
+    []
+  );
 
   const link = useCallback(
     async (e: React.FormEvent) => {
@@ -77,18 +111,33 @@ export const LeetCodeConnectionPanel: React.FC<LeetCodeConnectionPanelProps> = (
         const r = await api.linkLeetCode(text);
         setConn(r.connection);
         setText(r.connection.username ?? text);
-        setNote(
-          "Profile link saved. This does not prove the profile is yours and it does not import any numbers."
-        );
-        onChanged?.(r.connection);
+        if (lookupAvailable) {
+          setNote("Profile found and linked. Fetching your numbers…");
+          const after = await fetchNumbers("Profile found and linked. ");
+          onChanged?.(after ?? r.connection);
+        } else {
+          setNote(
+            "Profile link saved. This does not prove the profile is yours and it does not import any numbers."
+          );
+          onChanged?.(r.connection);
+        }
       } catch (err) {
         setActionError(err);
       } finally {
         setBusy(null);
       }
     },
-    [check.state, text, onChanged]
+    [check.state, text, onChanged, lookupAvailable, fetchNumbers]
   );
+
+  const refresh = async () => {
+    setBusy("lookup");
+    setActionError(null);
+    setNote(null);
+    const after = await fetchNumbers();
+    if (after) onChanged?.(after);
+    setBusy(null);
+  };
 
   const unlink = async (mode: "link" | "all") => {
     setBusy("unlink");
@@ -125,17 +174,26 @@ export const LeetCodeConnectionPanel: React.FC<LeetCodeConnectionPanelProps> = (
       <h2 id="leetcode-conn-heading" className="eyebrow text-ink-primary">
         LeetCode
       </h2>
-      <p className="mt-2 text-sm text-ink-primary">
-        <strong>This is not a live connection.</strong> LeetCode has no official sign-in
-        or API for apps like this and its terms forbid scraping, so UNBLUFF never contacts
-        LeetCode. You link your public username and import numbers you supply yourself.
-      </p>
+      {lookupAvailable ? (
+        <p className="mt-2 text-sm text-ink-primary">
+          <strong>This is not an official connection.</strong> LeetCode has no official
+          sign-in or API for apps like this. Type your public username and UNBLUFF looks up
+          your solved counts from LeetCode&apos;s public profile data when you ask. Nothing
+          proves the profile is yours, and you can still type your own numbers instead.
+        </p>
+      ) : (
+        <p className="mt-2 text-sm text-ink-primary">
+          <strong>This is not a live connection.</strong> LeetCode has no official sign-in
+          or API for apps like this and its terms forbid scraping, so UNBLUFF never contacts
+          LeetCode. You link your public username and import numbers you supply yourself.
+        </p>
+      )}
 
       <ul
         aria-label="What is and is not true about this link"
         className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2"
       >
-        {stateRows(conn).map((r) => (
+        {stateRows(conn, lookupAvailable).map((r) => (
           <li key={r.key} className="flex gap-2" data-state={r.key} data-on={r.on}>
             <span
               aria-hidden="true"
@@ -230,10 +288,12 @@ export const LeetCodeConnectionPanel: React.FC<LeetCodeConnectionPanelProps> = (
               ? `, ${imp.age_days} day${imp.age_days === 1 ? "" : "s"} old`
               : ""}
             ), imported {formatWhen(imp.last_imported_at)}
-            {imp.last_source
+            {imp.last_source && imp.last_source.kind !== "public_lookup"
               ? `, ${SOURCE_LABEL[imp.last_source.kind].toLowerCase()}`
               : ""}
-            . Supplied by you, not synchronised with LeetCode.
+            {imp.last_source?.kind === "public_lookup"
+              ? ". Looked up by username, not verified as yours."
+              : ". Supplied by you, not synchronised with LeetCode."}
           </p>
         ) : (
           <p>No numbers imported yet. A saved link alone shows no statistics.</p>
@@ -251,6 +311,11 @@ export const LeetCodeConnectionPanel: React.FC<LeetCodeConnectionPanelProps> = (
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
+        {lookupAvailable && conn.linked && !confirming && (
+          <Button size="sm" onClick={() => void refresh()} disabled={busy !== null}>
+            {busy === "lookup" ? "Fetching…" : "Fetch my numbers from LeetCode"}
+          </Button>
+        )}
         {(conn.linked || imp.snapshot_count > 0) && !confirming && (
           <Button
             variant="ghost"

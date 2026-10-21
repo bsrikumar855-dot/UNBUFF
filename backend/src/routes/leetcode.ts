@@ -26,7 +26,8 @@ function parse<T extends z.ZodType>(schema: T, value: unknown): z.output<T> {
 
 /**
  * LeetCode profile link and the student's own imported progress. Every route needs a verified student and the owner is
- * always the token's uid: no body, query or file can name another owner. Nothing here contacts LeetCode.
+ * always the token's uid: no body, query or file can name another owner. LeetCode is contacted only by the optional
+ * lookup, and only when the operator enabled it.
  */
 export function leetcodeRouter(leetcode: LeetCodeService, limiters: { read: RequestHandler; write: RequestHandler }): Router {
   const router = Router();
@@ -46,6 +47,13 @@ export function leetcodeRouter(leetcode: LeetCodeService, limiters: { read: Requ
   });
   router.post("/leetcode/import/confirm", limiters.write, async (req, res) => {
     res.set(noStore).json(await leetcode.confirm(uidOf(res), parse(ConfirmBody, req.body ?? {})));
+  });
+
+  router.get("/leetcode/lookup", limiters.read, async (_req, res) => {
+    res.set(noStore).json({ available: leetcode.lookupAvailable() });
+  });
+  router.post("/leetcode/lookup", limiters.write, async (_req, res) => {
+    res.set(noStore).json(await leetcode.lookupAndStore(uidOf(res)));
   });
 
   router.get("/leetcode/insights", limiters.read, async (_req, res) => {

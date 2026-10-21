@@ -179,6 +179,24 @@ export type Draft =
 const STYLE: Record<string, ExplanationStyle> = { concise: "concise", brief: "concise", short: "concise", detailed: "detailed", thorough: "detailed", step_by_step: "step_by_step", "step by step": "step_by_step", steps: "step_by_step" };
 const LANGUAGE: Record<string, CodeLanguageId> = { python: "python", javascript: "javascript", js: "javascript", cpp: "cpp", "c++": "cpp", java: "java" };
 
+/** Finds the languages the student named inside free text ("short explanations with Python examples"), in a fixed order, once each. */
+function languagesIn(content: string): CodeLanguageId[] {
+  const found = new Set<CodeLanguageId>();
+  for (const m of content.toLowerCase().matchAll(/(?<![a-z0-9+])(python|javascript|js|cpp|c\+\+|java)(?![a-z0-9+])/g)) found.add(LANGUAGE[m[1]!]!);
+  return [...found];
+}
+
+/** Reads an explanation style from the model's wording, exactly or by the keyword it contains. */
+function styleIn(content: string): ExplanationStyle | undefined {
+  const lower = content.toLowerCase();
+  const exact = STYLE[lower.replace(/-/g, "_")] ?? STYLE[lower];
+  if (exact) return exact;
+  if (/step[\s_-]*by[\s_-]*step|\bsteps\b/.test(lower)) return "step_by_step";
+  if (/\b(concise|brief|short|terse)\b/.test(lower)) return "concise";
+  if (/\b(detailed|thorough|in[\s-]depth)\b/.test(lower)) return "detailed";
+  return undefined;
+}
+
 function list(content: string): string[] {
   return content.split(/[,;]|\band\b/i).map((x) => cleanText(x, 60)).filter(Boolean).slice(0, 10);
 }
@@ -214,12 +232,12 @@ export function validateProposals(proposals: MentorMemoryProposal[], studentMess
       }
       let value: unknown;
       if (field === "target_roles" || field === "target_companies") value = list(content);
-      else if (field === "preferred_languages") value = list(content).map((l) => LANGUAGE[l.toLowerCase()]).filter((l): l is CodeLanguageId => Boolean(l));
+      else if (field === "preferred_languages") value = languagesIn(content);
       else if (field === "daily_study_minutes") {
         const m = /(\d+(?:\.\d+)?)\s*(hours?|hrs?|h|minutes?|mins?|m)?/i.exec(content);
         const n = m ? Math.round(Number(m[1]) * (/^h/i.test(m[2] ?? "") ? 60 : 1)) : NaN;
         value = Number.isFinite(n) && n >= 10 && n <= 720 ? n : undefined;
-      } else if (field === "explanation_style") value = STYLE[content.toLowerCase().replace(/-/g, "_")] ?? STYLE[content.toLowerCase()];
+      } else if (field === "explanation_style") value = styleIn(content);
       else value = content;
       if (value === undefined || isEmptyValue(value)) {
         rejected.push({ reason: "could not read a valid value" });

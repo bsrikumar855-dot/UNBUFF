@@ -124,6 +124,14 @@ const EnvSchema = z
       .enum(["true", "false", "1", "0"])
       .default("false")
       .transform((v) => v === "true" || v === "1"),
+    /**
+     * Opt-in: look a student's public solved counts up by username from LeetCode's unofficial endpoint. LeetCode's terms
+     * forbid automated access like this, so it is off unless the operator accepts that risk.
+     */
+    LEETCODE_PUBLIC_LOOKUP: z
+      .enum(["true", "false", "1", "0"])
+      .default("false")
+      .transform((v) => v === "true" || v === "1"),
     /** Secret. Sent only from the server, in a header. */
     JUDGE0_AUTH_TOKEN: z.string().optional(),
     JUDGE0_AUTH_HEADER: z.string().regex(/^[A-Za-z0-9-]{1,60}$/, "must be a plain header name").default("X-Auth-Token"),

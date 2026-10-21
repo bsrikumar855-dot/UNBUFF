@@ -129,6 +129,7 @@ export const SOURCE_LABEL: Record<LeetCodeSourceKind, string> = {
   manual_entry: "Typed in by you",
   json_file: "Your JSON file",
   csv_file: "Your CSV file",
+  public_lookup: "Looked up from your public LeetCode profile",
 };
 
 export const formatWhen = (iso: string | null): string =>
@@ -138,7 +139,8 @@ export const formatDay = (iso: string | null): string =>
 
 /** The five states the interface must never blur, in the order they are explained. */
 export function stateRows(
-  c: LeetCodeConnection
+  c: LeetCodeConnection,
+  lookupAvailable = false
 ): { key: string; label: string; on: boolean; detail: string }[] {
   const s = c.states;
   return [
@@ -172,9 +174,11 @@ export function stateRows(
     },
     {
       key: "live",
-      label: "Live sync unavailable",
+      label: lookupAvailable ? "Fetched on request, not live" : "Live sync unavailable",
       on: s.live_sync_unavailable,
-      detail: "Numbers are never fetched from LeetCode. They are only what you import.",
+      detail: lookupAvailable
+        ? "Numbers are fetched from LeetCode's public profile data only when you ask. They are not kept in sync."
+        : "Numbers are never fetched from LeetCode. They are only what you import.",
     },
   ];
 }

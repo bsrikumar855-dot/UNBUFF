@@ -15,6 +15,8 @@ vi.mock("@/api/endpoints", () => ({
     getLeetCodeConnection: vi.fn(),
     linkLeetCode: vi.fn(),
     unlinkLeetCode: vi.fn(),
+    getLeetCodeLookup: vi.fn(),
+    lookupLeetCode: vi.fn(),
     previewLeetCodeImport: vi.fn(),
     confirmLeetCodeImport: vi.fn(),
     getLeetCodeInsights: vi.fn(),
@@ -118,6 +120,7 @@ const preview = (over: Partial<LeetCodeImportPreview> = {}): LeetCodeImportPrevi
 beforeEach(() => {
   vi.resetAllMocks();
   mocked.getLeetCodeConnection.mockResolvedValue({ connection: connection() });
+  mocked.getLeetCodeLookup.mockResolvedValue({ available: false });
   mocked.getLeetCodeInsights.mockResolvedValue(insights({ connection: connection(), available: false, source: null, totals: null, difficulty: null, topics: null, contest: null, activity: null, history: [], trend: { available: false, reason: "Nothing has been imported yet.", from: null, to: null, solved_change: null, days: null } }));
   mocked.getLeetCodeHistory.mockResolvedValue({ snapshots: [], total: 0 });
   mocked.getGithubConnection.mockResolvedValue({ status: "disconnected" } as never);
@@ -259,6 +262,57 @@ describe("the connection panel (Settings)", () => {
     fireEvent.change(screen.getByLabelText("LeetCode username or profile address"), { target: { value: "lee215" } });
     fireEvent.click(screen.getByRole("button", { name: "Link profile" }));
     expect(await screen.findByText("That is not a valid address.")).toBeInTheDocument();
+  });
+});
+
+describe("looking numbers up by username (when the operator enabled it)", () => {
+  const snap = { id: "a".repeat(32), captured_at: "2026-10-21T10:00:00.000Z", imported_at: "2026-10-21T10:00:00.000Z", solved: 93, easy: 69, medium: 23, hard: 1, source: { kind: "public_lookup" as const, description: null }, linked_username: "lee215", fields: ["difficulty" as const, "available" as const] };
+
+  it("states on the LeetCode page whether UNBLUFF contacts LeetCode, matching the server setting", async () => {
+    renderAt("/leetcode");
+    expect(await screen.findByText(/UNBLUFF never contacts LeetCode\./)).toBeInTheDocument();
+    mocked.getLeetCodeLookup.mockResolvedValue({ available: true });
+    renderAt("/leetcode");
+    expect(await screen.findByText(/contacts LeetCode only when you ask it to look your numbers up/)).toBeInTheDocument();
+  });
+
+  it("is hidden and never calls LeetCode when the server has the lookup off", async () => {
+    renderAt("/settings");
+    await screen.findByText(/This is not a live connection/);
+    expect(screen.queryByRole("button", { name: "Fetch my numbers from LeetCode" })).not.toBeInTheDocument();
+    expect(mocked.lookupLeetCode).not.toHaveBeenCalled();
+  });
+
+  it("looks the numbers up right after a username is linked, and says they are not verified as yours", async () => {
+    mocked.getLeetCodeLookup.mockResolvedValue({ available: true });
+    mocked.linkLeetCode.mockResolvedValue({ connection: linked() });
+    mocked.lookupLeetCode.mockResolvedValue({ status: "imported", snapshot: snap, connection: linked() });
+    renderAt("/settings");
+    expect(await screen.findByText(/This is not an official connection/)).toBeInTheDocument();
+    fireEvent.change(await screen.findByLabelText("LeetCode username or profile address"), { target: { value: "lee215" } });
+    fireEvent.click(screen.getByRole("button", { name: "Link profile" }));
+    await waitFor(() => expect(mocked.lookupLeetCode).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText(/Saved 93 solved \(easy 69, medium 23, hard 1\).*not verified as yours/)).toBeInTheDocument();
+    expect(screen.getByText("Fetched on request, not live")).toBeInTheDocument();
+  });
+
+  it("refuses a username LeetCode does not know and shows the reason", async () => {
+    mocked.getLeetCodeLookup.mockResolvedValue({ available: true });
+    mocked.linkLeetCode.mockRejectedValue(new ApiError('LeetCode has no public profile named "ghost_user". Check the spelling.', "BAD_REQUEST", 400));
+    renderAt("/settings");
+    fireEvent.change(await screen.findByLabelText("LeetCode username or profile address"), { target: { value: "ghost_user" } });
+    fireEvent.click(screen.getByRole("button", { name: "Link profile" }));
+    expect(await screen.findByText(/LeetCode has no public profile named "ghost_user"/)).toBeInTheDocument();
+    expect(mocked.lookupLeetCode).not.toHaveBeenCalled();
+  });
+
+  it("offers a refresh button for a linked profile", async () => {
+    mocked.getLeetCodeLookup.mockResolvedValue({ available: true });
+    mocked.getLeetCodeConnection.mockResolvedValue({ connection: linked() });
+    mocked.lookupLeetCode.mockResolvedValue({ status: "already_imported", snapshot: snap, connection: linked() });
+    renderAt("/settings");
+    fireEvent.click(await screen.findByRole("button", { name: "Fetch my numbers from LeetCode" }));
+    expect(await screen.findByText(/Already up to date: 93 solved/)).toBeInTheDocument();
   });
 });
 
