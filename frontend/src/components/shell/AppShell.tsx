@@ -43,7 +43,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
     <TooltipProvider>
       <a
         href="#main"
-        className="sr-only z-[2000] rounded-md bg-ink-primary px-4 py-2 text-sm font-medium text-surface-50 focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
+        className="sr-only z-2000 rounded-md bg-ink-primary px-4 py-2 text-sm font-medium text-surface-50 focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
       >
         Skip to content
       </a>
@@ -53,7 +53,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
           <Sidebar onSearch={() => setPaletteOpen(true)} />
           <div className="flex min-w-0 flex-1 flex-col">
             <MobileBar onSearch={() => setPaletteOpen(true)} />
-            <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
+            <main id="main" tabIndex={-1} className="flex-1 focus:outline-hidden">
               <div key={pathname} className="motion-safe:animate-route-in">
                 {children}
               </div>
@@ -64,13 +64,13 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       ) : (
         <div className="flex min-h-screen flex-col bg-surface-50 text-ink-primary">
           <PublicHeader />
-          <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
+          <main id="main" tabIndex={-1} className="flex-1 focus:outline-hidden">
             <div key={pathname} className="motion-safe:animate-route-in">
               {children}
             </div>
           </main>
           <footer className="border-t border-line px-6 py-5">
-            <div className="mx-auto flex max-w-[88rem] flex-wrap items-center justify-between gap-2 text-xs text-ink-muted">
+            <div className="mx-auto flex max-w-352 flex-wrap items-center justify-between gap-2 text-xs text-ink-muted">
               <span className="eyebrow">UNBLUFF · evidence, not claims</span>
               <span>&copy; 2026</span>
             </div>

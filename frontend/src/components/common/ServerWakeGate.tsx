@@ -38,7 +38,7 @@ export const ServerWakeGate: React.FC = () => {
 
   if (phase === "checking" || phase === "ready") return null;
   return (
-    <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-surface-50/95 p-6">
+    <div className="fixed inset-0 z-1300 flex items-center justify-center bg-surface-50/95 p-6">
       {phase === "waking" ? (
         <div role="status" className="max-w-sm text-center">
           <span

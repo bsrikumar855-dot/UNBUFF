@@ -276,7 +276,7 @@ const DsaQuestionPage: React.FC = () => {
                 <p
                   role="status"
                   aria-live="polite"
-                  className="min-h-[1.25rem] text-sm text-ink-secondary"
+                  className="min-h-5 text-sm text-ink-secondary"
                 >
                   {saved}
                 </p>

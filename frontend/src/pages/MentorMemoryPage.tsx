@@ -540,7 +540,7 @@ const ProfileForm: React.FC<{ onSaved: () => void }> = ({ onSaved }) => {
               />
               <select
                 aria-label={`Level for skill ${i + 1}`}
-                className={`${field} max-w-[10rem]`}
+                className={`${field} max-w-40`}
                 value={s.level}
                 onChange={(e) =>
                   setSkills(

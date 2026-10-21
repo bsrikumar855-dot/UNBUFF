@@ -12,7 +12,7 @@ const WIDTH = {
   /** Most screens. */
   default: "max-w-6xl",
   /** Data-dense workspaces. */
-  wide: "max-w-[88rem]",
+  wide: "max-w-352",
 } as const;
 
 /** The content frame every screen uses: one width strategy, one gutter, one vertical rhythm. */

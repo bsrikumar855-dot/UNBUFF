@@ -160,7 +160,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           </label>
           <input
             id={`skip-${task.id}`}
-            className={`${field} min-w-[12rem] flex-1`}
+            className={`${field} min-w-48 flex-1`}
             value={reason}
             maxLength={200}
             onChange={(e) => setReason(e.target.value)}

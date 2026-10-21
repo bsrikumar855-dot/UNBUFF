@@ -102,7 +102,7 @@ export const AssistantPanel: React.FC<{
         </label>
         <input
           id="assistant-q"
-          className="min-h-10 min-w-[10rem] flex-1 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm"
+          className="min-h-10 min-w-40 flex-1 rounded-md border border-line-strong bg-surface px-3 py-2 text-sm"
           maxLength={500}
           value={message}
           onChange={(e) => setMessage(e.target.value)}

@@ -33,7 +33,7 @@ export const MaskedText: React.FC<{
         const marked = mark.includes(w.replace(/[.,]/g, ""));
         return (
           <React.Fragment key={`${w}-${i}`}>
-            <span className="inline-block overflow-hidden pb-[0.14em] align-bottom [margin-bottom:-0.14em]">
+            <span className="inline-block overflow-hidden pb-[0.14em] align-bottom mb-[-0.14em]">
               <m.span
                 className={cn(
                   "inline-block will-change-transform",

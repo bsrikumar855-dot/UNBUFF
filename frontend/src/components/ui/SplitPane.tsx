@@ -82,7 +82,7 @@ export const SplitPane: React.FC<{
     >
       <div
         className={cn(
-          "min-h-0 min-w-0 lg:shrink-0 lg:grow-0 lg:basis-[var(--split)]",
+          "min-h-0 min-w-0 lg:shrink-0 lg:grow-0 lg:basis-(--split)",
           firstClassName
         )}
       >

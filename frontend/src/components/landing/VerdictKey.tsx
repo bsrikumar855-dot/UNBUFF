@@ -88,7 +88,7 @@ export const VerdictKey: React.FC<{ className?: string }> = ({ className }) => {
             );
           })}
         </div>
-        <div className="min-h-[9.5rem] px-4 py-4" aria-live="polite">
+        <div className="min-h-38 px-4 py-4" aria-live="polite">
           <AnimatePresence mode="wait" initial={false}>
             <m.div
               key={active}

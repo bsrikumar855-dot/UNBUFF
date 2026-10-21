@@ -25,7 +25,7 @@ const Struck: React.FC<{ children: React.ReactNode; delay: number }> = ({ childr
       viewport={{ once: true, margin: "0px 0px -15% 0px" }}
       transition={{ delay, duration: 0.8, ease: EASE, opacity: { delay: delay + 0.4, duration: 0.5 } }}
       // A background line per text line (box-decoration-break: clone), so wrapped text is struck on every line.
-      className="[box-decoration-break:clone] bg-[linear-gradient(var(--color-accent),var(--color-accent))] bg-no-repeat [background-position:0_58%] [background-size:100%_2px]"
+      className="[box-decoration-break:clone] bg-[linear-gradient(var(--color-accent),var(--color-accent))] bg-no-repeat bg-position-[0_58%] bg-size-[100%_2px]"
     >
       {children}
     </m.span>
@@ -61,7 +61,7 @@ const Tick: React.FC<{ delay: number }> = ({ delay }) => {
 /** The evidence rules, stated plainly and shown with the red pen: what counts is ticked, what never counts is struck. */
 export const CountsSection: React.FC = () => (
   <section aria-labelledby="counts-title" className="border-b border-line bg-card">
-    <div className="mx-auto max-w-[96rem] px-6 py-20 sm:px-14 sm:py-32">
+    <div className="mx-auto max-w-384 px-6 py-20 sm:px-14 sm:py-32">
       <p className="eyebrow">02 · Evidence</p>
       <h2
         id="counts-title"

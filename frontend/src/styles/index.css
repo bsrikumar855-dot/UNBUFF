@@ -1,108 +1,387 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-/**
+@plugin 'tailwindcss-animate';
+
+@theme {
+  --color-paper: #f4f1ea;
+
+  --color-surface-50: #f4f1ea;
+  --color-surface-100: #ece8de;
+  --color-surface-200: #e2ddcf;
+  --color-surface: #fbf9f4;
+
+  --color-ink-primary: #15130f;
+  --color-ink-secondary: #3a362e;
+  --color-ink-muted: #645e52;
+  --color-ink-subtle: #6e675a;
+
+  --color-line: #ddd7c9;
+  --color-line-strong: #8a8373;
+
+  --color-redline: #b3291a;
+  --color-redline-dark: #8f1f13;
+  --color-redline-soft: #f6e4df;
+
+  --color-background: #f4f1ea;
+  --color-foreground: #15130f;
+
+  --color-card: #fbf9f4;
+  --color-card-foreground: #15130f;
+
+  --color-popover: #fbf9f4;
+  --color-popover-foreground: #15130f;
+
+  --color-primary: #15130f;
+  --color-primary-foreground: #f4f1ea;
+
+  --color-secondary: #ece8de;
+  --color-secondary-foreground: #15130f;
+
+  --color-muted: #ece8de;
+  --color-muted-foreground: #645e52;
+
+  --color-accent: #ece8de;
+  --color-accent-foreground: #15130f;
+
+  --color-destructive: #b3291a;
+  --color-destructive-foreground: #ffffff;
+
+  --color-border: #ddd7c9;
+  --color-input: #8a8373;
+  --color-ring: #b3291a;
+  --color-verified: #1f6b4a;
+
+  --color-verdict-defended-fg: #059669;
+  --color-verdict-defended-bg: #dcfce7;
+
+  --color-verdict-shaky-fg: #d97706;
+  --color-verdict-shaky-bg: #fef3c7;
+
+  --color-verdict-bluff-fg: #dc2626;
+  --color-verdict-bluff-bg: #fee2e2;
+
+  --color-verdict-honest_gap-fg: #4f46e5;
+  --color-verdict-honest_gap-bg: #eef2ff;
+
+  --color-verdict-error-fg: #64748b;
+  --color-verdict-error-bg: #f1f5f9;
+
+  --color-verdict-pending-fg: #94a3b8;
+  --color-verdict-pending-bg: #f1f5f9;
+
+  --color-skill-ready-fg: #059669;
+  --color-skill-ready-bg: #dcfce7;
+
+  --color-skill-needs_work-fg: #d97706;
+  --color-skill-needs_work-bg: #fef3c7;
+
+  --color-skill-unverified-fg: #94a3b8;
+  --color-skill-unverified-bg: #f1f5f9;
+
+  --color-skill-blind_spot-fg: #0f172a;
+  --color-skill-blind_spot-bg: #f1f5f9;
+
+  --color-skill-deprioritized-fg: #cbd5e1;
+  --color-skill-deprioritized-bg: #f1f5f9;
+
+  --font-sans:
+    'Geist Variable', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+    sans-serif;
+  --font-serif: 'Lora Variable', ui-serif, Georgia, Cambria, serif;
+  --font-mono:
+    'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+
+  --text-display-xl: clamp(2.75rem, 1.6rem + 5.2vw, 6rem);
+  --text-display-xl--line-height: 0.98;
+  --text-display-xl--letter-spacing: -0.035em;
+  --text-display: clamp(2.25rem, 1.5rem + 3.2vw, 4rem);
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.03em;
+  --text-title: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem);
+  --text-title--line-height: 1.1;
+  --text-title--letter-spacing: -0.025em;
+  --text-heading: 1.375rem;
+  --text-heading--line-height: 1.25;
+  --text-heading--letter-spacing: -0.015em;
+  --text-eyebrow: 0.6875rem;
+  --text-eyebrow--line-height: 1rem;
+  --text-eyebrow--letter-spacing: 0.09em;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 10px;
+
+  --shadow-float:
+    0 1px 0 rgb(21 19 15 / 0.04), 0 12px 32px -12px rgb(21 19 15 / 0.28);
+
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  --breakpoint-wide: 1440px;
+
+  --animate-fade-up: fade-up 400ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-rise: rise 320ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-route-in: rise 240ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+  --animate-slide-in: slide-in 220ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-slide-in-right: slide-in-right 220ms cubic-bezier(0.2, 0.7, 0.2, 1)
+    both;
+  --animate-overlay-in: overlay-in 160ms ease-out both;
+  --animate-pop-in: pop-in 160ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-mark-draw: mark-draw 520ms cubic-bezier(0.2, 0.7, 0.2, 1) 120ms both;
+  --animate-scroll-cue: scroll-cue 1.8s cubic-bezier(0.6, 0, 0.2, 1) infinite;
+
+  @keyframes fade-up {
+    0% {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes rise {
+    0% {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes slide-in {
+    0% {
+      transform: translateX(-12px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  @keyframes slide-in-right {
+    0% {
+      transform: translateX(16px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  @keyframes overlay-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes pop-in {
+    0% {
+      opacity: 0;
+      transform: translateY(4px) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  @keyframes mark-draw {
+    0% {
+      transform: scaleX(0);
+    }
+    100% {
+      transform: scaleX(1);
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility eyebrow {
+  /* Mono micro-label: section markers, provenance tags, column heads. Never decorative. */
+  @apply font-mono text-eyebrow font-medium uppercase text-ink-muted;
+}
+
+@utility num {
+  @apply font-mono;
+}
+
+@utility serif {
+  /* Editorial serif is reserved for page titles and a few display moments. */
+  @apply font-serif;
+  font-optical-sizing: auto;
+}
+
+@utility rule {
+  /* Ledger rule: the repeating motif of the product, a hairline that separates evidence from claim. */
+  @apply border-t border-line;
+}
+
+@utility rule-strong {
+  @apply border-t border-ink-primary;
+}
+
+@utility redline {
+  /* Red-pencil underline that draws in once, used for the single most important phrase on a page. */
+  background-image: linear-gradient(var(--color-accent), var(--color-accent));
+  background-repeat: no-repeat;
+  background-position: 0 92%;
+  background-size: 100% 0.14em;
+  @media (prefers-reduced-motion: no-preference) {
+    animation: mark-draw 520ms var(--ease-out) 150ms both;
+    background-size: 0 0.14em;
+    animation-name: redline-draw;
+  }
+}
+
+@utility redline-late {
+  /* The red pen underlines the key phrase after the headline has landed (a longer delay than .redline). */
+  background-image: linear-gradient(var(--color-accent), var(--color-accent));
+  background-repeat: no-repeat;
+  background-position: 0 94%;
+  background-size: 100% 0.06em;
+  @media (prefers-reduced-motion: no-preference) {
+    background-size: 0 0.06em;
+    animation: redline-draw-thin 900ms var(--ease-out) 1.7s forwards;
+  }
+}
+
+@utility redline-static {
+  /* The same mark, drawn statically: for repeated or inline use where animation would distract. */
+  background-image: linear-gradient(var(--color-accent), var(--color-accent));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 0.12em;
+}
+
+@utility scroll-x {
+  /* Panels and rows that scroll horizontally keep their own scroll area; the page never scrolls sideways. */
+  @apply overflow-x-auto overscroll-x-contain;
+}
+
+@layer utilities {
+  /**
  * UNBLUFF design tokens (Phase 11, "proofing desk").
  * Warm paper, ink, hairline rules and one accent: the examiner's red pen (`--color-accent`).
  * Verdict and skill-state colours are contract-locked (CONTRACT.md §6/§7) and unchanged; they mirror src/styles/tokens.ts.
  * Mirrors tailwind.config.js. Light theme only: the app has no dark theme and none is justified yet.
  */
-:root {
-  color-scheme: light;
+  :root {
+    color-scheme: light;
 
-  /* Base */
-  --color-bg: #f4f1ea;
-  --color-surface: #fbf9f4;
-  --color-surface-recess: #ece8de;
-  --color-text: #15130f;
-  --color-text-secondary: #3a362e;
-  --color-text-muted: #645e52;
-  --color-border: #ddd7c9;
-  --color-border-strong: #8a8373;
-  --color-accent: #b3291a;
-  --color-verified: #1f6b4a;
+    /* Base */
+    --color-bg: #f4f1ea;
+    --color-surface: #fbf9f4;
+    --color-surface-recess: #ece8de;
+    --color-text: #15130f;
+    --color-text-secondary: #3a362e;
+    --color-text-muted: #645e52;
+    --color-border: #ddd7c9;
+    --color-border-strong: #8a8373;
+    --color-accent: #b3291a;
+    --color-verified: #1f6b4a;
 
-  /* Verdict: icon/accent colours, UNBLUFF Design Bible §6 (contract-locked).
+    /* Verdict: icon/accent colours, UNBLUFF Design Bible §6 (contract-locked).
      Label text never uses these directly; see styles/tokens.ts textColor. */
-  --color-verdict-defended: #059669;
-  --color-verdict-shaky: #d97706;
-  --color-verdict-bluff: #dc2626;
-  --color-verdict-honest-gap: #4f46e5;
-  --color-verdict-error: #64748b;
-  --color-verdict-pending: #94a3b8;
+    --color-verdict-defended: #059669;
+    --color-verdict-shaky: #d97706;
+    --color-verdict-bluff: #dc2626;
+    --color-verdict-honest-gap: #4f46e5;
+    --color-verdict-error: #64748b;
+    --color-verdict-pending: #94a3b8;
 
-  /* Skill state: icon/accent colours, Design Bible §7 (contract-locked) */
-  --color-skill-ready: #059669;
-  --color-skill-needs-work: #d97706;
-  --color-skill-unverified: #94a3b8;
-  --color-skill-blind-spot: #0f172a;
-  --color-skill-deprioritized: #cbd5e1;
+    /* Skill state: icon/accent colours, Design Bible §7 (contract-locked) */
+    --color-skill-ready: #059669;
+    --color-skill-needs-work: #d97706;
+    --color-skill-unverified: #94a3b8;
+    --color-skill-blind-spot: #0f172a;
+    --color-skill-deprioritized: #cbd5e1;
 
-  /* Motion: short and decisive. Entrances 200-400ms, feedback 120-160ms. */
-  --motion-fast: 150ms;
-  --motion-normal: 250ms;
-  --motion-slow: 400ms;
-  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+    /* Motion: short and decisive. Entrances 200-400ms, feedback 120-160ms. */
+    --motion-fast: 150ms;
+    --motion-normal: 250ms;
+    --motion-slow: 400ms;
+    --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
 
-  /* Layout */
-  --sidebar-w: 15rem;
-  --topbar-h: 3.5rem;
+    /* Layout */
+    --sidebar-w: 15rem;
+    --topbar-h: 3.5rem;
 
-  /* Z-index layers */
-  --z-sticky: 40;
-  --z-dropdown: 1000;
-  --z-drawer: 1100;
-  --z-modal: 1200;
-  --z-toast: 1300;
-  --z-tooltip: 1400;
-}
+    /* Z-index layers */
+    --z-sticky: 40;
+    --z-dropdown: 1000;
+    --z-drawer: 1100;
+    --z-modal: 1200;
+    --z-toast: 1300;
+    --z-tooltip: 1400;
+  }
 
-html {
-  -webkit-text-size-adjust: 100%;
-  scroll-padding-top: calc(var(--topbar-h) + 1rem);
-}
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: calc(var(--topbar-h) + 1rem);
+  }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  font-family:
-    "Geist Variable",
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
-  font-feature-settings: "ss01", "cv11";
-  text-rendering: optimizeLegibility;
-}
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family:
+      'Geist Variable',
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    font-feature-settings: 'ss01', 'cv11';
+    text-rendering: optimizeLegibility;
+  }
 
-/* Paper grain: a static, very faint noise over the whole page. It gives the paper some tooth and carries no information. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0.045;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-}
+  /* Paper grain: a static, very faint noise over the whole page. It gives the paper some tooth and carries no information. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.045;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
 
-::selection {
-  background: #f1c9c1;
-  color: var(--color-text);
-}
+  ::selection {
+    background: #f1c9c1;
+    color: var(--color-text);
+  }
 
-/* Visible keyboard focus everywhere: never rely on colour alone for state,
+  /* Visible keyboard focus everywhere: never rely on colour alone for state,
    and never remove focus outlines for mouse-only aesthetics. */
-:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-  border-radius: 2px;
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
 }
 
 @layer base {
@@ -119,66 +398,6 @@ body::before {
   table,
   .num {
     font-variant-numeric: tabular-nums;
-  }
-}
-
-@layer components {
-  /* Mono micro-label: section markers, provenance tags, column heads. Never decorative. */
-  .eyebrow {
-    @apply font-mono text-eyebrow font-medium uppercase text-ink-muted;
-  }
-  .num {
-    @apply font-mono;
-  }
-  /* Editorial serif is reserved for page titles and a few display moments. */
-  .serif {
-    @apply font-serif;
-    font-optical-sizing: auto;
-  }
-  /* Ledger rule: the repeating motif of the product, a hairline that separates evidence from claim. */
-  .rule {
-    @apply border-t border-line;
-  }
-  .rule-strong {
-    @apply border-t border-ink-primary;
-  }
-  /* Red-pencil underline that draws in once, used for the single most important phrase on a page. */
-  .redline {
-    background-image: linear-gradient(var(--color-accent), var(--color-accent));
-    background-repeat: no-repeat;
-    background-position: 0 92%;
-    background-size: 100% 0.14em;
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    .redline {
-      animation: mark-draw 520ms var(--ease-out) 150ms both;
-      background-size: 0 0.14em;
-      animation-name: redline-draw;
-    }
-  }
-  /* The red pen underlines the key phrase after the headline has landed (a longer delay than .redline). */
-  .redline-late {
-    background-image: linear-gradient(var(--color-accent), var(--color-accent));
-    background-repeat: no-repeat;
-    background-position: 0 94%;
-    background-size: 100% 0.06em;
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    .redline-late {
-      background-size: 0 0.06em;
-      animation: redline-draw-thin 900ms var(--ease-out) 1.7s forwards;
-    }
-  }
-  /* The same mark, drawn statically: for repeated or inline use where animation would distract. */
-  .redline-static {
-    background-image: linear-gradient(var(--color-accent), var(--color-accent));
-    background-repeat: no-repeat;
-    background-position: 0 100%;
-    background-size: 100% 0.12em;
-  }
-  /* Panels and rows that scroll horizontally keep their own scroll area; the page never scrolls sideways. */
-  .scroll-x {
-    @apply overflow-x-auto overscroll-x-contain;
   }
 }
 

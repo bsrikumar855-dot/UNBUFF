@@ -24,11 +24,11 @@ export const PublicHeader: React.FC = () => {
   const { state } = useSessionState();
   return (
     <header className="border-b border-line bg-surface-50">
-      <div className="mx-auto flex max-w-[88rem] flex-wrap items-center gap-x-6 gap-y-1 px-4 py-2.5 sm:px-8">
+      <div className="mx-auto flex max-w-352 flex-wrap items-center gap-x-6 gap-y-1 px-4 py-2.5 sm:px-8">
         <Wordmark />
         <nav
           aria-label="Primary"
-          className="order-3 flex w-full items-center gap-5 sm:order-none sm:w-auto sm:flex-1"
+          className="order-3 flex w-full items-center gap-5 sm:order-0 sm:w-auto sm:flex-1"
         >
           <NavLink to={routes.roadmap(state.sessionId)} className={link}>
             Roadmap

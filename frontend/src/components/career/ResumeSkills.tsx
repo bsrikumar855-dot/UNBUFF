@@ -206,7 +206,7 @@ export const ResumeSkillsSection: React.FC = () => {
                       <span className="text-xs text-ink-muted">
                         mentioned {s.mentions} time{s.mentions === 1 ? "" : "s"}
                       </span>
-                      <span className="basis-full break-words pl-7 text-xs text-ink-secondary">
+                      <span className="basis-full wrap-break-word pl-7 text-xs text-ink-secondary">
                         “{s.evidence}”
                       </span>
                     </label>

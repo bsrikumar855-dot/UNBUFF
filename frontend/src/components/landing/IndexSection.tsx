@@ -53,7 +53,7 @@ export const IndexSection: React.FC = () => {
   const animated = canObserve();
   return (
     <section aria-labelledby="index-title" className="border-b border-line">
-      <div className="mx-auto max-w-[96rem] px-6 py-20 sm:px-14 sm:py-32">
+      <div className="mx-auto max-w-384 px-6 py-20 sm:px-14 sm:py-32">
         <p className="eyebrow">03 · Contents</p>
         <h2
           id="index-title"

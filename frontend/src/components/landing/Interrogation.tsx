@@ -167,7 +167,7 @@ const Specimen: React.FC<{ progress?: MotionValue<number>; stamped: boolean }> =
         {wrap(
           0.7,
           0.76,
-          cn(ROW, "min-h-[5.5rem]"),
+          cn(ROW, "min-h-22"),
           <>
             <span className="eyebrow pt-1">Verdict</span>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
@@ -210,7 +210,7 @@ const Pinned: React.FC = () => {
   return (
     <div ref={ref} className="relative h-[430vh]">
       <div className="sticky top-0 flex h-screen items-center">
-        <div className="mx-auto grid w-full max-w-[96rem] grid-cols-[17rem_minmax(0,1fr)] gap-14 px-14">
+        <div className="mx-auto grid w-full max-w-384 grid-cols-[17rem_minmax(0,1fr)] gap-14 px-14">
           <div className="relative flex flex-col justify-center">
             <p className="eyebrow">01 · Method</p>
             <h2 id="interrogation-title" className="serif mt-4 text-title font-medium">
@@ -255,7 +255,7 @@ const Pinned: React.FC = () => {
 
 /** Not pinned (phones, reduced motion): the same story as an ordinary section. */
 const Static: React.FC = () => (
-  <div className="mx-auto grid max-w-[96rem] gap-10 px-6 py-16 sm:px-14 sm:py-24 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-20">
+  <div className="mx-auto grid max-w-384 gap-10 px-6 py-16 sm:px-14 sm:py-24 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-20">
     <div>
       <p className="eyebrow">01 · Method</p>
       <h2 id="interrogation-title" className="serif mt-4 text-title font-medium">

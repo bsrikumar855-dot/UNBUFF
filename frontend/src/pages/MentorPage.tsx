@@ -38,7 +38,7 @@ const MessageBody: React.FC<{ text: string }> = ({ text }) => {
             <code>{part.replace(/\n$/, "")}</code>
           </pre>
         ) : part.trim() === "" ? null : (
-          <p key={i} className="whitespace-pre-wrap break-words">
+          <p key={i} className="whitespace-pre-wrap wrap-break-word">
             {part.replace(/^\n+|\n+$/g, "")}
           </p>
         )
@@ -455,7 +455,7 @@ const MentorPage: React.FC = () => {
           aria-label="Conversation"
           aria-live="polite"
           aria-relevant="additions"
-          className="flex min-h-[18rem] flex-1 flex-col gap-6 overflow-y-auto px-4 py-6 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200 sm:px-8 lg:min-h-0"
+          className="flex min-h-72 flex-1 flex-col gap-6 overflow-y-auto px-4 py-6 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200 sm:px-8 lg:min-h-0"
         >
           {messages.length === 0 && !loadingConversation && (
             <div className="max-w-xl text-sm text-ink-secondary">
@@ -488,7 +488,7 @@ const MentorPage: React.FC = () => {
               animate={{ opacity: 1, x: 0, y: 0 }}
               transition={settle(DUR.base)}
               className={cn(
-                "max-w-[46rem] text-[15.5px] leading-relaxed",
+                "max-w-184 text-[15.5px] leading-relaxed",
                 msg.role === "user"
                   ? "self-end border-l-2 border-ink-primary bg-surface-100 px-4 py-3"
                   : "self-start"

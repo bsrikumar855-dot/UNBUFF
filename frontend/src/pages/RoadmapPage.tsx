@@ -49,7 +49,7 @@ const RoadmapPage: React.FC = () => {
           {weeks.map((w) => (
             <li key={w.week} className="relative">
               <span
-                className="absolute -left-[37px] top-1.5 size-3 border-2 border-surface-50 bg-ink-primary"
+                className="absolute left-[-37px] top-1.5 size-3 border-2 border-surface-50 bg-ink-primary"
                 aria-hidden="true"
               />
               <h2 className="serif mb-3 text-heading font-medium text-ink-primary">

@@ -14,7 +14,7 @@ export const MobileBar: React.FC<{ onSearch: () => void }> = ({ onSearch }) => {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-[var(--topbar-h)] items-center gap-1 border-b border-border bg-card px-3 lg:hidden">
+      <header className="sticky top-0 z-40 flex h-(--topbar-h) items-center gap-1 border-b border-border bg-card px-3 lg:hidden">
         <Tooltip>
           <TooltipTrigger asChild>
             <button

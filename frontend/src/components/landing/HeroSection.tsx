@@ -33,7 +33,7 @@ export const HeroSection: React.FC = () => {
     >
       <CropMarks className="inset-3 sm:inset-6" />
       <Ruler className="left-3 text-foreground sm:left-6" />
-      <div className="mx-auto flex min-h-[calc(100svh-3.6rem)] max-w-[96rem] flex-col justify-between px-6 pb-10 pt-12 sm:px-14 sm:pt-16">
+      <div className="mx-auto flex min-h-[calc(100svh-3.6rem)] max-w-384 flex-col justify-between px-6 pb-10 pt-12 sm:px-14 sm:pt-16">
         <div className="eyebrow flex flex-wrap items-center justify-between gap-x-6 gap-y-1 text-ink-secondary">
           <span>Audit № 001</span>
           <span className="text-redline">Placement preparation · evidence only</span>
