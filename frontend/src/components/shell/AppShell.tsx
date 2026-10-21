@@ -4,22 +4,23 @@ import { useAuth } from "@/auth/context";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CommandPalette } from "./CommandPalette";
 import { RouteProgress } from "./RouteProgress";
-import { MobileBar } from "./MobileBar";
-import { PublicHeader } from "./PublicHeader";
-import { Sidebar } from "./Sidebar";
+import { MenuPanel } from "./MenuPanel";
+import { TopBar } from "./TopBar";
+import { HeaderActions } from "./HeaderActions";
 
 /** Routes that always use the marketing layout, even when signed in. */
 const MARKETING = new Set(["/", "/login"]);
 
 /**
  * Chooses the layout: marketing header for the landing and sign-in pages and for signed-out visitors,
- * the navigation rail for signed-in students everywhere else. Owns the skip link, the main landmark
+ * the top bar and floating menu panel for signed-in students everywhere else. Owns the skip link, the main landmark
  * and the Ctrl/Cmd+K shortcut.
  */
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuth();
   const { pathname } = useLocation();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const rail = auth.status === "signedIn" && !MARKETING.has(pathname);
 
   useEffect(() => {
@@ -48,35 +49,29 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         Skip to content
       </a>
       <RouteProgress />
-      {rail ? (
-        <div className="flex min-h-screen bg-surface-50 text-ink-primary">
-          <Sidebar onSearch={() => setPaletteOpen(true)} />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <MobileBar onSearch={() => setPaletteOpen(true)} />
-            <main id="main" tabIndex={-1} className="flex-1 focus:outline-hidden">
-              <div key={pathname} className="motion-safe:animate-route-in">
-                {children}
-              </div>
-            </main>
+      <div className="flex min-h-screen flex-col bg-surface-50 text-ink-primary">
+        <TopBar
+          onMenu={() => setMenuOpen(true)}
+          onSearch={rail ? () => setPaletteOpen(true) : undefined}
+          right={rail ? undefined : <HeaderActions />}
+        />
+        <MenuPanel open={menuOpen} onOpenChange={setMenuOpen} />
+        <main id="main" tabIndex={-1} className="min-w-0 flex-1 focus:outline-hidden">
+          <div key={pathname} className="motion-safe:animate-route-in">
+            {children}
           </div>
+        </main>
+        {rail ? (
           <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
-        </div>
-      ) : (
-        <div className="flex min-h-screen flex-col bg-surface-50 text-ink-primary">
-          <PublicHeader />
-          <main id="main" tabIndex={-1} className="flex-1 focus:outline-hidden">
-            <div key={pathname} className="motion-safe:animate-route-in">
-              {children}
-            </div>
-          </main>
+        ) : (
           <footer className="border-t border-line px-6 py-5">
             <div className="mx-auto flex max-w-352 flex-wrap items-center justify-between gap-2 text-xs text-ink-muted">
               <span className="eyebrow">UNBLUFF · evidence, not claims</span>
               <span>&copy; 2026</span>
             </div>
           </footer>
-        </div>
-      )}
+        )}
+      </div>
     </TooltipProvider>
   );
 };

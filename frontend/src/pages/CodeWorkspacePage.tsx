@@ -233,7 +233,7 @@ const CodeWorkspacePage: React.FC = () => {
     <div
       className={cn(
         "flex flex-col pb-24 lg:pb-0",
-        signedIn ? "lg:h-screen" : "lg:h-[calc(100dvh-4rem)]"
+        signedIn ? "lg:h-[calc(100vh-var(--topbar-h))]" : "lg:h-[calc(100dvh-4rem)]"
       )}
     >
       <header className="border-b border-line px-4 py-3 sm:px-6">

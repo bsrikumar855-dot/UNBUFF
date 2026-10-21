@@ -297,7 +297,7 @@ const MentorPage: React.FC = () => {
   const rateLimited = error instanceof ApiError && error.code === "RATE_LIMITED";
 
   return (
-    <div className="grid lg:h-screen lg:grid-cols-[18rem_minmax(0,1fr)]">
+    <div className="grid lg:h-[calc(100vh-var(--topbar-h))] lg:grid-cols-[18rem_minmax(0,1fr)]">
       <aside
         aria-label="Conversations"
         className="flex min-h-0 flex-col gap-3 border-b border-line bg-surface px-4 py-4 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:py-5"
