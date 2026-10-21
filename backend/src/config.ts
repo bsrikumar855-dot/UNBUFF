@@ -89,8 +89,8 @@ const EnvSchema = z
     GOOGLE_CLOUD_LOCATION: z.string().optional(),
     PORT: z.coerce.number().int().positive().default(8080),
     NODE_ENV: z.string().optional(),
-    /** none: running code is reported as unavailable. judge0: use the Judge0 service at JUDGE0_URL. */
-    EXECUTION_PROVIDER: z.enum(["none", "judge0"]).default("none"),
+    /** none: running code is reported as unavailable. judge0: use the Judge0 service at JUDGE0_URL. docker: local sandbox containers, development only. */
+    EXECUTION_PROVIDER: z.enum(["none", "judge0", "docker"]).default("none"),
     JUDGE0_URL: z.string().optional(),
     /**
      * GitHub contribution insights. All four of CLIENT_ID, CLIENT_SECRET, REDIRECT_URI and TOKEN_ENCRYPTION_KEY, or none:
@@ -208,6 +208,9 @@ const EnvSchema = z
         const o = parseCorsOrigins(env.GITHUB_FRONTEND_URL);
         if (o.invalid.length > 0 || o.origins.length !== 1 || o.wildcard) ctx.addIssue({ code: "custom", path: ["GITHUB_FRONTEND_URL"], message: "GITHUB_FRONTEND_URL must be one bare origin like https://app.example.com" });
       }
+    }
+    if (env.EXECUTION_PROVIDER === "docker" && env.NODE_ENV === "production") {
+      ctx.addIssue({ code: "custom", path: ["EXECUTION_PROVIDER"], message: "EXECUTION_PROVIDER=docker is for local development only; use judge0 in production" });
     }
     if (env.EXECUTION_PROVIDER === "judge0") {
       const problem = judge0UrlProblem(env.JUDGE0_URL, env.NODE_ENV === "production");

@@ -23,6 +23,7 @@ import { MentorService } from "./mentor/service.js";
 import { FirestoreMentorStore, MemoryMentorStore, type MentorStore } from "./mentor/store.js";
 import { AnalyticsService } from "./analytics/service.js";
 import { FirestoreRevisionStore, FirestoreStatsStore, MemoryRevisionStore, MemoryStatsStore, type RevisionStore, type StatsStore } from "./analytics/stores.js";
+import { DockerProvider } from "./code/docker.js";
 import { Judge0Provider } from "./code/judge0.js";
 import { UnavailableProvider, type ExecutionProvider } from "./code/provider.js";
 import { CodeService } from "./code/service.js";
@@ -74,6 +75,10 @@ function loadCatalogue(config: Config, root: string, logger: ReturnType<typeof c
 }
 
 function createExecutionProvider(config: Config, logger: ReturnType<typeof createLogger>): ExecutionProvider {
+  if (config.EXECUTION_PROVIDER === "docker") {
+    logger.warn("EXECUTION_PROVIDER=docker: running code in local Docker containers (development only)");
+    return new DockerProvider();
+  }
   if (config.EXECUTION_PROVIDER !== "judge0") {
     logger.warn("EXECUTION_PROVIDER is not set: running and submitting code is reported as unavailable");
     return new UnavailableProvider();
@@ -181,7 +186,7 @@ function main(): void {
     providerVerified: config.EXECUTION_PROVIDER_VERIFIED,
     onJudged: (record) => analytics.recordSubmission(record),
   });
-  const executionStatus = { configured: config.EXECUTION_PROVIDER === "judge0", verified: config.EXECUTION_PROVIDER === "judge0" && config.EXECUTION_PROVIDER_VERIFIED };
+  const executionStatus = { configured: config.EXECUTION_PROVIDER !== "none", verified: config.EXECUTION_PROVIDER === "judge0" && config.EXECUTION_PROVIDER_VERIFIED };
   const placement = new PlacementService({
     store: stores.placement,
     evidence: new EvidenceService({ analytics, sessions: stores.sessions, roles, lab, github, leetcode, mentor, catalogue: () => catalogue, suites, execution: executionStatus, llmMode: llm.mode, logger }),
