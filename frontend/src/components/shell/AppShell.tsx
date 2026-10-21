@@ -4,22 +4,23 @@ import { useAuth } from "@/auth/context";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CommandPalette } from "./CommandPalette";
 import { RouteProgress } from "./RouteProgress";
-import { MobileBar } from "./MobileBar";
+import { MenuPanel } from "./MenuPanel";
+import { TopBar } from "./TopBar";
 import { PublicHeader } from "./PublicHeader";
-import { Sidebar } from "./Sidebar";
 
 /** Routes that always use the marketing layout, even when signed in. */
 const MARKETING = new Set(["/", "/login"]);
 
 /**
  * Chooses the layout: marketing header for the landing and sign-in pages and for signed-out visitors,
- * the navigation rail for signed-in students everywhere else. Owns the skip link, the main landmark
+ * the top bar and floating menu panel for signed-in students everywhere else. Owns the skip link, the main landmark
  * and the Ctrl/Cmd+K shortcut.
  */
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuth();
   const { pathname } = useLocation();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const rail = auth.status === "signedIn" && !MARKETING.has(pathname);
 
   useEffect(() => {
@@ -49,16 +50,14 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       </a>
       <RouteProgress />
       {rail ? (
-        <div className="flex min-h-screen bg-surface-50 text-ink-primary">
-          <Sidebar onSearch={() => setPaletteOpen(true)} />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <MobileBar onSearch={() => setPaletteOpen(true)} />
-            <main id="main" tabIndex={-1} className="flex-1 focus:outline-hidden">
-              <div key={pathname} className="motion-safe:animate-route-in">
-                {children}
-              </div>
-            </main>
-          </div>
+        <div className="flex min-h-screen flex-col bg-surface-50 text-ink-primary">
+          <TopBar onMenu={() => setMenuOpen(true)} onSearch={() => setPaletteOpen(true)} />
+          <MenuPanel open={menuOpen} onOpenChange={setMenuOpen} />
+          <main id="main" tabIndex={-1} className="min-w-0 flex-1 focus:outline-hidden">
+            <div key={pathname} className="motion-safe:animate-route-in">
+              {children}
+            </div>
+          </main>
           <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
         </div>
       ) : (
