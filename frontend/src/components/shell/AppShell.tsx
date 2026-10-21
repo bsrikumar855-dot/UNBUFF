@@ -51,7 +51,10 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       <RouteProgress />
       {rail ? (
         <div className="flex min-h-screen flex-col bg-surface-50 text-ink-primary">
-          <TopBar onMenu={() => setMenuOpen(true)} onSearch={() => setPaletteOpen(true)} />
+          <TopBar
+            onMenu={() => setMenuOpen(true)}
+            onSearch={() => setPaletteOpen(true)}
+          />
           <MenuPanel open={menuOpen} onOpenChange={setMenuOpen} />
           <main id="main" tabIndex={-1} className="min-w-0 flex-1 focus:outline-hidden">
             <div key={pathname} className="motion-safe:animate-route-in">

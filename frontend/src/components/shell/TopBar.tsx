@@ -1,21 +1,38 @@
 import React from "react";
 import { Menu, Search } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import GlassSurface from "@/components/reactbits/GlassSurface";
 import { Wordmark } from "./Wordmark";
 
 /** The signed-in header at every width: a Menu pill that opens the floating panel, the wordmark, and search. */
-export const TopBar: React.FC<{ onMenu: () => void; onSearch: () => void }> = ({ onMenu, onSearch }) => (
-  <header className="sticky top-0 z-40 grid h-(--topbar-h) grid-cols-[1fr_auto_1fr] items-center border-b border-border bg-card px-3 sm:px-5">
+export const TopBar: React.FC<{ onMenu: () => void; onSearch: () => void }> = ({
+  onMenu,
+  onSearch,
+}) => (
+  <header className="sticky top-0 z-40 grid h-(--topbar-h) grid-cols-[1fr_auto_1fr] items-center border-b border-white/50 bg-card/70 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-5">
     <div>
-      <button
-        type="button"
-        onClick={onMenu}
-        aria-haspopup="dialog"
-        className="inline-flex min-h-10 items-center gap-2 rounded-full border border-line-strong bg-surface-50 px-4 font-mono text-sm font-semibold uppercase tracking-wide text-ink-primary transition-colors hover:border-ink-primary hover:bg-accent"
+      <GlassSurface
+        width="auto"
+        height={40}
+        borderRadius={999}
+        blur={10}
+        brightness={95}
+        opacity={0.9}
+        backgroundOpacity={0.35}
+        distortionScale={-60}
+        mixBlendMode="normal"
+        className="inline-flex"
       >
-        <Menu size={16} aria-hidden="true" />
-        Menu
-      </button>
+        <button
+          type="button"
+          onClick={onMenu}
+          aria-haspopup="dialog"
+          className="inline-flex min-h-10 items-center gap-2 rounded-full px-4 font-mono text-sm font-semibold uppercase tracking-wide text-ink-primary transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:scale-105 active:scale-95"
+        >
+          <Menu size={16} aria-hidden="true" />
+          Menu
+        </button>
+      </GlassSurface>
     </div>
     <Wordmark />
     <div className="flex justify-end">
