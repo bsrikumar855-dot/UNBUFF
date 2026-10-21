@@ -174,7 +174,7 @@ describe("mentor chat", () => {
     renderAt("/mentor");
     expect(await screen.findByRole("heading", { name: "AI Mentor" })).toBeInTheDocument();
     expect(await screen.findByText("No conversations yet.")).toBeInTheDocument();
-    expect(screen.getAllByRole("radio").map((r) => r.textContent)).toEqual([
+    expect(screen.getAllByRole("radio").map((r) => r.getAttribute("aria-label"))).toEqual([
       "DSA Coach",
       "Code Explainer",
       "Interview Practice",

@@ -1,5 +1,23 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import {
+  AlertTriangle,
+  ArrowRight,
+  BookOpen,
+  Briefcase,
+  CheckCircle2,
+  Code2,
+  FileText,
+  GraduationCap,
+  Info,
+  Lightbulb,
+  MessagesSquare,
+  Plus,
+  SendHorizontal,
+  Sparkles,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { api } from "@/api/endpoints";
 import { ApiError } from "@/api/types";
 import { Button } from "@/components/ui/button";
@@ -9,6 +27,7 @@ import { DUR, RISE, settle } from "@/components/motion/tokens";
 import { Thinking } from "@/components/motion/Thinking";
 import { useNewIds } from "@/components/motion/useNewIds";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { GLASS, TILE } from "@/components/ui/GlassCard";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { LEETCODE_STARTERS } from "@/lib/leetcode";
 import { RESUME_STARTERS } from "@/lib/resume";
@@ -24,6 +43,38 @@ import type {
   MentorReference,
 } from "@/types/contract";
 
+const MODE_ICON: Record<MentorMode, LucideIcon> = {
+  dsa_coach: GraduationCap,
+  code_explainer: Code2,
+  interview_practice: Users,
+  placement_mentor: Briefcase,
+};
+
+/** A round icon with a spark: the picture on every empty state. */
+const Illustration: React.FC<{ icon: LucideIcon; size?: "sm" | "md" }> = ({
+  icon: Icon,
+  size = "md",
+}) => (
+  <span
+    aria-hidden="true"
+    className={cn(
+      "relative grid place-items-center rounded-full bg-white text-redline shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08),0_10px_22px_-12px_rgba(24,24,27,0.35)]",
+      size === "md" ? "size-24" : "size-20"
+    )}
+  >
+    <Icon size={size === "md" ? 40 : 32} strokeWidth={1.5} />
+    <Sparkles size={16} className="absolute -right-1 top-2 text-redline/70" />
+  </span>
+);
+
+/** A quiet notice on a glass tile, with an icon. */
+const Note: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <p role="note" className={cn(TILE, "flex items-start gap-3 px-4 py-3 text-sm text-ink-secondary")}>
+    <Info size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-ink-muted" />
+    <span className="min-w-0">{children}</span>
+  </p>
+);
+
 /** Renders a message: plain paragraphs, and fenced code blocks as scrollable monospace blocks (text only, never HTML). */
 const MessageBody: React.FC<{ text: string }> = ({ text }) => {
   const parts = text.split(/```[a-zA-Z0-9+#-]*\n?([\s\S]*?)```/g);
@@ -34,7 +85,7 @@ const MessageBody: React.FC<{ text: string }> = ({ text }) => {
           <pre
             key={i}
             aria-label="Code"
-            className="overflow-x-auto border border-line bg-surface-50 p-3 font-mono text-[13px] leading-relaxed text-ink-primary"
+            className="overflow-x-auto rounded-xl bg-white/80 p-3 font-mono text-[13px] leading-relaxed text-ink-primary shadow-[inset_0_0_0_1px_rgba(24,24,27,0.06)]"
           >
             <code>{part.replace(/\n$/, "")}</code>
           </pre>
@@ -105,18 +156,24 @@ const MentorEngineNote: React.FC = () => {
   return engine.llm_mode === "mock" ? (
     <p
       role="note"
-      className="mt-3 max-w-2xl border-l-2 border-redline pl-3 text-sm text-ink-primary"
+      className="flex items-start gap-3 rounded-2xl bg-redline-soft/60 px-4 py-3 text-sm text-ink-primary shadow-[inset_0_0_0_1px_rgba(179,41,26,0.18)]"
     >
-      <span className="font-semibold">Mock mode.</span> This server answers with a
-      built-in stand-in, not an AI model. Nothing you read here comes from Gemini.
+      <AlertTriangle size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-redline" />
+      <span>
+        <span className="font-semibold">Mock mode.</span> This server answers with a
+        built-in stand-in, not an AI model. Nothing you read here comes from Gemini.
+      </span>
     </p>
   ) : (
     <p
       role="note"
-      className="mt-3 max-w-2xl border-l-2 border-verified pl-3 text-sm text-ink-secondary"
+      className={cn(TILE, "flex items-start gap-3 px-4 py-3 text-sm text-ink-secondary")}
     >
-      <span className="font-semibold text-ink-primary">Live model.</span> Answers come
-      from {engine.model ?? "the AI model"} through the UNBLUFF server.
+      <CheckCircle2 size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-verified" />
+      <span>
+        <span className="font-semibold text-ink-primary">Live model.</span> Answers come
+        from {engine.model ?? "the AI model"} through the UNBLUFF server.
+      </span>
     </p>
   );
 };
@@ -296,14 +353,24 @@ const MentorPage: React.FC = () => {
 
   const rateLimited = error instanceof ApiError && error.code === "RATE_LIMITED";
 
+  const startersFor = careerContext
+    ? CAREER_STARTERS
+    : leetcodeContext
+      ? LEETCODE_STARTERS
+      : resumeContext
+        ? RESUME_STARTERS
+        : STARTERS[mode];
+  const pill = "rounded-full";
+
   return (
-    <div className="grid lg:h-[calc(100vh-var(--topbar-h))] lg:grid-cols-[18rem_minmax(0,1fr)]">
+    <div className="flex flex-col gap-4 px-4 py-4 sm:px-5 lg:h-dvh lg:flex-row lg:pl-5 lg:pr-6">
       <aside
         aria-label="Conversations"
-        className="flex min-h-0 flex-col gap-3 border-b border-line bg-surface px-4 py-4 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:py-5"
+        className={cn(GLASS, "flex shrink-0 flex-col gap-4 p-4 lg:w-72 lg:overflow-y-auto")}
       >
         <div className="flex items-center justify-between gap-2">
-          <Button size="sm" onClick={startNew}>
+          <Button className={cn(pill, "flex-1")} onClick={startNew}>
+            <Plus aria-hidden="true" />
             New conversation
           </Button>
           <button
@@ -316,10 +383,7 @@ const MentorPage: React.FC = () => {
             {showList ? "Hide history" : "History"}
           </button>
         </div>
-        <div
-          id="conversation-list"
-          className={`${showList ? "block" : "hidden"} lg:block`}
-        >
+        <div id="conversation-list" className={`${showList ? "block" : "hidden"} lg:block`}>
           {listError !== null && (
             <ErrorState error={listError} onRetry={() => void loadList()} />
           )}
@@ -327,7 +391,13 @@ const MentorPage: React.FC = () => {
             <LoadingState message="Loading conversations…" />
           )}
           {conversations && conversations.length === 0 && (
-            <p className="text-sm text-ink-secondary">No conversations yet.</p>
+            <div className="flex flex-col items-center px-2 py-6 text-center">
+              <Illustration icon={FileText} size="sm" />
+              <p className="mt-4 font-semibold text-ink-primary">No conversations yet.</p>
+              <p className="mt-1 text-sm text-ink-secondary">
+                Start a new conversation with the AI mentor.
+              </p>
+            </div>
           )}
           {conversations && conversations.length > 0 && (
             <ul className="flex flex-col gap-1">
@@ -338,10 +408,10 @@ const MentorPage: React.FC = () => {
                     onClick={() => void openConversation(c.id)}
                     aria-current={active?.id === c.id ? "true" : undefined}
                     className={cn(
-                      "min-h-10 min-w-0 flex-1 truncate border-l-2 px-3 py-2 text-left text-sm transition-colors",
+                      "min-h-10 min-w-0 flex-1 truncate rounded-xl px-3 py-2 text-left text-sm transition-colors",
                       active?.id === c.id
-                        ? "border-redline bg-surface-100 font-semibold text-ink-primary"
-                        : "border-transparent text-ink-secondary hover:bg-surface-100/70 hover:text-ink-primary"
+                        ? "bg-white font-semibold text-ink-primary shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08)]"
+                        : "text-ink-secondary hover:bg-white/70 hover:text-ink-primary"
                     )}
                   >
                     {c.title}
@@ -351,6 +421,7 @@ const MentorPage: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
+                        className="rounded-full bg-white/70"
                         onClick={() => void removeConversation(c.id)}
                       >
                         Confirm delete
@@ -358,6 +429,7 @@ const MentorPage: React.FC = () => {
                       <Button
                         variant="ghost"
                         size="sm"
+                        className="rounded-full"
                         onClick={() => setConfirmDelete(null)}
                       >
                         Cancel
@@ -367,6 +439,7 @@ const MentorPage: React.FC = () => {
                     <Button
                       variant="ghost"
                       size="sm"
+                      className="rounded-full"
                       aria-label={`Delete conversation ${c.title}`}
                       onClick={() => setConfirmDelete(c.id)}
                     >
@@ -378,93 +451,121 @@ const MentorPage: React.FC = () => {
             </ul>
           )}
         </div>
-        <Link
-          to={routes.mentorMemory}
-          className="text-sm text-redline underline underline-offset-4"
-        >
-          What does the mentor remember? Manage memory
-        </Link>
+        <div className="flex flex-col gap-2 text-sm">
+          <Link
+            to={routes.mentorMemory}
+            className="inline-flex items-center gap-1.5 text-redline underline underline-offset-4"
+          >
+            What does the mentor remember?
+            <ArrowRight size={14} aria-hidden="true" />
+          </Link>
+          <Link
+            to={routes.mentorMemory}
+            className="inline-flex items-center gap-1.5 text-redline underline underline-offset-4"
+          >
+            Manage memory
+            <ArrowRight size={14} aria-hidden="true" />
+          </Link>
+        </div>
       </aside>
 
-      <section aria-label="Mentor chat" className="flex min-h-0 min-w-0 flex-col">
-        <div className="border-b border-line px-4 pb-3 pt-5 sm:px-8">
-          <p className="eyebrow mb-1 text-redline">Learn</p>
-          <h1 className="serif text-title font-medium text-ink-primary">AI Mentor</h1>
-          <p className="mt-1 max-w-2xl text-sm text-ink-secondary">
-            Ask about DSA, your code, interviews or your preparation plan. The mentor can
-            make mistakes, so check important facts.
-          </p>
-          <MentorEngineNote />
-          {careerContext && (
-            <p
-              role="note"
-              className="mt-3 max-w-2xl border-l-2 border-line-strong pl-3 text-sm text-ink-secondary"
-            >
-              <span className="font-semibold text-ink-primary">
-                Career context is on.
-              </span>{" "}
-              The mentor sees your best-matching listings, with scores the app computed,
-              and your saved and applied jobs. It cannot see job descriptions, and it can
-              only discuss listings it was given.
+      <section
+        aria-label="Mentor chat"
+        className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 lg:overflow-y-auto"
+      >
+        <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 pt-1">
+          <div className="min-w-0 max-w-3xl">
+            <p className="eyebrow mb-1 text-redline">Learn</p>
+            <h1 className="serif text-title font-medium text-ink-primary">
+              AI <em>Mentor</em>
+            </h1>
+            <p className="mt-1.5 text-sm leading-relaxed text-ink-secondary">
+              Ask about DSA, your code, interviews or your preparation plan. The mentor can
+              make mistakes, so check important facts.
             </p>
-          )}
-
-          {resumeContext && (
-            <p
-              role="note"
-              className="mt-3 max-w-2xl border-l-2 border-line-strong pl-3 text-sm text-ink-secondary"
-            >
-              <span className="font-semibold text-ink-primary">Résumé context is on.</span>{" "}
-              The mentor reads your saved résumé and its UNBLUFF ATS score, a heuristic
-              estimate and not any employer&apos;s system. It will mark rewritten bullets
-              as suggestions and will not invent numbers or experience for you.
+          </div>
+          <div className={cn(GLASS, "hidden items-center gap-3 px-4 py-3 md:flex")}>
+            <BookOpen size={22} strokeWidth={1.6} aria-hidden="true" className="text-redline" />
+            <p className="text-xs leading-snug text-ink-secondary">
+              Learn smarter
+              <br />
+              with AI guidance
             </p>
-          )}
+          </div>
+        </header>
 
-          {leetcodeContext && (
-            <p
-              role="note"
-              className="mt-3 max-w-2xl border-l-2 border-line-strong pl-3 text-sm text-ink-secondary"
-            >
-              <span className="font-semibold text-ink-primary">
-                LeetCode context is on.
-              </span>{" "}
-              The mentor sees a short summary of the numbers you imported, labelled as
-              supplied by you and dated. It cannot see your LeetCode account, and it will
-              not treat the numbers as live or as proof of problem-solving ability.
-            </p>
-          )}
+        <MentorEngineNote />
+        {careerContext && (
+          <Note>
+            <span className="font-semibold text-ink-primary">Career context is on.</span>{" "}
+            The mentor sees your best-matching listings, with scores the app computed, and
+            your saved and applied jobs. It cannot see job descriptions, and it can only
+            discuss listings it was given.
+          </Note>
+        )}
+        {resumeContext && (
+          <Note>
+            <span className="font-semibold text-ink-primary">Résumé context is on.</span>{" "}
+            The mentor reads your saved résumé and its UNBLUFF ATS score, a heuristic
+            estimate and not any employer&apos;s system. It will mark rewritten bullets as
+            suggestions and will not invent numbers or experience for you.
+          </Note>
+        )}
+        {leetcodeContext && (
+          <Note>
+            <span className="font-semibold text-ink-primary">LeetCode context is on.</span>{" "}
+            The mentor sees a short summary of the numbers you imported, labelled as
+            supplied by you and dated. It cannot see your LeetCode account, and it will not
+            treat the numbers as live or as proof of problem-solving ability.
+          </Note>
+        )}
 
-          <div
-            role="radiogroup"
-            aria-label="Mentor mode"
-            className="mt-4 flex flex-wrap gap-2"
-          >
-            {MODES.map((m) => (
+        <div
+          role="radiogroup"
+          aria-label="Mentor mode"
+          className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 xl:grid-cols-4"
+        >
+          {MODES.map((md) => {
+            const Icon = MODE_ICON[md.value];
+            const on = mode === md.value;
+            return (
               <button
-                key={m.value}
+                key={md.value}
                 type="button"
                 role="radio"
-                aria-checked={mode === m.value}
-                title={m.hint}
-                onClick={() => setMode(m.value)}
+                aria-checked={on}
+                aria-label={md.label}
+                title={md.hint}
+                onClick={() => setMode(md.value)}
                 className={cn(
-                  "min-h-10 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
-                  mode === m.value
-                    ? "border-ink-primary bg-ink-primary text-surface-50"
-                    : "border-line-strong bg-surface text-ink-primary hover:border-ink-primary"
+                  "flex min-h-16 items-center gap-3 rounded-2xl px-4 py-3 text-left transition-colors",
+                  on
+                    ? "bg-redline text-surface-50 shadow-[0_10px_22px_-12px_rgba(143,31,19,0.7)]"
+                    : cn(TILE, "text-ink-primary hover:bg-white")
                 )}
               >
-                {m.label}
+                <Icon size={24} strokeWidth={1.6} aria-hidden="true" className="shrink-0" />
+                <span className="min-w-0">
+                  <span aria-hidden="true" className="serif block text-[15px] font-medium leading-tight">
+                    {md.label}
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "mt-0.5 line-clamp-2 block text-xs leading-snug",
+                      on ? "text-surface-50/85" : "text-ink-secondary"
+                    )}
+                  >
+                    {md.hint}
+                  </span>
+                </span>
               </button>
-            ))}
-          </div>
-          <p className="mt-2 text-xs text-ink-muted">
-            {MODES.find((m) => m.value === mode)?.hint}
-          </p>
+            );
+          })}
         </div>
+
         {questionId && (
-          <p className="border-b border-line bg-surface-100/60 px-4 py-2 text-sm text-ink-secondary sm:px-8">
+          <p className={cn(TILE, "px-4 py-2.5 text-sm text-ink-secondary")}>
             Discussing question:{" "}
             <Link
               to={routes.dsaQuestion(questionId)}
@@ -476,7 +577,10 @@ const MentorPage: React.FC = () => {
         )}
 
         {!active && mode === "dsa_coach" && !questionId && (
-          <details className="border-b border-line bg-surface-100/60 px-4 py-3 sm:px-8" open={problemDraft.length > 0 || undefined}>
+          <details
+            className={cn(TILE, "px-4 py-3")}
+            open={problemDraft.length > 0 || undefined}
+          >
             <summary className="cursor-pointer text-sm font-medium text-ink-primary">
               Paste a problem to get help with it (optional)
             </summary>
@@ -490,17 +594,21 @@ const MentorPage: React.FC = () => {
               value={problemDraft}
               onChange={(e) => setProblemDraft(e.target.value)}
               placeholder="Paste the whole problem: the statement, an example and the constraints."
-              className="mt-1 w-full resize-y rounded-md border border-line-strong bg-surface-50 px-3 py-2 text-[15px] leading-relaxed"
+              className="mt-1 w-full resize-y rounded-2xl border border-line-strong bg-white/70 px-3.5 py-2.5 text-[15px] leading-relaxed"
             />
             <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs text-ink-muted">
-                {problemDraft.trim().length}/{PROBLEM_MAX}. The mentor explains it first, then gives hints; the full solution unlocks after 2 hints.
+                {problemDraft.trim().length}/{PROBLEM_MAX}. The mentor explains it first,
+                then gives hints; the full solution unlocks after 2 hints.
               </span>
               <Button
                 type="button"
                 size="sm"
+                className={pill}
                 disabled={sending || !problemUsable}
-                onClick={() => void send({ clientMessageId: newClientMessageId(), message: EXPLAIN_PROBLEM })}
+                onClick={() =>
+                  void send({ clientMessageId: newClientMessageId(), message: EXPLAIN_PROBLEM })
+                }
               >
                 Explain this problem
               </Button>
@@ -508,162 +616,205 @@ const MentorPage: React.FC = () => {
           </details>
         )}
         {problem && (
-          <details className="border-b border-line bg-surface-100/60 px-4 py-2 text-sm sm:px-8">
-            <summary className="cursor-pointer font-medium text-ink-primary">The problem you pasted</summary>
-            <p className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap wrap-break-word text-ink-secondary">{problem}</p>
+          <details className={cn(TILE, "px-4 py-2.5 text-sm")}>
+            <summary className="cursor-pointer font-medium text-ink-primary">
+              The problem you pasted
+            </summary>
+            <p className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap wrap-break-word text-ink-secondary">
+              {problem}
+            </p>
           </details>
         )}
 
-        {loadingConversation && (
-          <LoadingState className="px-4 py-3 sm:px-8" message="Loading conversation…" />
-        )}
-        <div
-          key={view}
-          role="log"
-          aria-label="Conversation"
-          aria-live="polite"
-          aria-relevant="additions"
-          className="flex min-h-72 flex-1 flex-col gap-6 overflow-y-auto px-4 py-6 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200 sm:px-8 lg:min-h-0"
-        >
-          {messages.length === 0 && !loadingConversation && (
-            <div className="max-w-xl text-sm text-ink-secondary">
-              <p className="eyebrow mb-3">Start a conversation. For example:</p>
-              <ul className="flex flex-col gap-1">
-                {(careerContext ? CAREER_STARTERS : leetcodeContext ? LEETCODE_STARTERS : resumeContext ? RESUME_STARTERS : STARTERS[mode]).map((s) => (
-                  <li key={s}>
-                    <button
-                      type="button"
-                      className="min-h-10 text-left text-[15px] text-ink-primary underline decoration-line-strong underline-offset-4 hover:decoration-redline"
-                      onClick={() => setDraft(s)}
-                    >
-                      {s}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+        <div className={cn(GLASS, "flex min-h-[26rem] flex-1 flex-col overflow-hidden lg:min-h-0")}>
+          {loadingConversation && (
+            <LoadingState className="px-5 py-3" message="Loading conversation…" />
           )}
-          {messages.map((msg) => (
-            <m.div
-              key={msg.id}
-              initial={
-                animateMessages && isNew(msg.id)
-                  ? msg.role === "user"
-                    ? { opacity: 0, x: RISE.sm }
-                    : { opacity: 0, y: RISE.sm }
-                  : false
-              }
-              animate={{ opacity: 1, x: 0, y: 0 }}
-              transition={settle(DUR.base)}
+          <div
+            key={view}
+            role="log"
+            aria-label="Conversation"
+            aria-live="polite"
+            aria-relevant="additions"
+            className="flex min-h-72 flex-1 flex-col gap-5 overflow-y-auto px-4 py-6 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200 sm:px-6 lg:min-h-0"
+          >
+            {messages.length === 0 && !loadingConversation && (
+              <div className="m-auto flex w-full max-w-2xl flex-col items-center py-4 text-center">
+                <Illustration icon={MessagesSquare} />
+                <h2 className="serif mt-5 text-heading font-medium text-ink-primary">
+                  What are you working on today?
+                </h2>
+                <p className="mt-1.5 text-sm text-ink-secondary">
+                  Ask anything about DSA, your code, interviews or your preparation plan.
+                </p>
+                <p className="eyebrow mt-6">Start a conversation. For example:</p>
+                <ul className="mt-3 grid w-full grid-cols-[minmax(0,1fr)] gap-3 text-left sm:grid-cols-2">
+                  {startersFor.map((s) => (
+                    <li key={s}>
+                      <button
+                        type="button"
+                        className={cn(
+                          TILE,
+                          "flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-ink-primary transition-colors hover:bg-white"
+                        )}
+                        onClick={() => setDraft(s)}
+                      >
+                        <FileText
+                          size={18}
+                          strokeWidth={1.6}
+                          aria-hidden="true"
+                          className="shrink-0 text-redline"
+                        />
+                        <span className="min-w-0 flex-1">{s}</span>
+                        <ArrowRight
+                          size={15}
+                          aria-hidden="true"
+                          className="shrink-0 text-redline"
+                        />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {messages.map((msg) => (
+              <m.div
+                key={msg.id}
+                initial={
+                  animateMessages && isNew(msg.id)
+                    ? msg.role === "user"
+                      ? { opacity: 0, x: RISE.sm }
+                      : { opacity: 0, y: RISE.sm }
+                    : false
+                }
+                animate={{ opacity: 1, x: 0, y: 0 }}
+                transition={settle(DUR.base)}
+                className={cn(
+                  "max-w-184 rounded-2xl px-4 py-3 text-[15.5px] leading-relaxed",
+                  msg.role === "user"
+                    ? "self-end bg-white shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08)]"
+                    : cn(TILE, "self-start")
+                )}
+              >
+                <p className="eyebrow mb-1">{msg.role === "user" ? "You" : "Mentor"}</p>
+                <MessageBody text={msg.content} />
+              </m.div>
+            ))}
+            {sending && <Thinking message="The mentor is thinking…" />}
+          </div>
+
+          {error !== null && (
+            <div
               className={cn(
-                "max-w-184 text-[15.5px] leading-relaxed",
-                msg.role === "user"
-                  ? "self-end border-l-2 border-ink-primary bg-surface-100 px-4 py-3"
-                  : "self-start"
+                TILE,
+                "mx-4 mb-3 p-3 text-sm shadow-[inset_0_0_0_1px_rgba(179,41,26,0.25)] sm:mx-6"
               )}
             >
-              <p className="eyebrow mb-1">{msg.role === "user" ? "You" : "Mentor"}</p>
-              <MessageBody text={msg.content} />
-            </m.div>
-          ))}
-          {sending && <Thinking message="The mentor is thinking…" />}
-        </div>
+              <ErrorState
+                error={error}
+                message={
+                  error instanceof ApiError && error.code === "LLM_INVALID_OUTPUT"
+                    ? "The mentor could not get an answer from the AI model, so nothing was saved. Retry the same message in a moment."
+                    : undefined
+                }
+              />
+              {rateLimited && (
+                <p className="mt-1 text-ink-secondary">
+                  You are sending messages quickly. Wait a moment, then retry.
+                </p>
+              )}
+              {retry && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 rounded-full bg-white/70"
+                  disabled={sending}
+                  onClick={() => void send(retry)}
+                >
+                  Retry the same message
+                </Button>
+              )}
+            </div>
+          )}
 
-        {error !== null && (
-          <div className="mx-4 mb-3 border-l-2 border-redline bg-surface-100/60 p-3 text-sm sm:mx-8">
-            <ErrorState
-              error={error}
-              message={
-                error instanceof ApiError && error.code === "LLM_INVALID_OUTPUT"
-                  ? "The mentor could not get an answer from the AI model, so nothing was saved. Retry the same message in a moment."
-                  : undefined
-              }
+          {notice && (
+            <div className="px-4 pb-2 sm:px-6">
+              <MentorNotices notice={notice} />
+            </div>
+          )}
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submit();
+            }}
+            className="flex flex-col gap-2 border-t border-black/5 bg-white/40 px-4 py-3.5 sm:px-6"
+          >
+            <label htmlFor="mentor-input" className="eyebrow">
+              Your message
+            </label>
+            <textarea
+              id="mentor-input"
+              ref={input}
+              rows={3}
+              maxLength={2000}
+              value={draft}
+              placeholder="Ask a question, paste code, or describe where you're stuck..."
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  submit();
+                }
+              }}
+              className="w-full resize-none rounded-2xl border border-line-strong bg-white/80 px-4 py-2.5 text-[15px] leading-relaxed"
             />
-            {rateLimited && (
-              <p className="mt-1 text-ink-secondary">
-                You are sending messages quickly. Wait a moment, then retry.
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs text-ink-muted">
+                Enter to send, Shift+Enter for a new line · {draft.length}/2000
+              </span>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full bg-white/70"
+                  disabled={sending}
+                  onClick={() => submit("hint")}
+                >
+                  <Lightbulb aria-hidden="true" />
+                  Give me a hint
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full bg-white/70"
+                  disabled={sending}
+                  onClick={() => submit("solution")}
+                >
+                  <Sparkles aria-hidden="true" />
+                  Show solution
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="rounded-full bg-redline text-surface-50 hover:bg-redline-dark"
+                  disabled={sending || draft.trim() === ""}
+                >
+                  <SendHorizontal aria-hidden="true" />
+                  {sending ? "Sending…" : "Send"}
+                </Button>
+              </div>
+            </div>
+            {active && active.hint_level > 0 && (
+              <p className="text-xs text-ink-muted">
+                Hints used in this conversation: {active.hint_level} of 3. A full solution
+                unlocks after 2 hints.
               </p>
             )}
-            {retry && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                disabled={sending}
-                onClick={() => void send(retry)}
-              >
-                Retry the same message
-              </Button>
-            )}
-          </div>
-        )}
-
-        {notice && (
-          <div className="px-4 pb-2 sm:px-8">
-            <MentorNotices notice={notice} />
-          </div>
-        )}
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit();
-          }}
-          className="flex flex-col gap-2 border-t border-line bg-surface px-4 py-3 sm:px-8"
-        >
-          <label htmlFor="mentor-input" className="eyebrow">
-            Your message
-          </label>
-          <textarea
-            id="mentor-input"
-            ref={input}
-            rows={3}
-            maxLength={2000}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                submit();
-              }
-            }}
-            className="w-full resize-none rounded-md border border-line-strong bg-surface-50 px-3 py-2 text-[15px] leading-relaxed"
-          />
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs text-ink-muted">
-              Enter to send, Shift+Enter for a new line · {draft.length}/2000
-            </span>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={sending}
-                onClick={() => submit("hint")}
-              >
-                Give me a hint
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={sending}
-                onClick={() => submit("solution")}
-              >
-                Show solution
-              </Button>
-              <Button type="submit" size="sm" disabled={sending || draft.trim() === ""}>
-                {sending ? "Sending…" : "Send"}
-              </Button>
-            </div>
-          </div>
-          {active && active.hint_level > 0 && (
-            <p className="text-xs text-ink-muted">
-              Hints used in this conversation: {active.hint_level} of 3. A full solution
-              unlocks after 2 hints.
-            </p>
-          )}
-        </form>
+          </form>
+        </div>
       </section>
     </div>
   );
@@ -680,12 +831,12 @@ const RELATION_ORDER: MentorReference["relation"][] = [
 const MentorNotices: React.FC<{ notice: MentorChatResponse }> = ({ notice }) => (
   <div className="flex flex-col gap-2 text-sm" aria-label="Notes about this answer">
     {notice.mock && (
-      <p role="note" className="border-l-2 border-line-strong pl-3 text-ink-secondary">
+      <p role="note" className={cn(TILE, "px-4 py-2.5 text-ink-secondary")}>
         Mock mentor: this answer came from a built-in stand-in, not a live AI model.
       </p>
     )}
     {notice.degraded && (
-      <p role="alert" className="border-l-2 border-redline pl-3 text-ink-primary">
+      <p role="alert" className="rounded-2xl bg-redline-soft/60 px-4 py-2.5 text-ink-primary shadow-[inset_0_0_0_1px_rgba(179,41,26,0.18)]">
         The answer worked, but something could not be saved
         {notice.persistence.conversation === "failed"
           ? ": this exchange is not in your history"
@@ -697,12 +848,12 @@ const MentorNotices: React.FC<{ notice: MentorChatResponse }> = ({ notice }) => 
       </p>
     )}
     {notice.analytics_note && (
-      <p role="note" className="border-l-2 border-line-strong pl-3 text-ink-secondary">
+      <p role="note" className={cn(TILE, "px-4 py-2.5 text-ink-secondary")}>
         {notice.analytics_note}
       </p>
     )}
     {notice.github_context?.used && (
-      <p role="note" className="border-l-2 border-line-strong pl-3 text-ink-secondary">
+      <p role="note" className={cn(TILE, "px-4 py-2.5 text-ink-secondary")}>
         This answer used a short summary of your saved public GitHub data (synchronised{" "}
         {new Date(notice.github_context.synced_at ?? "").toLocaleString()}
         {notice.github_context.stale ? ", may be out of date" : ""}). It is partial
@@ -710,21 +861,21 @@ const MentorNotices: React.FC<{ notice: MentorChatResponse }> = ({ notice }) => 
       </p>
     )}
     {notice.resume_context && (
-      <p role="note" className="border-l-2 border-line-strong pl-3 text-ink-secondary">
+      <p role="note" className={cn(TILE, "px-4 py-2.5 text-ink-secondary")}>
         {notice.resume_context.used
           ? `This answer used your saved résumé and its UNBLUFF ATS score (${notice.resume_context.score ?? "unknown"}/100, a heuristic estimate, saved ${new Date(notice.resume_context.updated_at ?? "").toLocaleDateString()}).`
           : "You have not saved a résumé, so the mentor had none to use. Save one in the Résumé builder."}
       </p>
     )}
     {notice.leetcode_context && (
-      <p role="note" className="border-l-2 border-line-strong pl-3 text-ink-secondary">
+      <p role="note" className={cn(TILE, "px-4 py-2.5 text-ink-secondary")}>
         {notice.leetcode_context.used
           ? `This answer used a short summary of the LeetCode numbers you imported (captured ${new Date(notice.leetcode_context.captured_at ?? "").toLocaleDateString()}${notice.leetcode_context.stale ? ", out of date" : ""}). They are your own supplied numbers: not live and not verified.`
           : "You have not imported any LeetCode numbers, so the mentor had none to use. Import your own on the LeetCode page."}
       </p>
     )}
     {notice.memory_saved.length > 0 && (
-      <div className="border-l-2 border-line-strong pl-3">
+      <div className={cn(TILE, "px-4 py-2.5")}>
         <p className="font-medium text-ink-primary">Saved to your mentor memory</p>
         <ul className="mt-1 list-disc pl-5 text-ink-secondary">
           {notice.memory_saved.map((m) => (
@@ -745,7 +896,7 @@ const MentorNotices: React.FC<{ notice: MentorChatResponse }> = ({ notice }) => 
       </div>
     )}
     {notice.references.length > 0 && (
-      <div className="border-l-2 border-line-strong pl-3">
+      <div className={cn(TILE, "px-4 py-2.5")}>
         <p className="font-medium text-ink-primary">Related practice from your records</p>
         <ul className="mt-1 flex flex-col gap-1">
           {[...notice.references]
