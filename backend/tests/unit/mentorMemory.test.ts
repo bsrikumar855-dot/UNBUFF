@@ -94,6 +94,34 @@ describe("validating model proposals", () => {
     expect(out.rejected.length).toBe(4); // too many minutes, skill_self_assessment, password, null field
   });
 
+  it("reads a preference out of the model's natural wording, as seen with the live model", () => {
+    const m = "I prefer short explanations with Python examples.";
+    const { drafts, rejected } = validateProposals(
+      [
+        proposal({ field: "explanation_style", content: "Short explanations", evidence_quote: "I prefer short explanations" }),
+        proposal({ field: "preferred_languages", content: "Python examples", evidence_quote: "with Python examples" }),
+      ],
+      m,
+      catalogue,
+    );
+    expect(rejected).toEqual([]);
+    expect(Object.fromEntries(drafts.filter((d) => d.kind === "profile").map((d) => [d.field, d.value]))).toEqual({ explanation_style: "concise", preferred_languages: ["python"] });
+  });
+
+  it("does not mistake JavaScript for Java, and still rejects text with no recognisable value", () => {
+    const m = "I use JavaScript. I like whatever.";
+    const { drafts, rejected } = validateProposals(
+      [
+        proposal({ field: "preferred_languages", content: "JavaScript", evidence_quote: "I use JavaScript" }),
+        proposal({ field: "explanation_style", content: "whatever", evidence_quote: "I like whatever" }),
+      ],
+      m,
+      catalogue,
+    );
+    expect(drafts.find((d) => d.kind === "profile" && d.field === "preferred_languages")).toMatchObject({ value: ["javascript"] });
+    expect(rejected).toEqual([{ reason: "could not read a valid value" }]);
+  });
+
   it("learning memories need a topic and a signal; goals validate their tracking against the catalogue", () => {
     const real = [...catalogue.allTopics()][0]!;
     const { drafts } = validateProposals(

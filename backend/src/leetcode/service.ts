@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { ApiError } from "../errors.js";
 import type { Logger } from "../logger.js";
 import type {
@@ -18,6 +19,7 @@ import type {
 } from "../types.js";
 import { NONE_EVIDENCE, leetcodeBlock, NO_DATA_TEXT, type LeetCodeEvidence } from "./context.js";
 import { MAX_IMPORT_BYTES, parseImport } from "./importer.js";
+import { LeetCodeLookupError, type LeetCodeLookup } from "./lookup.js";
 import { parseProfile, profileUrl } from "./profile.js";
 import { SNAPSHOT_ID, type LeetCodeStore, type SnapshotRecord } from "./store.js";
 
@@ -32,6 +34,8 @@ export const MAX_SNAPSHOTS = 120;
 const RECENT_DAYS = 14;
 const AGING_DAYS = 45;
 const DAY_MS = 86_400_000;
+/** One outgoing lookup per student per this long: the same answer is returned instead of asking LeetCode again. */
+const MIN_LOOKUP_INTERVAL_MS = 10 * 60_000;
 
 export const NOTES: string[] = [
   "LeetCode has no official API, sign-in or export that UNBLUFF can use, and its terms forbid scraping, so UNBLUFF never contacts LeetCode. This is not a live connection.",
@@ -39,20 +43,33 @@ export const NOTES: string[] = [
   "Numbers appear only if you import them yourself. They are shown as your own supplied data, dated by when you said they were captured.",
 ];
 
+/** The same notes, worded truthfully for a deployment where the operator enabled the unofficial lookup. */
+export const NOTES_WITH_LOOKUP: string[] = [
+  "LeetCode has no official API, sign-in or export that UNBLUFF can use. The numbers here come from an unofficial lookup of your public profile, made only when you ask, or from numbers you typed or imported. This is not an official connection.",
+  "Linking saves your username (checked against LeetCode's public profiles) and builds a link to your public profile. It does not prove that the profile is yours.",
+  "Numbers are shown with their source and capture date. A lookup returns solved counts only; topics, contest data and activity appear only if you import them.",
+];
+
 export interface LeetCodeDeps {
   store: LeetCodeStore;
   logger: Logger;
   /** UNBLUFF's own judged results, only ever shown beside (never added to) the LeetCode numbers. */
   judged?: (uid: string) => Promise<{ solved_unique: number; available: boolean }>;
+  /** Present only when the operator enabled the unofficial public lookup. Absent: UNBLUFF never contacts LeetCode. */
+  lookup?: LeetCodeLookup;
   now?: () => Date;
 }
 
-const sourceLabel = (k: LeetCodeSourceKind): string => `${k === "manual_entry" ? "Typed in by you" : k === "json_file" ? "From your JSON file" : "From your CSV file"} · not synchronised with LeetCode`;
+const sourceLabel = (k: LeetCodeSourceKind): string => k === "public_lookup" ? "Looked up from your public LeetCode profile · not verified as yours" : `${k === "manual_entry" ? "Typed in by you" : k === "json_file" ? "From your JSON file" : "From your CSV file"} · not synchronised with LeetCode`;
 
 const FIELD_ORDER = ["difficulty", "available", "topics", "contest", "activity"] as const;
 
 export class LeetCodeService {
   constructor(private readonly deps: LeetCodeDeps) {}
+
+  private notes(): string[] {
+    return this.deps.lookup ? NOTES_WITH_LOOKUP : NOTES;
+  }
 
   private now(): Date {
     return this.deps.now ? this.deps.now() : new Date();
@@ -98,7 +115,7 @@ export class LeetCodeService {
       states: { profile_linked: conn !== null, ownership_unverified: true, imported_data_available: snaps.length > 0, officially_connected: false, live_sync_unavailable: true },
       imported: { snapshot_count: snaps.length, last_imported_at: lastImport?.imported_at ?? null, last_captured_at: latest?.captured_at ?? null, last_source: lastImport?.source ?? null, ...f },
       limits: { max_import_bytes: MAX_IMPORT_BYTES, max_snapshots: MAX_SNAPSHOTS },
-      notes: NOTES,
+      notes: this.notes(),
     };
   }
 
@@ -111,6 +128,7 @@ export class LeetCodeService {
   async link(uid: string, profile: string): Promise<LeetCodeConnectionResponse> {
     const parsed = parseProfile(profile);
     if (!parsed.ok) throw new ApiError("BAD_REQUEST", parsed.message);
+    await this.checkUsernameExists(parsed.username);
     const now = this.now().toISOString();
     const prev = await this.deps.store.getConnection(uid);
     const same = prev && prev.username_key === parsed.username.toLowerCase();
@@ -123,6 +141,72 @@ export class LeetCodeService {
       updated_at: now,
     });
     return { connection: await this.connection(uid) };
+  }
+
+  /** True only when the operator enabled the unofficial public lookup. */
+  lookupAvailable(): boolean {
+    return this.deps.lookup !== undefined;
+  }
+
+  /**
+   * With the lookup enabled, a username must match a real public LeetCode profile before it is saved. An outage on
+   * LeetCode's side never blocks linking: the name is saved unchecked and numbers can be fetched later.
+   */
+  private async checkUsernameExists(username: string): Promise<void> {
+    if (!this.deps.lookup) return;
+    try {
+      if ((await this.deps.lookup.lookup(username)).status === "not_found") {
+        throw new ApiError("BAD_REQUEST", `LeetCode has no public profile named "${username}". Check the spelling.`);
+      }
+    } catch (e) {
+      if (!(e instanceof LeetCodeLookupError)) throw e;
+      this.deps.logger.warn({}, "leetcode: username check skipped, LeetCode unreachable");
+    }
+  }
+
+  /**
+   * Fetches the linked username's public solved counts and stores them as a snapshot labelled as a lookup (never as
+   * verified or as proof the profile is the student's). Throttled, and identical numbers are not stored twice.
+   */
+  async lookupAndStore(uid: string): Promise<LeetCodeImportConfirmResponse> {
+    const lookup = this.deps.lookup;
+    if (!lookup) throw new ApiError("NOT_FOUND", "Looking numbers up from LeetCode is not enabled on this server.");
+    const [conn, snaps] = await Promise.all([this.deps.store.getConnection(uid), this.all(uid)]);
+    if (!conn) throw new ApiError("BAD_REQUEST", "Link your LeetCode username first.");
+    const done = async (record: SnapshotRecord, status: "imported" | "already_imported"): Promise<LeetCodeImportConfirmResponse> => ({ status, snapshot: this.summary(record), connection: await this.connection(uid) });
+
+    const recent = snaps.find((s) => s.source.kind === "public_lookup" && this.now().getTime() - Date.parse(s.imported_at) < MIN_LOOKUP_INTERVAL_MS);
+    if (recent) return done(recent, "already_imported");
+
+    let result;
+    try {
+      result = await lookup.lookup(conn.username);
+    } catch (e) {
+      if (e instanceof LeetCodeLookupError) throw new ApiError("LEETCODE_UNAVAILABLE", "LeetCode could not be reached right now. Try again in a few minutes, or type your numbers in.");
+      throw e;
+    }
+    if (result.status === "not_found") throw new ApiError("BAD_REQUEST", `LeetCode has no public profile named "${conn.username}". Update the linked username.`);
+
+    const latest = snaps[0];
+    if (latest && JSON.stringify([latest.totals, latest.available]) === JSON.stringify([result.totals, result.available])) return done(latest, "already_imported");
+
+    const capturedAt = this.now().toISOString();
+    const record: SnapshotRecord = {
+      id: createHash("sha256").update(JSON.stringify([capturedAt, result.totals, result.available])).digest("hex").slice(0, 32),
+      owner_uid: uid,
+      captured_at: capturedAt,
+      totals: result.totals,
+      available: result.available,
+      topics: null,
+      contest: null,
+      activity: null,
+      source: { kind: "public_lookup", description: null },
+      imported_at: capturedAt,
+      linked_username: conn.username,
+    };
+    if (snaps.length >= MAX_SNAPSHOTS) throw new ApiError("LEETCODE_IMPORT_CONFLICT", `You have ${snaps.length} snapshots, the most that are kept. Delete older ones first.`);
+    const created = await this.deps.store.createSnapshot(record);
+    return done(created ? record : ((await this.deps.store.getSnapshot(uid, record.id)) ?? record), created ? "imported" : "already_imported");
   }
 
   /** Removes the link; with `all` also every imported snapshot. Imported numbers otherwise stay, still labelled as supplied by the student. */
@@ -264,7 +348,7 @@ export class LeetCodeService {
       trend,
       unavailable,
       unbluff,
-      notes: NOTES,
+      notes: this.notes(),
     };
   }
 

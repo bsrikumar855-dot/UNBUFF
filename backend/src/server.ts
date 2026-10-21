@@ -10,6 +10,7 @@ import { FirestorePlacementStore, MemoryPlacementStore, type PlacementStore } fr
 import { CareerService } from "./careers/service.js";
 import { FirestoreCareerStore, MemoryCareerStore, type CareerStore } from "./careers/store.js";
 import { FreehireClient } from "./careers/freehire.js";
+import { HttpLeetCodeLookup } from "./leetcode/lookup.js";
 import { LeetCodeService } from "./leetcode/service.js";
 import { FirestoreLeetCodeStore, MemoryLeetCodeStore, type LeetCodeStore } from "./leetcode/store.js";
 import { FirestoreLabStore, MemoryLabStore, type LabStore } from "./graphqllab/store.js";
@@ -149,6 +150,7 @@ function main(): void {
   // LeetCode has no official API and forbids scraping: this service only holds a saved username and numbers the student imports.
   const leetcode = new LeetCodeService({
     store: stores.leetcode,
+    lookup: config.LEETCODE_PUBLIC_LOOKUP ? new HttpLeetCodeLookup() : undefined,
     logger,
     judged: async (uid) => {
       const o = await analytics.overview(uid);

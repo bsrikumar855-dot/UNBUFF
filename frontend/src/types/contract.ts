@@ -44,6 +44,7 @@ export type ErrorCode =
   | "CAREER_JOB_NOT_FOUND"
   | "LEETCODE_IMPORT_INVALID"
   | "LEETCODE_IMPORT_CONFLICT"
+  | "LEETCODE_UNAVAILABLE"
   | "LLM_INVALID_OUTPUT"
   | "LLM_TIMEOUT"
   | "INTERNAL";
@@ -1525,7 +1526,7 @@ export interface ResumeSkillsResponse {
 // A student links a public username and imports numbers they supply themselves. Nothing here is live data, nothing is
 // verified against LeetCode, and none of it is merged into UNBLUFF's own judged submissions.
 export type LeetCodeFreshness = "none" | "recent" | "aging" | "stale"; // from the date the numbers were captured, not the date they were imported
-export type LeetCodeSourceKind = "manual_entry" | "json_file" | "csv_file";
+export type LeetCodeSourceKind = "manual_entry" | "json_file" | "csv_file" | "public_lookup";
 export type LeetCodeDifficulty = "easy" | "medium" | "hard";
 export interface LeetCodeSourceInfo {
   kind: LeetCodeSourceKind;
@@ -1616,6 +1617,10 @@ export interface LeetCodeImportConfirmResponse {
   status: "imported" | "already_imported";
   snapshot: LeetCodeSnapshotSummary;
   connection: LeetCodeConnection;
+}
+/** GET /api/leetcode/lookup. True only when the operator enabled the unofficial public lookup (LEETCODE_PUBLIC_LOOKUP). */
+export interface LeetCodeLookupStatusResponse {
+  available: boolean;
 }
 export interface LeetCodeHistoryResponse {
   snapshots: LeetCodeSnapshotSummary[]; // newest capture first
