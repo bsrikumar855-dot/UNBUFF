@@ -112,7 +112,7 @@ const PlacementPage: React.FC = () => {
       <PageHeader
         eyebrow="Plan"
         title="Your placement plan"
-        description="One plan built from your goals, your available time and what your records really show across DSA practice, interviews, the GraphQL Lab and, if you connect it, GitHub. It is a study plan, not a prediction: nothing here estimates your chance of an offer."
+        description="One plan built from your goals, your available time and what your records really show across DSA practice, interviews, DBMS quizzes and, if you connect it, GitHub. It is a study plan, not a prediction: nothing here estimates your chance of an offer."
       />
 
       {error !== null && (
@@ -332,7 +332,7 @@ const PlacementPage: React.FC = () => {
                   >
                     <span className="text-ink-secondary">
                       Delete your goals, plan and task history? Your DSA, interview,
-                      GraphQL and mentor records are not touched.
+                      DBMS quiz and mentor records are not touched.
                     </span>
                     <Button size="sm" disabled={busy} onClick={wipe}>
                       Yes, delete them

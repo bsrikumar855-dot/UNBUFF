@@ -88,7 +88,7 @@ const skill = (area: string, status: SkillAssessment["status"], provenance: Skil
   ({ area, label: area, category: "interview", status, estimate: 0.7, evidence: { kind: "interview_assessment", provenance, count: 3, unit: "answers", last_at: null, recency: "recent" }, confidence: "medium", gaps: [], self_reported: null, next_assessment: null, note: null }) as unknown as SkillAssessment;
 
 export const verifiedReact = skill("interview:frontend_developer:react_state", "strong", "verified");
-export const verifiedGraphql = skill("graphql", "developing", "verified");
+export const verifiedDbms = skill("dbms", "developing", "verified");
 export const weakVerified = skill("interview:frontend_developer:git", "weak", "verified");
 export const demoOnly = skill("interview:frontend_developer:accessibility", "strong", "demonstration");
 

@@ -5,7 +5,7 @@ import { EASE, canObserve } from "@/components/motion/ease";
 
 const COUNTS = [
   "A coding submission judged against the hidden tests of a first-party exercise, by an execution service the operator has verified",
-  "A GraphQL Lab exercise passed, decided by running your query against a reference",
+  "A DBMS quiz passed, graded on the server from answers it never sent you",
   "Interview answers graded during an audit session",
 ];
 const NEVER = [

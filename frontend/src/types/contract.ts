@@ -28,9 +28,6 @@ export type ErrorCode =
   | "GITHUB_REAUTH_REQUIRED"
   | "GITHUB_RATE_LIMITED"
   | "GITHUB_UNAVAILABLE"
-  | "MODULE_NOT_FOUND"
-  | "EXERCISE_NOT_FOUND"
-  | "GRAPHQL_LAB_UNAVAILABLE"
   | "PLACEMENT_PROFILE_REQUIRED"
   | "PLACEMENT_TASK_NOT_FOUND"
   | "EXECUTION_UNAVAILABLE"
@@ -45,6 +42,8 @@ export type ErrorCode =
   | "LEETCODE_IMPORT_INVALID"
   | "LEETCODE_IMPORT_CONFLICT"
   | "LEETCODE_UNAVAILABLE"
+  | "LATEX_UNAVAILABLE"
+  | "LEARN_NOT_FOUND"
   | "LLM_INVALID_OUTPUT"
   | "LLM_TIMEOUT"
   | "INTERNAL";
@@ -746,6 +745,7 @@ export interface MentorChatRequest {
   question_id?: string; // the DSA question being discussed (must exist in the catalogue)
   career_context?: boolean; // include the student's own best-matching job listings (computed by the app) as context
   leetcode_context?: boolean; // include a short summary of the LeetCode data the student imported (never live data)
+  resume_context?: boolean; // include the saved résumé, its ATS score and the fixes (the score is a heuristic, never an employer verdict)
 }
 
 export interface MentorReference {
@@ -776,6 +776,7 @@ export interface MentorChatResponse {
   mock: boolean; // true when the answer came from the built-in mock mentor, not a live model
   github_context?: { used: boolean; synced_at: string | null; stale: boolean }; // used: a short GitHub summary was given to the mentor
   leetcode_context?: { used: boolean; captured_at: string | null; stale: boolean }; // used: a summary of the student's imported LeetCode data was given to the mentor
+  resume_context?: { used: boolean; score: number | null; updated_at: string | null }; // used: a summary of the saved résumé and its ATS result went into the answer
 }
 
 // ---------- GitHub contribution insights (Phase 7) ----------
@@ -921,246 +922,16 @@ export interface GithubSyncResponse {
   rate_limit_remaining: number | null;
 }
 
-// ---------- GraphQL Learning Lab (Phase 8) ----------
-// An educational module. Students run queries against a small, controlled TRAINING API (never an external server).
-// Results here are separate from DSA analytics and from any readiness score.
-export type LabDifficulty = "beginner" | "intermediate" | "advanced";
-export type LabExerciseType = "query" | "mutation" | "multiple_choice" | "schema_reading" | "explanation";
-export type LabModuleStatus = "not_started" | "in_progress" | "completed";
-export type LabErrorCategory = "syntax" | "validation" | "variables" | "execution" | "authorization" | "limits";
-export type LabPhase = "ok" | "syntax" | "validation" | "variables" | "execution";
-export type LabHelpAction = "explain_query" | "explain_error" | "hint" | "explain_schema" | "practice_question" | "explain_result";
-
-export type LabBlock =
-  | { kind: "p"; text: string }
-  | { kind: "list"; items: string[] }
-  | { kind: "code"; code: string; language: "graphql" | "json" }
-  | { kind: "try"; label: string; query: string; variables?: Record<string, unknown> }; // a runnable example
-
-export interface LabError {
-  message: string;
-  locations?: { line: number; column: number }[];
-  path?: (string | number)[];
-  category: LabErrorCategory;
-  code: string | null;
-}
-export interface LabResult {
-  data?: unknown;
-  errors?: LabError[];
-}
-export interface LabExecuteRequest {
-  query: string; // max 4000 characters
-  variables?: Record<string, unknown> | null; // max 2000 characters as JSON
-  operation_name?: string;
-}
-export interface LabExecuteResponse {
-  phase: LabPhase; // where it stopped: syntax, validation, variables (coercion) or execution; "ok" when it ran
-  operation: "query" | "mutation" | "subscription" | null;
-  result: LabResult; // a standard GraphQL response ({ data, errors })
-  state_changed: boolean; // true when a mutation changed YOUR training data
-  training_data: "per_student" | "read_only"; // read_only: storage is unavailable, so mutations are refused
-}
-
-export interface LabModuleSummary {
-  id: string;
-  order: number;
-  title: string;
-  summary: string;
-  difficulty: LabDifficulty;
-  prerequisites: string[]; // module ids; recommended first, not enforced
-  recommended_first: string[]; // the prerequisites this student has not completed yet
-  lesson_count: number;
-  exercise_count: number;
-  status: LabModuleStatus;
-  lessons_completed: number;
-  exercises_passed: number;
-}
-export interface LabModulesResponse {
-  modules: LabModuleSummary[];
-  current_module_id: string | null;
-}
-export interface LabLesson {
-  id: string;
-  title: string;
-  objectives: string[];
-  blocks: LabBlock[];
-  exercise_ids: string[];
-  completed: boolean;
-}
-export interface LabChoiceOption {
-  id: string;
-  text: string;
-}
-export interface LabExerciseStudent {
-  attempts: number;
-  passed: boolean;
-  passed_at: string | null;
-  hints_used: number;
-  last_attempt_at: string | null;
-}
-export interface LabExercise {
-  id: string;
-  module_id: string;
-  lesson_id: string;
-  order: number;
-  title: string;
-  type: LabExerciseType;
-  difficulty: LabDifficulty;
-  description: string;
-  objectives: string[];
-  concepts: string[];
-  requirements: string[]; // what the solution must do; each is checked by the grader
-  starter_query: string | null;
-  starter_variables: Record<string, unknown> | null;
-  example: { query: string; variables?: Record<string, unknown> } | null;
-  options: LabChoiceOption[] | null; // choice and schema-reading questions
-  multi_select: boolean;
-  schema_excerpt: string | null;
-  hints_total: number;
-  max_answer_chars: number | null; // explanation questions
-  grading: string; // how it is graded, in words
-  version: number;
-  provenance: "authored_original";
-  student: LabExerciseStudent;
-}
-export interface LabModuleDetail {
-  module: LabModuleSummary;
-  objectives: string[];
-  completion_criteria: string;
-  lessons: LabLesson[];
-  exercises: LabExercise[];
-}
-export interface LabExercisesResponse {
-  exercises: LabExercise[];
-}
-
-export interface LabSchemaArg {
-  name: string;
-  type: string;
-  default: string | null;
-  description: string | null;
-}
-export interface LabSchemaField {
-  name: string;
-  type: string;
-  description: string | null;
-  args: LabSchemaArg[];
-}
-export interface LabSchemaType {
-  name: string;
-  kind: "OBJECT" | "INPUT_OBJECT" | "ENUM" | "UNION" | "INTERFACE" | "SCALAR";
-  description: string | null;
-  fields: LabSchemaField[]; // object types and input objects
-  enum_values: { name: string; description: string | null }[];
-  possible_types: string[]; // unions
-}
-export interface LabTrainingSchemaResponse {
-  sdl: string; // the actual schema the server executes against
-  types: LabSchemaType[]; // derived from that same schema
-  query_type: string;
-  mutation_type: string | null;
-  limits: { max_query_chars: number; max_variables_chars: number; max_depth: number; max_fields: number; max_result_bytes: number };
-}
-
-export interface LabSubmitRequest {
-  client_attempt_id: string; // 8 to 64 letters, digits, - or _; a retry with the same id returns the stored result
-  query?: string;
-  variables?: Record<string, unknown> | null;
-  answer?: string | string[]; // choice ids, or the written explanation
-}
-export interface LabCheck {
-  label: string;
-  passed: boolean;
-}
-export interface LabAttempt {
-  id: string;
-  exercise_id: string;
-  at: string;
-  passed: boolean;
-  query: string | null;
-  variables: Record<string, unknown> | null;
-  answer: string | string[] | null;
-  feedback: string;
-  checks: LabCheck[];
-}
-export interface LabSubmitResponse {
-  attempt: LabAttempt;
-  outcome: "passed" | "needs_improvement";
-  feedback: string;
-  checks: LabCheck[];
-  hint: string | null; // a nudge when it did not pass (never the answer)
-  explanation: string | null; // shown only after passing
-  lesson: { module_id: string; lesson_id: string; title: string };
-  newly_completed: { lesson: boolean; module: boolean };
-  exercise: LabExerciseStudent;
-  execution: LabExecuteResponse | null; // the result of running the student's own query, when there was one
-  replayed: boolean; // true when this was a retry of an earlier submission
-}
-export interface LabAttemptsResponse {
-  attempts: LabAttempt[];
-}
-export interface LabHintResponse {
-  hint: string;
-  hint_number: number;
-  hints_total: number;
-}
-
-export interface LabModuleProgress {
-  module_id: string;
-  title: string;
-  status: LabModuleStatus;
-  lessons_completed: number;
-  lessons_total: number;
-  exercises_passed: number;
-  exercises_total: number;
-}
-export interface LabProgressResponse {
-  has_started: boolean;
-  totals: {
-    modules_started: number;
-    modules_completed: number;
-    modules_total: number;
-    lessons_completed: number;
-    lessons_total: number;
-    exercises_attempted: number;
-    exercises_passed: number;
-    exercises_total: number;
-    attempts: number;
-  };
-  current_module_id: string | null;
-  modules: LabModuleProgress[];
-  recent_activity: { at: string; kind: "passed" | "attempt" | "hint"; exercise_id: string; exercise_title: string; module_id: string }[];
-  needs_another_attempt: { concept: string; exercise_ids: string[] }[]; // concepts of exercises attempted but not yet passed
-  definitions: { metric: string; meaning: string }[];
-}
-
-export interface LabHelpRequest {
-  action: LabHelpAction;
-  exercise_id?: string;
-  query?: string;
-  variables?: Record<string, unknown> | null;
-  message?: string; // the student's own question, max 500 characters
-}
-export interface LabHelpResponse {
-  reply: string;
-  mock: boolean; // true when the built-in mock mentor answered
-  query_status: { phase: LabPhase; error_count: number } | null; // what actually happened when the server ran the student's query
-  memory_saved: MentorSavedMemory[];
-}
-export interface LabResetResponse {
-  application_count: number;
-}
-
 // ---------- Unified Placement Intelligence (Phase 9) ----------
 // Everything here is computed by the application from stored records. The AI mentor explains it; it never supplies
 // a score, a task or a completion. There is deliberately no overall readiness score or offer probability.
 export type PlacementExperience = "beginner" | "intermediate" | "advanced";
-export type PlacementPriority = "dsa" | "interview" | "graphql" | "projects" | "communication";
-export type PlacementTaskType = "dsa_practice" | "dsa_revision" | "graphql" | "technical_interview" | "communication" | "project" | "diagnostic" | "general";
+export type PlacementPriority = "dsa" | "interview" | "dbms" | "projects" | "communication";
+export type PlacementTaskType = "dsa_practice" | "dsa_revision" | "dbms" | "technical_interview" | "communication" | "project" | "diagnostic" | "general";
 export type PlacementTaskStatus = "planned" | "in_progress" | "completed" | "skipped" | "removed" | "superseded"; // postponing keeps "planned" and moves the due date
 export type PlacementTaskAction = "start" | "complete" | "postpone" | "skip" | "reschedule" | "remove" | "reopen";
 export type EvidenceProvenance = "verified" | "self_reported" | "demonstration" | "unavailable";
-export type EvidenceKind = "dsa_judged" | "interview_assessment" | "graphql_lab" | "github_context" | "none";
+export type EvidenceKind = "dsa_judged" | "interview_assessment" | "dbms_quiz" | "github_context" | "none";
 export type SkillStatus = "strong" | "developing" | "weak" | "unassessed";
 export type EvidenceConfidence = "none" | "low" | "medium" | "high";
 export type EvidenceRecency = "recent" | "aging" | "stale" | "none";
@@ -1186,14 +957,14 @@ export interface PlacementProfileResponse {
 }
 
 export interface EvidenceLimitation {
-  source: "dsa" | "interview" | "graphql" | "github" | "memory" | "leetcode";
+  source: "dsa" | "interview" | "dbms" | "github" | "memory" | "leetcode";
   severity: "info" | "limits_accuracy";
   message: string;
 }
 export interface SkillAssessment {
-  area: string; // stable key, for example dsa:Arrays, interview:react_state, graphql, project:github
+  area: string; // stable key, for example dsa:Arrays, interview:react_state, dbms, project:github
   label: string;
-  category: "dsa" | "interview" | "graphql" | "project";
+  category: "dsa" | "interview" | "dbms" | "project";
   status: SkillStatus;
   estimate: number | null; // 0..1, only from verified results; null when there is not enough to estimate
   evidence: { kind: EvidenceKind; provenance: EvidenceProvenance; count: number; unit: string; last_at: string | null; recency: EvidenceRecency };
@@ -1268,7 +1039,7 @@ export interface PlacementImprovement {
   at: string | null;
   area: string;
   message: string;
-  source: "dsa_judged" | "graphql_lab" | "interview_assessment" | "plan";
+  source: "dsa_judged" | "dbms_quiz" | "interview_assessment" | "plan";
 }
 export interface PlacementDashboard {
   generated_at: string;
@@ -1621,6 +1392,184 @@ export interface LeetCodeImportConfirmResponse {
 /** GET /api/leetcode/lookup. True only when the operator enabled the unofficial public lookup (LEETCODE_PUBLIC_LOOKUP). */
 export interface LeetCodeLookupStatusResponse {
   available: boolean;
+}
+
+// ---------- Resume builder and ATS score ----------
+export type AtsCheckStatus = "pass" | "warn" | "fail";
+export interface AtsCheck {
+  id: string; // contact | sections | keywords | impact | verbs | length | format
+  label: string;
+  score: number; // points earned, at most `max`
+  max: number;
+  status: AtsCheckStatus;
+  detail: string; // what was found
+  fix: string | null; // what to change; null when the check passed
+}
+export interface AtsResult {
+  score: number; // 0 to 100, the sum of the check scores. A heuristic estimate, never an employer's real ATS verdict
+  rating: "strong" | "good" | "needs_work" | "weak";
+  checks: AtsCheck[];
+  keywords: { matched: string[]; missing: string[]; source: "role" | "job_description" | "both" };
+  stats: { words: number; bullets: number; sections: string[] };
+  role_id: string | null;
+  scored_at: string; // ISO 8601 UTC
+  disclaimer: string;
+}
+export interface ResumeDocument {
+  latex: string;
+  role_id: string | null; // the target role the score is measured against
+  job_description: string | null; // optional pasted job description, used for keyword matching
+  updated_at: string; // ISO 8601 UTC
+}
+/** GET /api/resume. The score is computed fresh from the saved LaTeX every time, so it can never be stale. */
+export interface ResumeResponse {
+  document: ResumeDocument | null;
+  ats: AtsResult | null;
+  compiler_available: boolean; // false when no LaTeX compiler is configured on this server
+  max_bytes: number;
+}
+export interface ResumeSaveRequest {
+  latex: string;
+  role_id?: string | null;
+  job_description?: string | null;
+}
+/** POST /api/resume/ats. Scores the given text without saving it. */
+export interface AtsRequest {
+  latex: string;
+  role_id?: string | null;
+  job_description?: string | null;
+}
+export interface ResumeCompileRequest {
+  latex: string;
+}
+export interface ResumeCompileResponse {
+  ok: boolean; // true when a PDF was produced
+  pdf_base64: string | null; // the compiled PDF, base64; null when compilation failed
+  log: string; // the compiler's own messages, trimmed (errors are listed here)
+  pages: number | null;
+  duration_ms: number;
+}
+export interface ResumeTemplate {
+  id: string;
+  name: string;
+  description: string;
+  latex: string;
+}
+export interface ResumeTemplatesResponse {
+  templates: ResumeTemplate[];
+}
+/** POST /api/resume/import. Converts the plain text of an existing résumé (read from a PDF in the browser, or pasted) into editable LaTeX. Nothing is stored. */
+export interface ResumeImportRequest {
+  text: string;
+}
+export interface ResumeImportResponse {
+  latex: string; // the converted document, in the classic template
+  warnings: string[]; // what could not be read, and what to check
+  sections: string[]; // the section headings that were recognised
+}
+
+// ---------- Learn: DSA patterns and DBMS ----------
+export type PatternLevel = "core" | "intermediate" | "advanced";
+export type LearnDifficulty = "easy" | "medium" | "hard";
+export interface PatternProblem {
+  key: string; // stable id for progress: the public slug, or the UNBLUFF question id
+  title: string;
+  difficulty: LearnDifficulty;
+  note: string; // what the pattern's cue looks like in this problem
+  url: string | null; // the problem's public page; null for UNBLUFF's own problems
+  practice_id: string | null; // an UNBLUFF graded question id: it opens in the code workspace
+}
+export interface PatternSummary {
+  id: string;
+  name: string;
+  topic: string;
+  level: PatternLevel;
+  cues: string[]; // phrases in a problem statement that point to this pattern
+  summary: string;
+  problem_count: number;
+}
+export interface PatternDetail extends PatternSummary {
+  idea: string[];
+  template: string; // Python, checked by tests
+  complexity: { time: string; space: string };
+  pitfalls: string[];
+  variants: { name: string; when: string }[];
+  problems: PatternProblem[];
+  related: { id: string; name: string }[];
+}
+export interface PatternsResponse {
+  patterns: PatternSummary[];
+  topics: string[]; // the families, in display order
+}
+export interface DbmsTopicSummary {
+  id: string;
+  name: string;
+  group: string;
+  summary: string;
+  minutes: number;
+  has_example: boolean;
+  quiz_questions: number;
+}
+export interface DbmsExample {
+  title: string;
+  setup: string;
+  query: string;
+  explanation: string;
+  columns: string[];
+  rows: (string | number | null)[][]; // what the query returns; tests run it on SQLite
+}
+export interface DbmsTopicDetail extends DbmsTopicSummary {
+  sections: { heading: string; body: string[] }[];
+  key_points: string[];
+  example: DbmsExample | null;
+  interview: { q: string; a: string }[];
+  quiz: { id: string; question: string; options: string[] }[]; // answers are never sent with the questions
+  related: { id: string; name: string }[];
+}
+export interface DbmsTopicsResponse {
+  topics: DbmsTopicSummary[];
+  groups: string[];
+}
+/** POST /api/learn/dbms/:id/quiz. One answer (an option index) per question, in order. */
+export interface DbmsQuizRequest {
+  answers: number[];
+}
+export interface DbmsProgress {
+  best_score: number;
+  total: number;
+  attempts: number;
+  passed_at: string | null; // when a score at or above the pass mark was first reached
+  last_attempt_at: string;
+}
+export interface DbmsQuizResult {
+  topic_id: string;
+  score: number;
+  total: number;
+  pass_mark: number; // the score needed to pass
+  passed: boolean;
+  results: { question_id: string; chosen: number; answer: number; correct: boolean; why: string }[];
+  progress: DbmsProgress;
+}
+export interface PatternProgress {
+  done: boolean;
+  problems_done: string[]; // PatternProblem.key values the student marked solved
+}
+export interface LearnProgress {
+  patterns: Record<string, PatternProgress>;
+  dbms: Record<string, DbmsProgress>;
+  updated_at: string | null;
+}
+export interface LearnProgressResponse {
+  progress: LearnProgress;
+  patterns_done: number;
+  patterns_total: number;
+  dbms_passed: number;
+  dbms_total: number;
+}
+/** PUT /api/learn/patterns/:id/progress. Self-reported marks: they are never presented as verified practice. */
+export interface PatternProgressRequest {
+  done?: boolean;
+  problems?: { key: string; done: boolean }[];
 }
 export interface LeetCodeHistoryResponse {
   snapshots: LeetCodeSnapshotSummary[]; // newest capture first

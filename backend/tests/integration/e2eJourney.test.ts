@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- these tests walk arbitrary API response JSON */
 import request from "supertest";
 import { describe, expect, it } from "vitest";
+import { DBMS_TOPICS } from "../../src/learn/content/index.js";
 import type { PlacementDashboard, PlacementTask } from "../../src/types.js";
 import { RecordingLlm } from "../mentor/recordingLlm.js";
 import { A, B, harness, standardProfile, type Harness } from "../placement/harness.js";
@@ -34,7 +35,7 @@ describe("student journey: execution results are counted (test-only stand-in pol
     expect((await h.api.get("/dashboard")).body.needs_profile).toBe(true);
 
     // 2. goals, timeline and availability
-    expect((await h.api.put("/profile", standardProfile({ priorities: ["dsa", "interview", "graphql"] }))).status).toBe(200);
+    expect((await h.api.put("/profile", standardProfile({ priorities: ["dsa", "interview", "dbms"] }))).status).toBe(200);
 
     // 3. the plan is built from content that really exists
     const plan = await refresh(h);
@@ -44,8 +45,8 @@ describe("student journey: execution results are counted (test-only stand-in pol
     expect(h.catalogue.summary(diag.ref.id)).not.toBeNull();
     const gradable = (await request(h.app).get(`/api/code/exercises/${diag.ref.id}`)).body;
     expect(gradable.gradable).toBe(true);
-    const lab = all(plan).find((t) => t.type === "graphql" && t.depends_on.length === 0)!;
-    expect(lab.ref.id).toBe("m1-e1");
+    const dbmsTask = all(plan).find((t) => t.type === "dbms" && t.depends_on.length === 0)!;
+    expect(dbmsTask.ref.id).toBe("er-model");
 
     // 4. the exercise is opened: only the public projection is returned, never the hidden cases
     expect(Object.keys(gradable).sort()).toEqual(["gradable", "hidden_test_count", "is_demonstration", "limits", "question_id", "samples", "starter_code", "statement", "test_revision"]);
@@ -83,13 +84,13 @@ describe("student journey: execution results are counted (test-only stand-in pol
     const o = await overview(h, A);
     expect(o.totals).toMatchObject({ solved_unique: 1, eligible_attempts: 3, accepted_attempts: 1 });
 
-    // 9. a GraphQL exercise is passed in the Lab; the plan unlocks the next one
+    // 9. a DBMS topic quiz is passed; the plan unlocks the next topic
     tick(h);
-    const lessonPass = await request(h.app).post("/api/graphql-lab/exercises/m1-e1/submit").set(as(A)).send({ client_attempt_id: "attempt_journey_01", answer: ["b"] });
-    expect(lessonPass.body.outcome).toBe("passed");
-    const afterLab = await refresh(h);
-    expect(afterLab.history.recent_completed.find((t) => t.id === lab.id)).toMatchObject({ completed_by: "verified_event" });
-    expect(all(afterLab).filter((t) => t.type === "graphql" && t.status === "planned").some((t) => t.ref.id === "m1-e2" && !t.blocked)).toBe(true);
+    const quizPass = await request(h.app).post("/api/learn/dbms/er-model/quiz").set(as(A)).send({ answers: DBMS_TOPICS.find((t) => t.id === "er-model")!.quiz.map((q) => q.answer) });
+    expect(quizPass.body.passed).toBe(true);
+    const afterQuiz = await refresh(h);
+    expect(afterQuiz.history.recent_completed.find((t) => t.id === dbmsTask.id)).toMatchObject({ completed_by: "verified_event" });
+    expect(all(afterQuiz).filter((t) => t.type === "dbms" && t.status === "planned").some((t) => t.ref.id === "keys-constraints" && !t.blocked)).toBe(true);
 
     // 10. the mentor keeps what the student said, and in a separate conversation sees it with the current evidence
     const first = await request(h.app).post("/api/mentor/chat").set(as(A)).send({ mode: "placement_mentor", message: "My target role is Frontend Developer.", client_message_id: "cm_journey_001" });
@@ -112,7 +113,7 @@ describe("student journey: execution results are counted (test-only stand-in pol
     const dash = await refresh(h);
     const movable = all(dash).find((t) => t.status === "planned" && !t.blocked)!;
     expect((await h.api.post(`/tasks/${movable.id}/action`, { action: "postpone", days: 1 })).body.postponed_count).toBe(1);
-    expect((await h.api.put("/profile", standardProfile({ daily_minutes: 45, priorities: ["dsa", "interview", "graphql"] }))).status).toBe(200);
+    expect((await h.api.put("/profile", standardProfile({ daily_minutes: 45, priorities: ["dsa", "interview", "dbms"] }))).status).toBe(200);
     const trimmed = (await h.api.get("/dashboard")).body as PlacementDashboard;
     for (const day of trimmed.week) expect(day.planned_minutes <= 45 || day.tasks.length === 1).toBe(true);
     expect(trimmed.history.changes.some((c) => c.kind === "profile_changed")).toBe(true);
@@ -125,7 +126,7 @@ describe("student journey: execution results are counted (test-only stand-in pol
     expect((await h.api.del("/data")).status).toBe(204);
     expect((await h.api.get("/dashboard")).body.needs_profile).toBe(true);
     expect((await overview(h, A)).totals.solved_unique).toBe(1); // the planner's data is gone; the practice record is not
-    expect((await h.lab.progress(A)).totals.exercises_passed).toBe(1);
+    expect((await h.learn.progress(A)).dbms_passed).toBe(1);
     const memories = (await request(h.app).get("/api/mentor/memories").set(as(A))).body.memories as { id: string; content: string }[];
     const target = memories.find((m) => /Frontend Developer/i.test(m.content))!;
     expect((await request(h.app).delete(`/api/mentor/memories/${target.id}`).set(as(A))).status).toBe(204);
@@ -167,7 +168,7 @@ describe("student journey: production policy excludes stand-in execution results
 describe("student journey: the sections that depend on missing infrastructure stay honestly blocked", () => {
   it("without a configured execution service, judging reports unavailable and the planner schedules no DSA work", async () => {
     const h = harness({ execution: { configured: false, verified: false } }); // testApp's default code service has no provider
-    await h.api.put("/profile", standardProfile());
+    await h.api.put("/profile", standardProfile({ priorities: ["dsa", "interview", "dbms"] }));
     const d = await refresh(h);
     expect(all(d).some((t) => ["diagnostic", "dsa_practice", "dsa_revision"].includes(t.type))).toBe(false);
     const res = await submit(h, A, "q_fixture_01", "ECHO");
@@ -176,7 +177,7 @@ describe("student journey: the sections that depend on missing infrastructure st
     expect((await overview(h, A)).has_eligible_activity).toBe(false);
     // the rest of the journey still works
     expect(all(d).some((t) => t.type === "technical_interview")).toBe(true);
-    expect(all(d).some((t) => t.type === "graphql")).toBe(true);
+    expect(all(d).some((t) => t.type === "dbms")).toBe(true);
   });
 
   it("a disconnected GitHub account blocks nothing, and the student can still be advised", async () => {

@@ -62,7 +62,7 @@ export function verifiedSkillSlugs(skills: SkillAssessment[]): string[] {
   const out = new Set<string>();
   for (const s of skills) {
     if (s.evidence.provenance !== "verified" || (s.status !== "strong" && s.status !== "developing")) continue;
-    if (s.area === "graphql") out.add("graphql");
+    if (s.area === "dbms") out.add("sql"); // a passed DBMS quiz is verified knowledge of databases and SQL
     const m = /^interview:[a-z0-9_]+:([a-z0-9_]+)$/.exec(s.area);
     if (m) for (const slug of INTERVIEW_SKILLS[m[1]!] ?? []) out.add(slug);
   }

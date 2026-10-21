@@ -26,7 +26,7 @@ import { normalizeProfile } from "./profile.js";
 import type { PlacementStore, PlanRecord, ProfileRecord, TaskRecord } from "./store.js";
 
 export interface PlanMentorPort {
-  tutorHelp(uid: string, input: { lab: string; message: string; topics: string[]; kind?: "lab" | "plan" }): Promise<{ reply: string; mock: boolean; memory_saved: MentorSavedMemory[] }>;
+  tutorHelp(uid: string, input: { context: string; message: string; topics: string[] }): Promise<{ reply: string; mock: boolean; memory_saved: MentorSavedMemory[] }>;
 }
 
 export interface PlacementDeps {
@@ -419,7 +419,7 @@ export class PlacementService {
     const meta = { available: false, mock: false, error: null as string | null };
     if (this.deps.mentor) {
       try {
-        const out = await this.deps.mentor.tutorHelp(uid, { kind: "plan", lab: planContext(dash, intent, proposed), message, topics: dash.skills.skills.filter((s) => s.category === "dsa" && (s.status === "weak" || s.status === "unassessed")).map((s) => s.area.slice(4)).slice(0, 5) });
+        const out = await this.deps.mentor.tutorHelp(uid, { context: planContext(dash, intent, proposed), message, topics: dash.skills.skills.filter((s) => s.category === "dsa" && (s.status === "weak" || s.status === "unassessed")).map((s) => s.area.slice(4)).slice(0, 5) });
         mentor_reply = out.reply;
         memory = out.memory_saved;
         meta.available = true;
@@ -558,7 +558,7 @@ export class PlacementService {
         sufficient_evidence: skills.skills.filter((s) => s.category !== "project" && (s.confidence === "medium" || s.confidence === "high")).map((s) => s.label),
         weak: weakSkills,
         unassessed,
-        next_diagnostics: skills.skills.filter((s) => s.next_assessment && (s.next_assessment.type === "diagnostic" || s.next_assessment.type === "technical_interview" || s.next_assessment.type === "graphql") && s.status === "unassessed").slice(0, 5).map((s) => ({ area: s.label, description: s.next_assessment!.description })),
+        next_diagnostics: skills.skills.filter((s) => s.next_assessment && (s.next_assessment.type === "diagnostic" || s.next_assessment.type === "technical_interview" || s.next_assessment.type === "dbms") && s.status === "unassessed").slice(0, 5).map((s) => ({ area: s.label, description: s.next_assessment!.description })),
         note: "Readiness here means how much has been measured per skill. There is no overall score and no probability of an offer.",
       },
       limitations: skills.limitations,
@@ -622,8 +622,8 @@ export function completionProof(t: TaskRecord, ev: EvidenceBundle): string | nul
       if (t.type === "diagnostic") return o.attempts > 0 && o.last_attempt_at !== null && o.last_attempt_at > t.created_at ? "A counted judged submission now exists for this question." : null;
       return o.solved ? "A judged submission for this question was accepted." : null;
     }
-    case "lab_exercise":
-      return ev.lab.exercises.find((e) => e.id === t.ref.id)?.passed ? "The GraphQL Lab recorded a passed check for this exercise." : null;
+    case "dbms_topic":
+      return ev.dbms.topics.find((x) => x.id === t.ref.id)?.passed ? "The server recorded a passed quiz for this DBMS topic." : null;
     case "role":
       return ev.interview.sessions.some((s) => s.role_id === t.ref.id && s.created_at > t.created_at && s.assessed_skill_ids.length > 0) ? "An interview session with an assessed claim was recorded." : null;
     case "mentor_mode":
@@ -655,14 +655,9 @@ function improvements(ev: EvidenceBundle, completed: TaskRecord[], today: string
   if (cmp?.available && cmp.current.accuracy.value !== null && cmp.previous.accuracy.value !== null && cmp.current.accuracy.value > cmp.previous.accuracy.value) {
     out.push({ at: cmp.current.to, area: "dsa", message: `Judged submission accuracy rose from ${Math.round(cmp.previous.accuracy.value * 100)}% to ${Math.round(cmp.current.accuracy.value * 100)}% between the last two 28-day periods.`, source: "dsa_judged" });
   }
-  const modules = new Map<string, { title: string; all: boolean; at: string | null }>();
-  for (const e of ev.lab.exercises) {
-    const m = modules.get(e.module_id) ?? { title: e.module_title, all: true, at: null };
-    m.all &&= e.passed;
-    if (e.last_attempt_at && (m.at ?? "") < e.last_attempt_at) m.at = e.last_attempt_at;
-    modules.set(e.module_id, m);
+  for (const t of ev.dbms.topics) {
+    if (t.passed) out.push({ at: t.last_attempt_at, area: "dbms", message: `You passed the DBMS quiz "${t.title}".`, source: "dbms_quiz" });
   }
-  for (const m of modules.values()) if (m.all) out.push({ at: m.at, area: "graphql", message: `You completed the GraphQL module "${m.title}": every exercise passed its check.`, source: "graphql_lab" });
   for (const t of completed.filter((x) => x.completed_by === "verified_event" && (x.completed_at ?? "").slice(0, 10) >= addDays(today, -14)).slice(0, 5)) out.push({ at: t.completed_at, area: t.skill_area, message: `Completed with proof from your records: ${t.title}`, source: "plan" });
   return out.slice(0, 12);
 }

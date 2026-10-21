@@ -11,10 +11,27 @@ import type {
   CareerTrackerUpdate,
   HealthResponse,
   LeetCodeConnectionResponse,
+  PatternsResponse,
+  PatternDetail,
+  DbmsTopicsResponse,
+  DbmsTopicDetail,
+  DbmsQuizRequest,
+  DbmsQuizResult,
+  LearnProgressResponse,
+  PatternProgressRequest,
   LeetCodeHistoryResponse,
   LeetCodeImportConfirmRequest,
   LeetCodeImportConfirmResponse,
   LeetCodeLookupStatusResponse,
+  AtsRequest,
+  AtsResult,
+  ResumeCompileRequest,
+  ResumeImportRequest,
+  ResumeImportResponse,
+  ResumeCompileResponse,
+  ResumeResponse,
+  ResumeSaveRequest,
+  ResumeTemplatesResponse,
   LeetCodeImportPreview,
   LeetCodeImportRequest,
   LeetCodeInsightsResponse,
@@ -71,20 +88,6 @@ import type {
   PlacementAssistantResponse,
   PlacementApplyChangeRequest,
   PlacementApplyChangeResponse,
-  LabModulesResponse,
-  LabModuleDetail,
-  LabExercise,
-  LabTrainingSchemaResponse,
-  LabExecuteRequest,
-  LabExecuteResponse,
-  LabHintResponse,
-  LabSubmitRequest,
-  LabSubmitResponse,
-  LabProgressResponse,
-  LabAttemptsResponse,
-  LabResetResponse,
-  LabHelpRequest,
-  LabHelpResponse,
   GithubConnection,
   GithubConnectResponse,
   GithubDisconnectResponse,
@@ -150,6 +153,34 @@ export const api = {
   /** DELETE /api/leetcode/connection: removes the link, and with mode "all" every imported snapshot. */
   async unlinkLeetCode(mode: "link" | "all"): Promise<LeetCodeUnlinkResponse> {
     return apiClient<LeetCodeUnlinkResponse>(`/leetcode/connection?mode=${mode}`, { method: "DELETE" });
+  },
+  /** GET /api/resume: the saved LaTeX résumé, its freshly computed ATS score, and whether this server can build PDFs. */
+  getResume(): Promise<ResumeResponse> {
+    return apiClient<ResumeResponse>("/resume", { method: "GET" });
+  },
+  /** PUT /api/resume: saves the LaTeX, the target role and an optional job description. */
+  saveResume(body: ResumeSaveRequest): Promise<ResumeResponse> {
+    return apiClient<ResumeResponse>("/resume", { method: "PUT", body: JSON.stringify(body) });
+  },
+  /** DELETE /api/resume: removes the saved résumé. */
+  async deleteResume(): Promise<void> {
+    await apiClient<unknown>("/resume", { method: "DELETE" });
+  },
+  /** GET /api/resume/templates: ATS-friendly LaTeX starting points. */
+  getResumeTemplates(): Promise<ResumeTemplatesResponse> {
+    return apiClient<ResumeTemplatesResponse>("/resume/templates", { method: "GET" });
+  },
+  /** POST /api/resume/ats: scores the text without saving it (a heuristic estimate, not an employer's verdict). */
+  scoreResume(body: AtsRequest): Promise<AtsResult> {
+    return apiClient<AtsResult>("/resume/ats", { method: "POST", body: JSON.stringify(body) });
+  },
+  /** POST /api/resume/import: converts the text of an existing résumé (read from a PDF in the browser) into editable LaTeX. Nothing is stored. */
+  importResume(body: ResumeImportRequest): Promise<ResumeImportResponse> {
+    return apiClient<ResumeImportResponse>("/resume/import", { method: "POST", body: JSON.stringify(body) });
+  },
+  /** POST /api/resume/compile: builds the PDF in an isolated LaTeX container. A failed build is a normal result with the log. */
+  compileResume(body: ResumeCompileRequest): Promise<ResumeCompileResponse> {
+    return apiClient<ResumeCompileResponse>("/resume/compile", { method: "POST", body: JSON.stringify(body) });
   },
   /** GET /api/leetcode/lookup: whether the operator enabled the unofficial lookup of public solved counts by username. */
   getLeetCodeLookup(): Promise<LeetCodeLookupStatusResponse> {
@@ -485,42 +516,27 @@ export const api = {
     return apiClient<void>("/placement/data", { method: "DELETE" });
   },
 
-  /** GraphQL Learning Lab: runs only against the Lab's own training API. */
-  async getLabModules(): Promise<LabModulesResponse> {
-    return apiClient<LabModulesResponse>("/graphql-lab/modules", { method: "GET" });
+  /** Learn: the pattern and DBMS lessons are public; progress and quizzes need sign-in. */
+  async getLearnPatterns(): Promise<PatternsResponse> {
+    return apiClient<PatternsResponse>("/learn/patterns", { method: "GET" });
   },
-  async getLabModule(id: string): Promise<LabModuleDetail> {
-    return apiClient<LabModuleDetail>(`/graphql-lab/modules/${encodeURIComponent(id)}`, { method: "GET" });
+  async getLearnPattern(id: string): Promise<PatternDetail> {
+    return apiClient<PatternDetail>(`/learn/patterns/${encodeURIComponent(id)}`, { method: "GET" });
   },
-  async getLabExercise(id: string): Promise<LabExercise> {
-    return apiClient<LabExercise>(`/graphql-lab/exercises/${encodeURIComponent(id)}`, { method: "GET" });
+  async getDbmsTopics(): Promise<DbmsTopicsResponse> {
+    return apiClient<DbmsTopicsResponse>("/learn/dbms", { method: "GET" });
   },
-  async getLabTrainingSchema(): Promise<LabTrainingSchemaResponse> {
-    return apiClient<LabTrainingSchemaResponse>("/graphql-lab/training-schema", { method: "GET" });
+  async getDbmsTopic(id: string): Promise<DbmsTopicDetail> {
+    return apiClient<DbmsTopicDetail>(`/learn/dbms/${encodeURIComponent(id)}`, { method: "GET" });
   },
-  async executeLab(body: LabExecuteRequest): Promise<LabExecuteResponse> {
-    return apiClient<LabExecuteResponse>("/graphql-lab/execute", { method: "POST", body: JSON.stringify(body) });
+  async getLearnProgress(): Promise<LearnProgressResponse> {
+    return apiClient<LearnProgressResponse>("/learn/progress", { method: "GET" });
   },
-  async hintLab(exerciseId: string): Promise<LabHintResponse> {
-    return apiClient<LabHintResponse>(`/graphql-lab/exercises/${encodeURIComponent(exerciseId)}/hint`, { method: "POST", body: JSON.stringify({}) });
+  async setPatternProgress(id: string, body: PatternProgressRequest): Promise<LearnProgressResponse> {
+    return apiClient<LearnProgressResponse>(`/learn/patterns/${encodeURIComponent(id)}/progress`, { method: "PUT", body: JSON.stringify(body) });
   },
-  async submitLab(exerciseId: string, body: LabSubmitRequest): Promise<LabSubmitResponse> {
-    return apiClient<LabSubmitResponse>(`/graphql-lab/exercises/${encodeURIComponent(exerciseId)}/submit`, { method: "POST", body: JSON.stringify(body) });
-  },
-  async getLabProgress(): Promise<LabProgressResponse> {
-    return apiClient<LabProgressResponse>("/graphql-lab/progress", { method: "GET" });
-  },
-  async getLabAttempts(exerciseId?: string): Promise<LabAttemptsResponse> {
-    return apiClient<LabAttemptsResponse>(`/graphql-lab/attempts${exerciseId ? `?exercise_id=${encodeURIComponent(exerciseId)}` : ""}`, { method: "GET" });
-  },
-  async resetLabTrainingData(): Promise<LabResetResponse> {
-    return apiClient<LabResetResponse>("/graphql-lab/training-data/reset", { method: "POST", body: JSON.stringify({}) });
-  },
-  async deleteLabProgress(): Promise<void> {
-    return apiClient<void>("/graphql-lab/progress", { method: "DELETE" });
-  },
-  async labHelp(body: LabHelpRequest): Promise<LabHelpResponse> {
-    return apiClient<LabHelpResponse>("/graphql-lab/help", { method: "POST", body: JSON.stringify(body) });
+  async submitDbmsQuiz(id: string, body: DbmsQuizRequest): Promise<DbmsQuizResult> {
+    return apiClient<DbmsQuizResult>(`/learn/dbms/${encodeURIComponent(id)}/quiz`, { method: "POST", body: JSON.stringify(body) });
   },
 
   /** GitHub (read-only, public data). The token never reaches the browser. */

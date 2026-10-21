@@ -4,7 +4,7 @@ import type { SuiteRegistry } from "../code/suites.js";
 import { buildReport } from "../core/report.js";
 import type { GithubService } from "../github/service.js";
 import { NONE_EVIDENCE, type LeetCodeEvidence } from "../leetcode/context.js";
-import type { LabService } from "../graphqllab/service.js";
+import type { LearnService } from "../learn/service.js";
 import type { Logger } from "../logger.js";
 import type { MentorService } from "../mentor/service.js";
 import type { RoleRegistry } from "../services/roles.js";
@@ -14,7 +14,7 @@ import type { DsaAnalyticsResponse, MentorProfile, QuestionSummary, RevisionItem
 /**
  * Collects what the other modules already know about a student. Nothing is recomputed here: DSA numbers come from the
  * analytics service (counted judged submissions only), interview skill states from the existing report builder, the
- * GraphQL results from the Lab's own graded progress, project context from the GitHub cache and goals from the mentor's
+ * DBMS results from quizzes the server grades, project context from the GitHub cache and goals from the mentor's
  * memory. Each source is read independently: one failing never blocks the rest.
  */
 
@@ -59,21 +59,20 @@ export interface InterviewEvidence {
   readFailed: boolean;
 }
 
-export interface LabExerciseState {
+/** One DBMS topic's quiz record. Passing is decided by the server grading the answers. */
+export interface DbmsTopicState {
   id: string;
-  module_id: string;
-  lesson_id: string;
   title: string;
-  order: number;
+  group: string;
+  minutes: number;
   passed: boolean;
   attempts: number;
+  best_score: number;
+  total: number;
   last_attempt_at: string | null;
-  module_title: string;
-  module_order: number;
-  difficulty: string;
 }
-export interface LabEvidence {
-  exercises: LabExerciseState[];
+export interface DbmsEvidence {
+  topics: DbmsTopicState[];
   readFailed: boolean;
 }
 
@@ -97,7 +96,7 @@ export interface EvidenceBundle {
   generatedAt: string;
   dsa: DsaEvidence;
   interview: InterviewEvidence;
-  lab: LabEvidence;
+  dbms: DbmsEvidence;
   github: GithubEvidence;
   /** Numbers the student imported from LeetCode: context only, never counted as judged practice. Absent when not read. */
   leetcode?: LeetCodeEvidence;
@@ -109,7 +108,7 @@ export interface EvidenceDeps {
   analytics: AnalyticsService;
   sessions: SessionStore;
   roles: RoleRegistry;
-  lab: LabService;
+  learn: LearnService;
   github: GithubService;
   leetcode?: { evidence(uid: string): Promise<LeetCodeEvidence> };
   mentor: MentorService;
@@ -130,8 +129,8 @@ export class EvidenceService {
   }
 
   async collect(uid: string): Promise<EvidenceBundle> {
-    const [dsa, interview, lab, github, leetcode, memory, conversations] = await Promise.all([this.dsa(uid), this.interview(uid), this.labEvidence(uid), this.githubEvidence(uid), this.leetcodeEvidence(uid), this.memory(uid), this.conversations(uid)]);
-    return { generatedAt: this.now().toISOString(), dsa, interview, lab, github, leetcode, memory, conversations };
+    const [dsa, interview, dbms, github, leetcode, memory, conversations] = await Promise.all([this.dsa(uid), this.interview(uid), this.dbmsEvidence(uid), this.githubEvidence(uid), this.leetcodeEvidence(uid), this.memory(uid), this.conversations(uid)]);
+    return { generatedAt: this.now().toISOString(), dsa, interview, dbms, github, leetcode, memory, conversations };
   }
 
   /** Questions a student can actually be judged on: they exist in the catalogue and have a hidden-test suite. */
@@ -197,12 +196,12 @@ export class EvidenceService {
     }
   }
 
-  private async labEvidence(uid: string): Promise<LabEvidence> {
+  private async dbmsEvidence(uid: string): Promise<DbmsEvidence> {
     try {
-      return { exercises: await this.deps.lab.studentExercises(uid), readFailed: false };
+      return { topics: await this.deps.learn.dbmsEvidence(uid), readFailed: false };
     } catch (err) {
-      this.deps.logger.warn({ err: (err as Error).message }, "placement: GraphQL Lab evidence could not be read");
-      return { exercises: [], readFailed: true };
+      this.deps.logger.warn({ err: (err as Error).message }, "placement: DBMS quiz evidence could not be read");
+      return { topics: [], readFailed: true };
     }
   }
 

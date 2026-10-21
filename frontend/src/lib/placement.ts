@@ -11,7 +11,7 @@ import type {
 export const TASK_TYPE_LABEL: Record<PlacementTaskType, string> = {
   dsa_practice: "DSA practice",
   dsa_revision: "DSA revision",
-  graphql: "GraphQL",
+  dbms: "DBMS",
   technical_interview: "Technical interview",
   communication: "Communication",
   project: "Project",
@@ -68,7 +68,7 @@ export const EXPERIENCE_LABEL: Record<PlacementExperience, string> = {
 export const PRIORITY_CHOICES: { value: PlacementPriority; label: string }[] = [
   { value: "dsa", label: "Data structures and algorithms" },
   { value: "interview", label: "Technical interviews" },
-  { value: "graphql", label: "GraphQL and API design" },
+  { value: "dbms", label: "Databases (DBMS and SQL)" },
   { value: "communication", label: "HR and communication" },
   { value: "projects", label: "Projects and portfolio" },
 ];

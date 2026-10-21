@@ -15,8 +15,8 @@ import { normalizeTopic, type LeetCodeEvidence } from "../leetcode/context.js";
 export const SKILL_RULES = {
   /** Confidence from judged submissions and distinct questions in a DSA topic. */
   dsa: { low: { attempts: 3, questions: 1 }, medium: { attempts: 6, questions: 3 }, high: { attempts: 12, questions: 5 } },
-  /** Confidence from the number of exercises attempted in the GraphQL Lab. */
-  graphql: { low: 1, medium: 6, high: 15 },
+  /** Confidence from the number of DBMS topic quizzes attempted. */
+  dbms: { low: 1, medium: 4, high: 8 },
   /** Confidence from the number of recorded interview assessments of a skill. */
   interview: { low: 1, medium: 2, high: 3 },
   /** Status from an estimate when the analytics engine gives no weakness status. */
@@ -28,7 +28,7 @@ export const SKILL_RULES = {
 export const METHOD: string[] = [
   "DSA topics: from counted, judged submissions only (the analytics engine's rules). Estimate = the share of attempted questions you solved, shown only when the minimum sample is met; status comes from the analytics weakness rules.",
   "Interview skills: the existing interview report's skill state and proficiency for your target roles. Results graded by the built-in mock model are shown as demonstrations, with no estimate.",
-  "GraphQL: the share of Lab exercises you have passed. Each pass is decided by running your query against a reference; reading a lesson alone counts for nothing.",
+  "DBMS: the share of topics whose quiz you have passed (three of four correct). The server grades the quiz, so a pass is verified; reading the notes alone counts for nothing.",
   "Projects: GitHub activity is context only. It gives no estimate and is never counted towards coverage.",
   "LeetCode: numbers you import yourself are listed beside matching DSA topics as your own reported context, with their capture date. They never change an estimate, a status, a confidence level or coverage, and they are never merged with judged submissions.",
   "Confidence depends on how much evidence there is (see the thresholds in the documentation); recency is days since the last piece of evidence. Self-reported levels are displayed separately.",
@@ -153,34 +153,39 @@ export function assessSkills(ev: EvidenceBundle, profile: PlacementProfile | nul
   }
   if ((profile?.role_ids.length ?? 0) === 0) limitations.push({ source: "interview", severity: "info", message: "Choose a target role in your goals to include interview skills." });
 
-  // ---------------- GraphQL ----------------
-  const lab = ev.lab;
-  if (lab.readFailed) limitations.push({ source: "graphql", severity: "info", message: "GraphQL Lab progress could not be read right now." });
-  const wantsGraphql = (profile?.priorities.includes("graphql") ?? false) || lab.exercises.some((e) => e.attempts > 0) || rolesNeedApis(profile, roles);
-  if (wantsGraphql) {
-    const attempted = lab.exercises.filter((e) => e.attempts > 0);
-    const passed = lab.exercises.filter((e) => e.passed);
-    const total = lab.exercises.length;
+  // ---------------- DBMS ----------------
+  const dbms = ev.dbms;
+  if (dbms.readFailed) limitations.push({ source: "dbms", severity: "info", message: "DBMS quiz progress could not be read right now." });
+  const wantsDbms = (profile?.priorities.includes("dbms") ?? false) || dbms.topics.some((t) => t.attempts > 0);
+  if (wantsDbms) {
+    const attempted = dbms.topics.filter((t) => t.attempts > 0);
+    const passed = dbms.topics.filter((t) => t.passed);
+    const total = dbms.topics.length;
     const estimate = attempted.length > 0 && total > 0 ? passed.length / total : null;
-    const last = attempted.map((e) => e.last_attempt_at).filter((x): x is string => x !== null).sort().at(-1) ?? null;
-    const c = SKILL_RULES.graphql;
+    const last = attempted.map((t) => t.last_attempt_at).filter((x): x is string => x !== null).sort().at(-1) ?? null;
+    const c = SKILL_RULES.dbms;
     const confidence: EvidenceConfidence = attempted.length >= c.high ? "high" : attempted.length >= c.medium ? "medium" : attempted.length >= c.low ? "low" : "none";
     const status: SkillStatus = estimate === null ? "unassessed" : confidence === "low" && estimate < SKILL_RULES.status.developing ? "developing" : statusFromEstimate(estimate);
     skills.push({
-      area: "graphql",
-      label: "GraphQL",
-      category: "graphql",
+      area: "dbms",
+      label: "DBMS",
+      category: "dbms",
       status,
       estimate,
-      evidence: { kind: attempted.length > 0 ? "graphql_lab" : "none", provenance: attempted.length > 0 ? "verified" : "unavailable", count: attempted.length, unit: "exercises attempted", last_at: last, recency: recencyOf(last, now) },
+      evidence: { kind: attempted.length > 0 ? "dbms_quiz" : "none", provenance: attempted.length > 0 ? "verified" : "unavailable", count: attempted.length, unit: "topic quizzes attempted", last_at: last, recency: recencyOf(last, now) },
       confidence,
-      gaps: attempted.filter((e) => !e.passed).slice(0, 3).map((e) => `Not yet passed: ${e.title}`),
-      self_reported: selfReported("graphql", profile, mentorLevels),
-      next_assessment: attempted.length === 0 && total > 0 ? { type: "graphql", description: "Pass the first GraphQL Lab exercises to get a first measurement." } : passed.length < total ? { type: "graphql", description: "Continue with the next GraphQL Lab exercise." } : null,
-      note: attempted.length === 0 ? "No GraphQL exercises attempted yet. Reading lessons alone is not counted." : `${passed.length} of ${total} exercises passed; each pass was decided by running your query against a reference.`,
+      gaps: attempted.filter((t) => !t.passed).slice(0, 3).map((t) => `Not yet passed: ${t.title}`),
+      self_reported: selfReported("dbms", profile, mentorLevels),
+      next_assessment:
+        attempted.length === 0 && total > 0
+          ? { type: "dbms", description: "Read a DBMS topic and pass its quiz to get a first measurement." }
+          : passed.length < total
+            ? { type: "dbms", description: "Continue with the next DBMS topic." }
+            : null,
+      note: attempted.length === 0 ? "No DBMS quizzes attempted yet. Reading the notes alone is not counted." : `${passed.length} of ${total} topics passed; each pass is decided by the server grading your quiz answers.`,
     });
   } else {
-    limitations.push({ source: "graphql", severity: "info", message: "GraphQL is not in your priorities or your target role's needs, so it is left out. You can still use the Lab any time." });
+    limitations.push({ source: "dbms", severity: "info", message: "DBMS is not in your priorities, so it is left out. You can still study it any time." });
   }
 
   // ---------------- projects (context only) ----------------
@@ -232,7 +237,3 @@ export function assessSkills(ev: EvidenceBundle, profile: PlacementProfile | nul
   };
 }
 
-/** A target role that lists an API skill makes API design (the GraphQL Lab) relevant. */
-export function rolesNeedApis(profile: PlacementProfile | null, roles: RoleRegistry): boolean {
-  return (profile?.role_ids ?? []).some((id) => roles.get(id)?.skills.some((s) => /(^|_)apis?($|_)|graphql/i.test(s.id)) ?? false);
-}

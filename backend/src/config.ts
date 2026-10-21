@@ -132,6 +132,8 @@ const EnvSchema = z
       .enum(["true", "false", "1", "0"])
       .default("false")
       .transform((v) => v === "true" || v === "1"),
+    /** none: the résumé builder cannot build PDFs (editing and the ATS score still work). docker: local TeX Live container, development only. */
+    LATEX_COMPILER: z.enum(["none", "docker"]).default("none"),
     /** Secret. Sent only from the server, in a header. */
     JUDGE0_AUTH_TOKEN: z.string().optional(),
     JUDGE0_AUTH_HEADER: z.string().regex(/^[A-Za-z0-9-]{1,60}$/, "must be a plain header name").default("X-Auth-Token"),
@@ -216,6 +218,9 @@ const EnvSchema = z
         const o = parseCorsOrigins(env.GITHUB_FRONTEND_URL);
         if (o.invalid.length > 0 || o.origins.length !== 1 || o.wildcard) ctx.addIssue({ code: "custom", path: ["GITHUB_FRONTEND_URL"], message: "GITHUB_FRONTEND_URL must be one bare origin like https://app.example.com" });
       }
+    }
+    if (env.LATEX_COMPILER === "docker" && env.NODE_ENV === "production") {
+      ctx.addIssue({ code: "custom", path: ["LATEX_COMPILER"], message: "LATEX_COMPILER=docker is for local development only; a production compiler needs its own sandbox" });
     }
     if (env.EXECUTION_PROVIDER === "docker" && env.NODE_ENV === "production") {
       ctx.addIssue({ code: "custom", path: ["EXECUTION_PROVIDER"], message: "EXECUTION_PROVIDER=docker is for local development only; use judge0 in production" });

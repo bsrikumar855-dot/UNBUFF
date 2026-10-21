@@ -34,9 +34,11 @@ const GithubInsightsPage = lazy(() => import("@/pages/GithubInsightsPage"));
 const PlacementPage = lazy(() => import("@/pages/PlacementPage"));
 const CareerPage = lazy(() => import("@/pages/CareerPage"));
 const LeetCodeInsightsPage = lazy(() => import("@/pages/LeetCodeInsightsPage"));
-const GraphqlLabPage = lazy(() => import("@/pages/GraphqlLabPage"));
-const GraphqlLabModulePage = lazy(() => import("@/pages/GraphqlLabModulePage"));
-const GraphqlPlaygroundPage = lazy(() => import("@/pages/GraphqlPlaygroundPage"));
+const ResumeBuilderPage = lazy(() => import("@/pages/ResumeBuilderPage"));
+const LearnPatternsPage = lazy(() => import("@/pages/LearnPatternsPage"));
+const LearnPatternPage = lazy(() => import("@/pages/LearnPatternPage"));
+const LearnDbmsPage = lazy(() => import("@/pages/LearnDbmsPage"));
+const LearnDbmsTopicPage = lazy(() => import("@/pages/LearnDbmsTopicPage"));
 const MentorPage = lazy(() => import("@/pages/MentorPage"));
 const MentorMemoryPage = lazy(() => import("@/pages/MentorMemoryPage"));
 
@@ -59,6 +61,11 @@ export const AppRoutes: React.FC = () => (
       <Route path="/dsa/questions/:questionId" element={<DsaQuestionPage />} />
       {/* Anyone can read the exercise; running, submitting and history require sign-in. */}
       <Route path="/dsa/questions/:questionId/code" element={<CodeWorkspacePage />} />
+      {/* The lessons are public; marking progress and taking quizzes ask for sign-in. */}
+      <Route path="/learn/patterns" element={<LearnPatternsPage />} />
+      <Route path="/learn/patterns/:patternId" element={<LearnPatternPage />} />
+      <Route path="/learn/dbms" element={<LearnDbmsPage />} />
+      <Route path="/learn/dbms/:topicId" element={<LearnDbmsTopicPage />} />
       <Route element={<RequireAuth />}>
         <Route path="/setup" element={<SetupPage />} />
         <Route path="/ledger" element={<LedgerPage />} />
@@ -73,11 +80,9 @@ export const AppRoutes: React.FC = () => (
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/github" element={<GithubInsightsPage />} />
         <Route path="/leetcode" element={<LeetCodeInsightsPage />} />
+        <Route path="/resume" element={<ResumeBuilderPage />} />
         <Route path="/placement" element={<PlacementPage />} />
         <Route path="/career" element={<CareerPage />} />
-        <Route path="/graphql-lab" element={<GraphqlLabPage />} />
-        <Route path="/graphql-lab/playground" element={<GraphqlPlaygroundPage />} />
-        <Route path="/graphql-lab/modules/:moduleId" element={<GraphqlLabModulePage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

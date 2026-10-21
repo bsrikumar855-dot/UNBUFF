@@ -97,7 +97,7 @@ async function seed() {
     experience_level: "intermediate",
     strengths: [],
     weak_areas: ["Stack"],
-    priorities: ["dsa", "interview", "graphql"],
+    priorities: ["dsa", "interview", "dbms"],
   };
   console.log(
     "seed profile",
@@ -119,11 +119,10 @@ async function seed() {
     ).status
   );
   console.log(
-    "seed lab",
+    "seed quiz",
     (
-      await call(t, "POST", "/graphql-lab/exercises/m1-e1/submit", {
-        client_attempt_id: "attempt_qa_seed_01",
-        answer: ["b"],
+      await call(t, "POST", "/learn/dbms/joins/quiz", {
+        answers: [0, 0, 0, 0],
       })
     ).status
   );

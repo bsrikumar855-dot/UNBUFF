@@ -41,6 +41,10 @@ const PUBLIC = new Set([
   "get /code/languages",
   "get /code/exercises/:questionId",
   "get /github/oauth/callback",
+  "get /learn/patterns", // static learning content: no student data
+  "get /learn/patterns/:id",
+  "get /learn/dbms",
+  "get /learn/dbms/:id",
 ]);
 
 const concrete = (path: string) => path.replace(/:[A-Za-z]+/g, (p) => (p === ":questionId" ? "q_fixture_01" : p === ":taskId" ? `t_${"a".repeat(24)}` : "x"));
@@ -51,7 +55,7 @@ describe("every route requires a verified student unless it is explicitly public
 
   it("finds the routes (guards against the audit silently checking nothing)", () => {
     expect(all.length).toBeGreaterThanOrEqual(72);
-    for (const f of ["mentor.ts", "github.ts", "graphqlLab.ts", "placement.ts", "code.ts", "analytics.ts", "sessions.ts", "career.ts"]) expect(all.some((r) => r.file === f), f).toBe(true);
+    for (const f of ["mentor.ts", "github.ts", "learn.ts", "resume.ts", "placement.ts", "code.ts", "analytics.ts", "sessions.ts", "career.ts"]) expect(all.some((r) => r.file === f), f).toBe(true);
   });
 
   it("refuses a missing, malformed or invalid token on every private route, with no detail", async () => {

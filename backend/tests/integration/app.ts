@@ -10,8 +10,6 @@ import { GithubGraphQL } from "../../src/github/client.js";
 import { EvidenceService } from "../../src/placement/evidence.js";
 import { PlacementService } from "../../src/placement/service.js";
 import { MemoryPlacementStore, type PlacementStore } from "../../src/placement/store.js";
-import { LabService } from "../../src/graphqllab/service.js";
-import { MemoryLabStore, type LabStore } from "../../src/graphqllab/store.js";
 import { GithubService } from "../../src/github/service.js";
 import { MemoryGithubStore } from "../../src/github/store.js";
 import { MentorService } from "../../src/mentor/service.js";
@@ -30,6 +28,11 @@ import { FreehireError, type FreehireClient } from "../../src/careers/freehire.j
 import { MemoryCareerStore, type CareerStore } from "../../src/careers/store.js";
 import { LeetCodeService } from "../../src/leetcode/service.js";
 import { MemoryLeetCodeStore, type LeetCodeStore } from "../../src/leetcode/store.js";
+import { UnavailableLatex, type LatexCompiler } from "../../src/resume/latex.js";
+import { LearnService } from "../../src/learn/service.js";
+import { MemoryLearnStore, type LearnStore } from "../../src/learn/store.js";
+import { ResumeService } from "../../src/resume/service.js";
+import { MemoryResumeStore, type ResumeStore } from "../../src/resume/store.js";
 import { AssessmentService } from "../../src/services/assessment.js";
 import type { SessionStore } from "../../src/store/SessionStore.js";
 import { MemoryStore } from "../../src/store/memoryStore.js";
@@ -81,7 +84,7 @@ export const DEFAULT_TEST_UID = "student-a";
  * 401 behaviour. The wrapper only touches headers; the app under test is unchanged.
  */
 export function testApp(
-  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService; lab?: LabService; labStore?: LabStore; placement?: PlacementService; placementStore?: PlacementStore; career?: CareerService; careerStore?: CareerStore; leetcode?: LeetCodeService; leetcodeStore?: LeetCodeStore; freehire?: Pick<FreehireClient, "search" | "getJob" | "facets">; execution?: { configured: boolean; verified: boolean }; llmMode?: "live" | "mock"; now?: () => Date } = {},
+  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService; placement?: PlacementService; placementStore?: PlacementStore; career?: CareerService; careerStore?: CareerStore; leetcode?: LeetCodeService; leetcodeStore?: LeetCodeStore; resume?: ResumeService; resumeStore?: ResumeStore; learn?: LearnService; learnStore?: LearnStore; latex?: LatexCompiler; freehire?: Pick<FreehireClient, "search" | "getJob" | "facets">; execution?: { configured: boolean; verified: boolean }; llmMode?: "live" | "mock"; now?: () => Date } = {},
 ): Express {
   const llm = opts.llm ?? new MockProvider();
   const catalogue = opts.catalogue ?? fixtureCatalogue();
@@ -116,6 +119,10 @@ export function testApp(
       },
       now: opts.now,
     });
+  const resume =
+    opts.resume ??
+    new ResumeService({ store: opts.resumeStore ?? new MemoryResumeStore(), compiler: opts.latex ?? new UnavailableLatex(), role: (id) => roles.get(id) ?? null, logger: silentLogger, now: opts.now });
+  const learn = opts.learn ?? new LearnService({ store: opts.learnStore ?? new MemoryLearnStore(), now: opts.now });
   const careerHolder: { current?: CareerService } = {}; // the Career service needs the placement service, which needs the mentor
   const mentor =
     opts.mentor ??
@@ -132,9 +139,9 @@ export function testApp(
       logger: silentLogger,
       github,
       leetcode,
+      resume,
       career: () => careerHolder.current,
     });
-  const lab = opts.lab ?? new LabService({ store: opts.labStore ?? new MemoryLabStore(), mentor, logger: silentLogger });
   const placement =
     opts.placement ??
     new PlacementService({
@@ -143,7 +150,7 @@ export function testApp(
         analytics,
         sessions: sessionStore,
         roles,
-        lab,
+        learn,
         github,
         leetcode,
         mentor,
@@ -193,10 +200,11 @@ export function testApp(
     analytics,
     mentor,
     github,
-    lab,
     placement,
     career,
     leetcode,
+    resume,
+    learn,
     llm,
     logger: silentLogger,
     demoReportJson,

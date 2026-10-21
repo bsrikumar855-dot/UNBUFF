@@ -20,6 +20,7 @@ import type {
 } from "../types.js";
 import { githubBlock, NOT_CONNECTED_TEXT, wantsGithub, type CachedGithub } from "../github/context.js";
 import { wantsLeetcode } from "../leetcode/context.js";
+import { wantsResume } from "../resume/context.js";
 import { buildActivityContext, type ActivityDeps } from "./activity.js";
 import { evaluateGoals } from "./goals.js";
 import {
@@ -42,7 +43,7 @@ import {
   type Draft,
   type RetentionConfig,
 } from "./memories.js";
-import { chatPrompt, CONTEXT_LIMITS, labSystemPrompt, planSystemPrompt, summaryPrompt, SUMMARY_SYSTEM, systemPrompt } from "./prompts.js";
+import { chatPrompt, CONTEXT_LIMITS, planSystemPrompt, summaryPrompt, SUMMARY_SYSTEM, systemPrompt } from "./prompts.js";
 import { selectMemories, topicsIn } from "./retrieve.js";
 import type { ConversationRecord, MemoryRecord, MentorStore, StoredMessage } from "./store.js";
 
@@ -60,6 +61,8 @@ export interface MentorDeps extends ActivityDeps {
   career?: () => { mentorContext(uid: string): Promise<{ text: string; available: boolean }> } | undefined;
   /** Optional: a minimal summary of the numbers the student imported from LeetCode (never live data). The mentor works the same without it. */
   leetcode?: { mentorContext(uid: string): Promise<{ text: string; used: boolean; captured_at: string | null; stale: boolean }> };
+  /** The student's saved résumé and its freshly computed ATS result, as text for the model. */
+  resume?: { mentorContext(uid: string): Promise<{ text: string; used: boolean; score: number | null; updated_at: string | null }> };
 }
 
 const MAX_STORED_MESSAGES = 60;
@@ -184,6 +187,20 @@ export class MentorService {
       }
     }
 
+    // ---- the saved résumé and its ATS score: only when the message is about the résumé (or the student turned it on)
+    let resumeText: string | undefined;
+    let resumeMeta: { used: boolean; score: number | null; updated_at: string | null } | undefined;
+    if (this.deps.resume && (req.resume_context || wantsResume(message))) {
+      const c = await this.deps.resume.mentorContext(uid).catch(() => null);
+      if (c) {
+        resumeText = c.text;
+        resumeMeta = { used: c.used, score: c.score, updated_at: c.updated_at };
+      } else {
+        resumeText = "(The saved résumé could not be read right now. You have NO résumé text and NO ATS score; say so and do not guess either.)";
+        resumeMeta = { used: false, score: null, updated_at: null };
+      }
+    }
+
     // ---- the model (skipped when a full solution is requested too early)
     let replyText: string;
     let proposals: Parameters<typeof validateProposals>[0] = [];
@@ -192,8 +209,8 @@ export class MentorService {
     } else {
       try {
         const out = await llm.mentorChat({
-          system: systemPrompt(req.mode, { hintLevel, solutionAllowed: req.assist === "solution", github: githubText !== undefined, career: careerText !== undefined, leetcode: leetcodeText !== undefined }),
-          prompt: chatPrompt({ activity: activity.text, profile: nonEmptyProfileJson(profile), memories: selected, recent: conv?.messages ?? [], message, ...(githubText !== undefined ? { github: githubText } : {}), ...(careerText !== undefined ? { career: careerText } : {}), ...(leetcodeText !== undefined ? { leetcode: leetcodeText } : {}) }),
+          system: systemPrompt(req.mode, { hintLevel, solutionAllowed: req.assist === "solution", github: githubText !== undefined, career: careerText !== undefined, leetcode: leetcodeText !== undefined, resume: resumeText !== undefined }),
+          prompt: chatPrompt({ activity: activity.text, profile: nonEmptyProfileJson(profile), memories: selected, recent: conv?.messages ?? [], message, ...(githubText !== undefined ? { github: githubText } : {}), ...(careerText !== undefined ? { career: careerText } : {}), ...(leetcodeText !== undefined ? { leetcode: leetcodeText } : {}), ...(resumeText !== undefined ? { resume: resumeText } : {}) }),
         });
         replyText = stripControl(out.reply).trim().slice(0, 6000);
         proposals = out.memory_updates;
@@ -272,17 +289,18 @@ export class MentorService {
       mock: llm.mode === "mock",
       ...(githubMeta ? { github_context: githubMeta } : {}),
       ...(leetcodeMeta ? { leetcode_context: leetcodeMeta } : {}),
+      ...(resumeMeta ? { resume_context: resumeMeta } : {}),
     };
   }
 
-  // ---------------- GraphQL Learning Lab tutoring ----------------
+  // ---------------- placement-plan tutoring ----------------
 
   /**
-   * One-shot contextual help for the GraphQL Lab, answered by the same mentor, model, memory store and safeguards as chat.
-   * `lab` is context prepared by the Lab from the real schema and a real execution result; it is untrusted data to the model.
+   * One-shot help explaining the student's placement plan, answered by the same mentor, model, memory store and safeguards as chat.
+   * `context` is the plan the application calculated; it is untrusted data to the model.
    * Nothing is stored as a conversation. A memory is saved only when the student's own typed question states a supported fact.
    */
-  async tutorHelp(uid: string, input: { lab: string; message: string; topics: string[]; kind?: "lab" | "plan" }): Promise<{ reply: string; mock: boolean; memory_saved: MentorSavedMemory[] }> {
+  async tutorHelp(uid: string, input: { context: string; message: string; topics: string[] }): Promise<{ reply: string; mock: boolean; memory_saved: MentorSavedMemory[] }> {
     if (this.inFlight.has(uid)) throw new ApiError("RATE_LIMITED", "Your previous mentor request is still being answered. Wait for it to finish.");
     this.inFlight.add(uid);
     try {
@@ -292,7 +310,7 @@ export class MentorService {
     }
   }
 
-  private async tutorOnce(uid: string, input: { lab: string; message: string; topics: string[]; kind?: "lab" | "plan" }) {
+  private async tutorOnce(uid: string, input: { context: string; message: string; topics: string[] }) {
     const { store, llm, logger } = this.deps;
     const now = this.now();
     const message = stripControl(input.message).trim().slice(0, 500);
@@ -302,18 +320,18 @@ export class MentorService {
       allMemories = (await store.listMemories(uid, MAX_MEMORY_SCAN)).filter((m) => !isExpired(m.expires_at, now));
     } catch (err) {
       memoryReadFailed = true;
-      logger.warn({ err: (err as Error).message }, "mentor: memory could not be read for lab help; answering without it");
+      logger.warn({ err: (err as Error).message }, "mentor: memory could not be read for plan help; answering without it");
     }
     const selected = selectMemories(allMemories, { topics: input.topics, now });
     const profile = profileFromMemories(allMemories).profile;
     let out;
     try {
       out = await llm.mentorChat({
-        system: input.kind === "plan" ? planSystemPrompt() : labSystemPrompt(),
-        prompt: chatPrompt({ activity: "(not used in the GraphQL Lab)", profile: nonEmptyProfileJson(profile), memories: selected, recent: [], message: message || "(the student did not type a question; use the context block)", ...(input.kind === "plan" ? { plan: input.lab } : { lab: input.lab }) }),
+        system: planSystemPrompt(),
+        prompt: chatPrompt({ activity: "(not used for plan help)", profile: nonEmptyProfileJson(profile), memories: selected, recent: [], message: message || "(the student did not type a question; use the context block)", plan: input.context }),
       });
     } catch (err) {
-      if (err instanceof LlmError) throw new ApiError(err.code === "LLM_TIMEOUT" ? "LLM_TIMEOUT" : "LLM_INVALID_OUTPUT", "The mentor could not answer right now. The playground and exercises still work.");
+      if (err instanceof LlmError) throw new ApiError(err.code === "LLM_TIMEOUT" ? "LLM_TIMEOUT" : "LLM_INVALID_OUTPUT", "The mentor could not answer right now. The plan itself is unaffected.");
       throw err;
     }
     const saved: MentorSavedMemory[] = [];
@@ -327,7 +345,7 @@ export class MentorService {
           for (const m of result.saved) saved.push({ id: m.id, type: m.type, content: m.content, provenance: m.provenance });
         } catch (err) {
           saved.length = 0;
-          logger.error({ err: (err as Error).message }, "mentor: memory could not be saved for lab help");
+          logger.error({ err: (err as Error).message }, "mentor: memory could not be saved for plan help");
         }
       }
     }
