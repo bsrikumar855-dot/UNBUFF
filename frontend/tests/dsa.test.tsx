@@ -295,6 +295,44 @@ describe("Access control in the UI", () => {
     expect(screen.getByText("my note")).toBeInTheDocument();
     expect(await screen.findByText(/no longer in the catalogue/)).toBeInTheDocument();
   });
+
+  it("My progress counts only what the student recorded and filters it into tabs", async () => {
+    mocked.getDsaProgress.mockResolvedValue({
+      progress: [
+        rec({ question_id: "q_1", status: "solved", bookmarked: true, notes: "kept" }),
+        rec({ question_id: "q_2", status: "attempted" }),
+      ],
+    });
+    mocked.getQuestion.mockImplementation(async (id) => ({
+      question: q(id === "q_1" ? 1 : 2),
+      companies: [],
+      source: sample,
+    }));
+    renderAt("/dsa/progress", signedIn);
+    const summary = await screen.findByRole("region", { name: "Summary" });
+    expect(within(summary).getByText("Questions solved").nextElementSibling).toHaveTextContent("1");
+    expect(within(summary).getByText("Bookmarked").nextElementSibling).toHaveTextContent("1");
+    expect(within(summary).getByText("Notes").nextElementSibling).toHaveTextContent("1");
+
+    const open = (name: RegExp) => {
+      const tab = screen.getByRole("tab", { name });
+      fireEvent.mouseDown(tab, { button: 0 });
+      fireEvent.click(tab);
+    };
+    open(/Solved questions/);
+    expect(await screen.findByRole("link", { name: "Sample Problem 1" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Sample Problem 2" })).not.toBeInTheDocument();
+
+    open(/Topic progress/);
+    expect(await screen.findByText(/Self-reported, not judged/)).toBeInTheDocument();
+  });
+
+  it("My progress shows an honest empty state with the way forward", async () => {
+    mocked.getDsaProgress.mockResolvedValue({ progress: [] });
+    renderAt("/dsa/progress", signedIn);
+    expect(await screen.findByText("Nothing tracked yet.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Browse questions/ })).toHaveAttribute("href", "/dsa/questions");
+  });
 });
 
 describe("Catalogue size and provenance are reported honestly", () => {
