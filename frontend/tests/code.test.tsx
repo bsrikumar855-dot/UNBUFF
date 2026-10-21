@@ -352,7 +352,8 @@ describe("drafts", () => {
     mocked.getCodeSubmissions.mockResolvedValue({ submissions: [] });
     const { App } = await import("@/App");
     render(<App authClient={fakeAuth(user)} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Menu" }));
+    await screen.findByRole("link", { name: "Mentor" }); // the signed-in pills have replaced the public ones
+    fireEvent.click(await screen.findByRole("button", { name: "More" }));
     fireEvent.click(await screen.findByRole("button", { name: "Sign out" }));
     await waitFor(() => expect(loadDraft("u1", "q_fixture_06", "python")).toBeNull());
   });

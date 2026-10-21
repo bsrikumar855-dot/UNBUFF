@@ -21,10 +21,11 @@ vi.mock("@/api/endpoints", () => ({
 }));
 
 describe("the floating menu panel", () => {
-  it("opens from the Menu pill with the main places in large type, and closes with the Close pill", async () => {
+  it("opens from the More pill with the main places in large type, and closes with the Close pill", async () => {
     window.history.pushState({}, "", "/dsa");
     render(<App authClient={signedIn} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Menu" }));
+    await screen.findByRole("link", { name: "Mentor" }); // the signed-in pills have replaced the public ones
+    fireEvent.click(await screen.findByRole("button", { name: "More" }));
     const dialog = await screen.findByRole("dialog", { name: "Navigation" });
     for (const name of [
       "Placement plan",
@@ -50,7 +51,8 @@ describe("the floating menu panel", () => {
   it("closes when a link is chosen", async () => {
     window.history.pushState({}, "", "/dsa");
     render(<App authClient={signedIn} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Menu" }));
+    await screen.findByRole("link", { name: "Mentor" }); // the signed-in pills have replaced the public ones
+    fireEvent.click(await screen.findByRole("button", { name: "More" }));
     fireEvent.click(await screen.findByRole("link", { name: "DBMS" }));
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
@@ -65,11 +67,13 @@ describe("the same header for visitors who are not signed in", () => {
     },
   };
 
-  it("shows the Menu pill and the audit call to action, and the panel lists the public places", async () => {
+  it("shows the pill navigation and the audit call to action, and the panel lists the public places", async () => {
     window.history.pushState({}, "", "/");
     render(<App authClient={signedOut} />);
-    expect((await screen.findAllByRole("link", { name: "Audit My Readiness" })).length).toBeGreaterThan(0);
-    fireEvent.click(await screen.findByRole("button", { name: "Menu" }));
+    expect(
+      (await screen.findAllByRole("link", { name: "Audit My Readiness" })).length
+    ).toBeGreaterThan(0);
+    fireEvent.click(await screen.findByRole("button", { name: "More" }));
     const dialog = await screen.findByRole("dialog", { name: "Navigation" });
     for (const name of ["DSA Arena", "DSA patterns", "DBMS", "Roadmap", "Sign in"]) {
       expect(dialog).toContainElement(screen.getAllByRole("link", { name })[0]!);

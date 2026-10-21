@@ -34,3 +34,26 @@ if (typeof globalThis.ResizeObserver === "undefined") {
 // jsdom has no CSS.supports; the glass surface asks it whether the browser can do backdrop filters.
 if (typeof globalThis.CSS === "undefined") (globalThis as unknown as { CSS: object }).CSS = {};
 if (typeof globalThis.CSS.supports !== "function") globalThis.CSS.supports = () => false;
+
+// jsdom has no Web Animations API; the pill navigation (React Bits) animates with element.animate().
+if (typeof Element !== "undefined" && typeof Element.prototype.animate !== "function") {
+  Element.prototype.animate = function () {
+    const animation = {
+      finished: Promise.resolve(),
+      cancel() {},
+      finish() {},
+      play() {},
+      pause() {},
+      reverse() {},
+      commitStyles() {},
+      addEventListener() {},
+      removeEventListener() {},
+      onfinish: null,
+      oncancel: null,
+      playbackRate: 1,
+      currentTime: 0,
+    };
+    return animation as unknown as Animation;
+  };
+  Element.prototype.getAnimations = () => [];
+}
