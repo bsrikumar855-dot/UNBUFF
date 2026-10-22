@@ -4,6 +4,7 @@ import { useAuth } from "@/auth/context";
 import { validateAuthForm, type AuthMode as Mode } from "@/auth/validate";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { rememberThisDevice, setRememberThisDevice } from "@/lib/remember";
 import { routes } from "@/lib/routes";
 
 const TITLES: Record<Mode, string> = {
@@ -25,6 +26,7 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [remember, setRemember] = useState(rememberThisDevice);
 
   useEffect(() => {
     if (auth.sessionExpired) setNotice("Your session expired. Please sign in again.");
@@ -60,8 +62,9 @@ export const LoginPage: React.FC = () => {
     setNotice(null);
     try {
       const address = email.trim();
-      if (mode === "signin") await auth.signIn(address, password);
-      else if (mode === "register") await auth.signUp(address, password);
+      if (mode !== "reset") setRememberThisDevice(remember);
+      if (mode === "signin") await auth.signIn(address, password, remember);
+      else if (mode === "register") await auth.signUp(address, password, remember);
       else {
         await auth.sendPasswordReset(address);
         setNotice("If an account exists for that email, a reset link is on its way.");
@@ -150,6 +153,23 @@ export const LoginPage: React.FC = () => {
                 onChange={(e) => setConfirm(e.target.value)}
                 className="min-h-11 rounded-md border border-line-strong bg-surface px-3 py-2 font-normal"
               />
+            </label>
+          )}
+
+          {mode !== "reset" && (
+            <label className="flex items-start gap-2.5 text-sm text-ink-secondary">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                className="mt-0.5 size-4 accent-redline"
+              />
+              <span>
+                Keep me signed in on this device
+                <span className="block text-xs text-ink-muted">
+                  Turn this off on a shared or lab computer: closing the browser signs you out and clears your drafts.
+                </span>
+              </span>
             </label>
           )}
 

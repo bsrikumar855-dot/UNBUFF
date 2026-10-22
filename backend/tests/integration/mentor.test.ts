@@ -30,7 +30,7 @@ function setup(opts: { store?: MemoryMentorStore; llm?: RecordingLlm; chatPerMin
   const analytics = new AnalyticsService({ stats, revisions, submissions, progress, catalogue: () => catalogue, logger: silentLogger, now: () => clock });
   const sessions = new MemoryStore();
   const mentor = new MentorService({ store, llm, stats, revisions, analytics, progress, catalogue: () => catalogue, sessions, roles, logger: silentLogger, now: () => clock, retention: opts.retention });
-  const app = testApp({ autoAuth: false, mentor, analytics, catalogue, progressStore, submissionStore: submissions, statsStore: stats, revisionStore: revisions, llm, rateLimits: { globalPerMinute: 10_000, llmPerMinute: 10_000, mentorChatPerMinute: opts.chatPerMinute ?? 10_000 } });
+  const app = testApp({ autoAuth: false, mentor, analytics, catalogue, progressStore, submissionStore: submissions, statsStore: stats, revisionStore: revisions, llm, rateLimits: { globalPerMinute: 10_000, llmPerMinute: 10_000, llmUserPerMinute: 10_000, mentorChatPerMinute: opts.chatPerMinute ?? 10_000 } });
   const as = (uid: string) => ({ Authorization: bearer(uid) });
   let n = 0;
   const cid = () => `cm_${++n}_${randomUUID().slice(0, 8)}`;

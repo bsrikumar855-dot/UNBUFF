@@ -114,6 +114,22 @@ const EnvSchema = z
     MENTOR_TIMEOUT_MS: z.coerce.number().int().min(5_000).max(60_000).default(30_000),
     /** Retention: conversations are deleted this many days after their last message. */
     MENTOR_CONVERSATION_RETENTION_DAYS: z.coerce.number().int().min(7).max(365).default(90),
+    /** Language-model calls one student may cause per UTC day (cost and abuse control). */
+    LLM_DAILY_BUDGET: z.coerce.number().int().min(1).max(10_000).default(150),
+    /** Saved readiness audits per student; extraction is refused beyond this until some are deleted. */
+    MAX_SESSIONS_PER_STUDENT: z.coerce.number().int().min(1).max(1000).default(50),
+    /** Readiness audits (with their resume text) untouched for this many days are deleted automatically. */
+    SESSION_RETENTION_DAYS: z.coerce.number().int().min(30).max(1825).default(365),
+    /**
+     * Firebase App Check: off (default), monitor (verify and log, never refuse; use first in production) or enforce (refuse
+     * requests without a valid App Check token, except /api/health and GitHub's OAuth redirect).
+     */
+    APP_CHECK: z.enum(["off", "monitor", "enforce"]).default("off"),
+    /** Private routes (except the account ones) need a verified email address. */
+    REQUIRE_EMAIL_VERIFICATION: z
+      .enum(["true", "false", "1", "0"])
+      .default("true")
+      .transform((v) => v === "true" || v === "1"),
     MENTOR_SUMMARY_RETENTION_DAYS: z.coerce.number().int().min(30).max(730).default(365),
     MENTOR_LEARNING_RETENTION_DAYS: z.coerce.number().int().min(30).max(730).default(180),
     /**

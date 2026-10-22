@@ -34,4 +34,6 @@ export interface SessionStore {
   listByOwner(uid: string): Promise<Session[]>;
   /** Removes the session document entirely (resume text, answers, report data). No-op if absent. */
   delete(id: string): Promise<void>;
+  /** Deletes up to `limit` sessions not saved since `cutoff` (retention). Returns how many were deleted. */
+  deleteInactiveBefore(cutoff: Date, limit: number): Promise<number>;
 }

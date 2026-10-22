@@ -1,6 +1,8 @@
 import React, { useId, useState } from "react";
 import { KeyRound } from "lucide-react";
+import { api } from "@/api/endpoints";
 import { useAuth } from "@/auth/context";
+import { useSignOut } from "@/components/shell/useSignOut";
 import { MIN_PASSWORD } from "@/auth/validate";
 import { Button } from "@/components/ui/button";
 import { GlassCard, TILE } from "@/components/ui/GlassCard";
@@ -13,11 +15,13 @@ const LABEL = "mb-1.5 block text-sm font-medium text-ink-secondary";
 /** The sign-in email, changing the password (the current one is checked first) and a reset link by email. */
 export const SecurityPanel: React.FC = () => {
   const auth = useAuth();
+  const signOut = useSignOut();
   const email = auth.user?.email ?? null;
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [busy, setBusy] = useState<null | "change" | "reset">(null);
+  const [busy, setBusy] = useState<null | "change" | "reset" | "everywhere">(null);
+  const [confirmEverywhere, setConfirmEverywhere] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const ids = { current: useId(), next: useId(), confirm: useId() };
 
@@ -41,10 +45,23 @@ export const SecurityPanel: React.FC = () => {
       setCurrent("");
       setNext("");
       setConfirm("");
-      setMessage({ kind: "ok", text: "Your password is changed." });
+      setMessage({ kind: "ok", text: "Your password is changed. Any other device you were signed in on is signed out." });
     } catch (err) {
       setMessage({ kind: "error", text: getErrorMessage(err) });
     } finally {
+      setBusy(null);
+    }
+  };
+
+  /** Revokes every session on the server, then signs out here too (this device's token is revoked as well). */
+  const everywhere = async () => {
+    setBusy("everywhere");
+    setMessage(null);
+    try {
+      await api.signOutEverywhere();
+      await signOut();
+    } catch (err) {
+      setMessage({ kind: "error", text: getErrorMessage(err) });
       setBusy(null);
     }
   };
@@ -101,6 +118,26 @@ export const SecurityPanel: React.FC = () => {
           </Button>
         </div>
       </form>
+      <div className={cn(TILE, "mt-5 flex flex-wrap items-center justify-between gap-3 px-4 py-3.5")}>
+        <div className="text-sm">
+          <p className="font-medium text-ink-primary">Sign out of all devices</p>
+          <p className="text-ink-secondary">Use this if you signed in on a shared computer or think someone else has access. Includes this device.</p>
+        </div>
+        {confirmEverywhere ? (
+          <div className="flex gap-2">
+            <Button className="rounded-full" onClick={() => void everywhere()} disabled={busy !== null}>
+              {busy === "everywhere" ? "Signing out…" : "Sign out everywhere"}
+            </Button>
+            <Button variant="ghost" className="rounded-full" onClick={() => setConfirmEverywhere(false)} disabled={busy !== null}>
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <Button variant="outline" className="rounded-full bg-white/70" onClick={() => setConfirmEverywhere(true)}>
+            Sign out of all devices…
+          </Button>
+        )}
+      </div>
       {message && (
         <p
           role={message.kind === "error" ? "alert" : "status"}
