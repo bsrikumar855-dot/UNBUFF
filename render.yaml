@@ -39,5 +39,22 @@ services:
         value: none # code Run/Submit reports "unavailable" until a verified Judge0 is configured
       - key: LOG_LEVEL
         value: info
+      - key: MENTOR_TEMPERATURE
+        value: "0.7" # conversational tone for the AI mentor (grading and summaries use fixed low temperatures)
+      - key: LATEX_COMPILER
+        value: none # the Docker LaTeX compiler is development-only and refused in production; the PDF preview reports "unavailable"
+      - key: LEETCODE_PUBLIC_LOOKUP
+        value: "false" # LeetCode is never contacted unless an operator turns this on
+      # GitHub insights are off unless ALL FOUR of these are set (see backend/.env.example). Enter them in the dashboard only.
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_REDIRECT_URI
+        sync: false # https://<this service>/api/github/oauth/callback, exactly as registered on the GitHub OAuth app
+      - key: GITHUB_FRONTEND_URL
+        sync: false # the deployed frontend origin the callback sends the student back to
+      - key: GITHUB_TOKEN_ENCRYPTION_KEY
+        sync: false # 32 random bytes, base64; encrypts stored GitHub tokens. Generate: openssl rand -base64 32
       - key: GEMINI_API_KEY
         sync: false # entered once in the Render dashboard; never stored in the repo

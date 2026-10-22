@@ -108,8 +108,10 @@ export function createApp(deps: AppDeps): Express {
   api.use(learnPublicRouter(deps.learn)); // patterns and DBMS topics: static content, no student data
   const githubLimiters = createGithubLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS);
   api.use(githubCallbackRouter(deps.github, githubLimiters.callback)); // GitHub's redirect carries no bearer token; identified by one-time state
-  // Everything below is private student data: a verified Firebase ID token is required.
-  api.use(["/claims", "/interrogate", "/fix-task", "/report", "/sessions", "/me", "/code/run", "/code/submit", "/code/submissions", "/mentor", "/github", "/placement", "/career", "/leetcode", "/resume", "/learn/progress", "/learn/patterns/:id/progress", "/learn/dbms/:id/quiz"], requireAuth(deps.verifier));
+  // Everything below is private student data, so it is private by default: a verified Firebase ID token is required for
+  // any request that no public router above answered. A route added later is therefore protected unless someone
+  // deliberately mounts it above this line (and the route audit test lists it as public).
+  api.use(requireAuth(deps.verifier));
   api.use(sessionsRouter(deps.service));
   api.use(dsaProgressRouter(deps.dsaProgress));
   api.use(analyticsRouter(deps.analytics));
