@@ -582,3 +582,24 @@ describe("GitHub insights page", () => {
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
   });
 });
+
+describe("a sync that is already running when the page opens", () => {
+  it("keeps checking, then reloads the sections when it finishes", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const running = conn({ sync_in_progress: true, last_synced_at: null, freshness: "never_synced" });
+      mocked.getGithubConnection.mockResolvedValueOnce(running).mockResolvedValueOnce(running).mockResolvedValue(conn());
+      mocked.getGithubContributions.mockResolvedValue({ available: false } as never);
+      mocked.getGithubRepositories.mockResolvedValue({ available: false } as never);
+      mocked.getGithubActivity.mockResolvedValue({ available: false } as never);
+      renderAt("/github");
+      expect(await screen.findByText(/synchronisation running/)).toBeInTheDocument();
+      const before = mocked.getGithubContributions.mock.calls.length;
+      await vi.advanceTimersByTimeAsync(3500);
+      await waitFor(() => expect(screen.queryByText(/synchronisation running/)).not.toBeInTheDocument());
+      await waitFor(() => expect(mocked.getGithubContributions.mock.calls.length).toBeGreaterThan(before));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
