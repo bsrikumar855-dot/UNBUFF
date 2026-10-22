@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { AppRoutes } from "@/App";
 import { AuthProvider } from "@/auth/AuthContext";
@@ -130,6 +130,21 @@ describe("learn: patterns", () => {
     fireEvent.click(buttons[0]!);
     await waitFor(() => expect(mocked.setPatternProgress).toHaveBeenCalledWith(pattern.id, { problems: [{ key: "maximum-average-subarray-i", done: true }] }));
     expect(await screen.findByText("Marked solved")).toBeInTheDocument();
+  });
+
+  it("keeps a mark saved even when the first progress load finishes after it", async () => {
+    let finishLoad: (r: LearnProgressResponse) => void = () => undefined;
+    mocked.getLearnProgress.mockReturnValue(new Promise((resolve) => (finishLoad = resolve)));
+    mocked.getLearnPattern.mockResolvedValue(pattern);
+    mocked.setPatternProgress.mockResolvedValue(
+      progress({ progress: { patterns: { [pattern.id]: { done: false, problems_done: ["maximum-average-subarray-i"] } }, dbms: {}, updated_at: "now" } })
+    );
+    renderAt("/learn/patterns/sliding-window-fixed");
+    fireEvent.click((await screen.findAllByRole("button", { name: "Mark solved" }))[0]!);
+    expect(await screen.findByText("Marked solved")).toBeInTheDocument();
+    // the older, empty answer arrives last and must not wipe the mark
+    await act(async () => finishLoad(progress()));
+    expect(screen.getByText("Marked solved")).toBeInTheDocument();
   });
 
   it("shows an error with a retry when the pattern cannot be loaded", async () => {
