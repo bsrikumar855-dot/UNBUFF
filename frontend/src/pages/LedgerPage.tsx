@@ -1,18 +1,72 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowRight, EyeOff } from "lucide-react";
 import type { ClaimInput, RoleSkill } from "@/types/contract";
 import { api } from "@/api/endpoints";
 import { useSessionState } from "@/state/useSession";
+import { useHydrateSession } from "@/state/useHydrateSession";
 import { ClaimRow } from "@/components/ledger/ClaimRow";
 import { FlowShell } from "@/components/common/FlowShell";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { buttonClasses } from "@/lib/buttonClasses";
 import { routes } from "@/lib/routes";
 
-/** Claim Ledger: the student edits/deletes extracted claims, then confirms the full list. */
+const TITLE = (
+  <>
+    Claim <em>ledger</em>
+  </>
+);
+
+/**
+ * Claim Ledger: the student edits/deletes extracted claims, then confirms the full list. The session comes from the
+ * address (/ledger/:sessionId) so a reload or a link from My sessions picks up where the student left off.
+ */
 export const LedgerPage: React.FC = () => {
+  const params = useParams<{ sessionId?: string }>();
+  const { state } = useSessionState();
+  const sessionId = params.sessionId ?? state.sessionId;
+  const { ready, error } = useHydrateSession(sessionId);
+
+  if (!sessionId) {
+    return (
+      <FlowShell current={2} eyebrow="Evidence" title={TITLE}>
+        <p className="mb-4 text-ink-secondary">
+          No session open. Start by adding your resume, or pick up a session you already started.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Link to={routes.setup} className={buttonClasses("primary", "md", "rounded-full")}>
+            Go to setup
+          </Link>
+          <Link to={routes.sessions} className={buttonClasses("secondary", "md", "rounded-full bg-white/70")}>
+            My sessions
+          </Link>
+        </div>
+      </FlowShell>
+    );
+  }
+  if (!ready) {
+    return (
+      <FlowShell current={2} eyebrow="Evidence" title={TITLE}>
+        {error !== null ? (
+          <>
+            <ErrorState error={error} className="mb-4" />
+            <Link to={routes.sessions} className={buttonClasses("secondary", "sm", "rounded-full")}>
+              My sessions
+            </Link>
+          </>
+        ) : (
+          <LoadingState message="Loading your claims…" />
+        )}
+      </FlowShell>
+    );
+  }
+  // Keyed so the editable rows start from this session's claims.
+  return <Ledger key={sessionId} sessionId={sessionId} />;
+};
+
+const Ledger: React.FC<{ sessionId: string }> = ({ sessionId }) => {
   const { state, dispatch } = useSessionState();
   const navigate = useNavigate();
   const [rows, setRows] = useState<ClaimInput[]>(() =>
@@ -35,27 +89,6 @@ export const LedgerPage: React.FC = () => {
       .catch(setError);
   }, [state.roleId]);
 
-  if (!state.sessionId) {
-    return (
-      <FlowShell
-        current={2}
-        eyebrow="Evidence"
-        title={
-          <>
-            Claim <em>ledger</em>
-          </>
-        }
-      >
-        <p className="mb-4 text-ink-secondary">
-          No session yet. Start by adding your resume.
-        </p>
-        <Link to={routes.setup} className={buttonClasses("primary", "md", "rounded-full")}>
-          Go to setup
-        </Link>
-      </FlowShell>
-    );
-  }
-  const sessionId = state.sessionId;
   const canStart =
     rows.length > 0 && rows.every((r) => r.text.trim().length > 0) && !busy;
 
@@ -84,11 +117,7 @@ export const LedgerPage: React.FC = () => {
     <FlowShell
       current={2}
       eyebrow="Evidence"
-      title={
-        <>
-          Claim <em>ledger</em>
-        </>
-      }
+      title={TITLE}
       description="Check what we extracted. Edit wording, fix the skill, or delete anything you don’t want probed."
     >
 

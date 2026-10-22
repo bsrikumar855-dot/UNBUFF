@@ -2,6 +2,7 @@ import React from "react";
 import { LogOut } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useAuth } from "@/auth/context";
+import { useAccountProfile } from "@/hooks/useAccountProfile";
 import { useSignOut } from "./useSignOut";
 
 /**
@@ -14,15 +15,17 @@ export const AccountMenu: React.FC<{ variant?: "full" | "compact" | "button" }> 
 }) => {
   const auth = useAuth();
   const signOut = useSignOut();
+  const { profile } = useAccountProfile();
   const email = auth.user?.email ?? "Signed in";
+  const name = profile?.display_name ?? null;
   const initial = (
     <span
       role="img"
-      aria-label={`Signed in as ${email}`}
+      aria-label={`Signed in as ${name ?? email}`}
       title={email}
       className="grid size-9 shrink-0 place-items-center rounded-sm bg-ink-primary font-mono text-xs font-medium uppercase text-surface-50"
     >
-      {email.slice(0, 1)}
+      {(name ?? email).slice(0, 1)}
     </span>
   );
   const button = (
@@ -55,9 +58,11 @@ export const AccountMenu: React.FC<{ variant?: "full" | "compact" | "button" }> 
       {initial}
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-ink-primary" title={email}>
-          {email}
+          {name ?? email}
         </p>
-        <p className="eyebrow">Student</p>
+        <p className="eyebrow truncate" title={name ? email : undefined}>
+          {name ? email : "Student"}
+        </p>
       </div>
       {button}
     </div>

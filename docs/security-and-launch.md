@@ -62,6 +62,34 @@ the repository history.
 - Real GitHub OAuth, Judge0 execution and the production Firebase project. See `production-readiness.md`.
 - The signed-in screens' look on a phone and on real GPUs (the landing hero uses WebGL; it falls back cleanly without it).
 
+## Addendum: continuity, account controls and a sign-out leak (22 October 2026, later)
+
+Found by using the app as two students in a browser against the Firebase **emulators** (Auth + Firestore, live Gemini),
+then fixed and covered by tests.
+
+| Finding | Effect | Fix |
+| --- | --- | --- |
+| The claim ledger kept its session only in memory (`/ledger`). | Reloading the ledger after extraction showed "No session yet"; the extracted claims could not be reached again. | The ledger lives at `/ledger/:sessionId`, and a new read-only `GET /api/sessions/:id` (no LLM call) rehydrates it. |
+| A reloaded workspace replaced the claim list with only the current claim (a stale closure in the turn handler), and rehydrated through the report, which can trigger LLM enrichment. | Claims vanished from the list; reloads could spend LLM calls. | Claims are merged in the reducer (`UPSERT_CLAIM`); the workspace rehydrates from `GET /api/sessions/:id` and resumes the open question first (free). |
+| My sessions only offered "Open report", even for an unfinished session. | No way to continue a session after closing the tab or on another device. | Each session now has a `stage` (`review` / `interrogate` / `complete`) and a matching action (Review claims / Continue interview / Open report). |
+| A long typed answer was lost on reload. | Lost work. | Unsent answers are kept as drafts under the signed-in uid, exactly like code drafts, and cleared on sign-out. |
+| Signing out on a private page sent the sign-in screen the student's last address. | The **next** person to sign in on that browser was taken to the previous student's page (e.g. their session id). No data was served (ownership checks held), but the address leaked. | A deliberate sign-out now goes home with no return address. Token-expiry sign-outs still return the same student to their page. |
+| "This session has expired" was shown for a deleted or another student's session. | Misleading. | Copy now says it could not be found and points to My sessions. |
+
+New account controls (Settings): **profile** (display name, college, graduation year, target role) via
+`GET/PUT /api/me/profile`; **change password** (current password re-checked by Firebase) and a reset email; **download
+my data** (`GET /api/me/export`, every domain as stored, never GitHub tokens); and **delete my account and all data**
+(`DELETE /api/me` with the typed phrase `DELETE MY DATA`). Deletion checks the password first, then removes data in every
+domain (each step attempted even if one fails, idempotent, so a retry finishes the job), then deletes the Firebase
+sign-in account. The cached profile is tagged with its uid and cleared on sign-out, so one student's name never shows for
+another. `tenantIsolation.test.ts` now also covers the profile, the export and `DELETE /api/me`.
+
+Verified in this pass: two-student isolation on every session route with real emulator tokens, persistence across a
+backend restart (Firestore emulator), a production-mode boot (all new routes 401 without a token; CORS limited to the
+configured origin; emulator hosts refused), `npm audit --omit=dev` 0 vulnerabilities for both apps, and the full emulator
+suite (44 tests). The new Firestore collection `unbluff_profiles` is read by document id only, so it needs no index, and
+`firestore.rules` already denies all browser access.
+
 ## Before you launch (operator)
 
 1. **Rotate exposed credentials.** The Firebase service-account key and the GitHub OAuth client secret were pasted into a

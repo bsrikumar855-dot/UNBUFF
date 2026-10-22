@@ -23,6 +23,8 @@ export interface Session {
   completions: number;
   /** Internal retest schedule (teach time + order) keyed by claim id. */
   schedule: ScheduleState;
+  /** When the student confirmed the claim ledger. Absent on sessions created before this field existed. */
+  confirmed_at?: string | null;
 }
 
 export interface SessionStore {

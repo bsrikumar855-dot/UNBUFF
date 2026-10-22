@@ -3,6 +3,8 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { MemoryRouter } from "react-router-dom";
 import { AppRoutes } from "@/App";
 import { AuthProvider } from "@/auth/AuthContext";
+import { InterrogationProvider } from "@/state/InterrogationContext";
+import { SessionProvider } from "@/state/SessionContext";
 import type { AuthClient, AuthUser } from "@/auth/types";
 import { api } from "@/api/endpoints";
 import { ApiError } from "@/api/types";
@@ -12,6 +14,8 @@ import type { LeetCodeConnection, LeetCodeImportPreview, LeetCodeInsightsRespons
 
 vi.mock("@/api/endpoints", () => ({
   api: {
+    getAccountProfile: vi.fn(),
+    getRoles: vi.fn(), // the Settings page also shows the profile panel, which these tests do not exercise
     getLeetCodeConnection: vi.fn(),
     linkLeetCode: vi.fn(),
     unlinkLeetCode: vi.fn(),
@@ -49,9 +53,13 @@ const fakeAuth = (u: AuthUser | null): AuthClient => ({
 const renderAt = (path: string) =>
   render(
     <AuthProvider client={fakeAuth(user)}>
-      <MemoryRouter initialEntries={[path]}>
-        <AppRoutes />
-      </MemoryRouter>
+      <SessionProvider>
+        <InterrogationProvider>
+          <MemoryRouter initialEntries={[path]}>
+            <AppRoutes />
+          </MemoryRouter>
+        </InterrogationProvider>
+      </SessionProvider>
     </AuthProvider>
   );
 
@@ -119,6 +127,8 @@ const preview = (over: Partial<LeetCodeImportPreview> = {}): LeetCodeImportPrevi
 
 beforeEach(() => {
   vi.resetAllMocks();
+  mocked.getAccountProfile.mockResolvedValue({ profile: { display_name: null, college: null, graduation_year: null, target_role_id: null, updated_at: null } });
+  mocked.getRoles.mockResolvedValue({ roles: [] });
   mocked.getLeetCodeConnection.mockResolvedValue({ connection: connection() });
   mocked.getLeetCodeLookup.mockResolvedValue({ available: false });
   mocked.getLeetCodeInsights.mockResolvedValue(insights({ connection: connection(), available: false, source: null, totals: null, difficulty: null, topics: null, contest: null, activity: null, history: [], trend: { available: false, reason: "Nothing has been imported yet.", from: null, to: null, solved_change: null, days: null } }));

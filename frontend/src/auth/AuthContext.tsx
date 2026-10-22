@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { setAuthHooks } from "@/api/client";
 import { firebaseAuthClient } from "./firebaseClient";
 import { AuthContext, type AuthContextValue } from "./context";
-import type { AuthClient, AuthStatus, AuthUser } from "./types";
+import { AuthError, type AuthClient, type AuthStatus, type AuthUser } from "./types";
+
+const UNSUPPORTED = new AuthError("This isn't available for this sign-in method.", "app/unsupported");
 
 export const AuthProvider: React.FC<{
   client?: AuthClient;
@@ -11,12 +13,14 @@ export const AuthProvider: React.FC<{
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [user, setUser] = useState<AuthUser | null>(null);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [signedOutOnPurpose, setSignedOutOnPurpose] = useState(false);
   const signedIn = useRef(false);
 
   useEffect(
     () =>
       client.onChange((u) => {
         signedIn.current = u !== null;
+        if (u) setSignedOutOnPurpose(false);
         setUser(u);
         setStatus(u ? "signedIn" : "signedOut");
       }),
@@ -43,13 +47,22 @@ export const AuthProvider: React.FC<{
       user,
       configured: client.configured,
       sessionExpired,
+      signedOutOnPurpose,
       signIn: (e, p) => client.signIn(e, p),
       signUp: (e, p) => client.signUp(e, p),
-      signOut: () => client.signOut(),
+      signOut: () => {
+        setSignedOutOnPurpose(true);
+        return client.signOut();
+      },
       sendPasswordReset: (e) => client.sendPasswordReset(e),
+      changePassword: (current, next) =>
+        client.changePassword ? client.changePassword(current, next) : Promise.reject(UNSUPPORTED),
+      verifyPassword: (password) =>
+        client.verifyPassword ? client.verifyPassword(password) : Promise.reject(UNSUPPORTED),
+      deleteAccount: () => (client.deleteAccount ? client.deleteAccount() : Promise.reject(UNSUPPORTED)),
       clearSessionExpired: () => setSessionExpired(false),
     }),
-    [client, status, user, sessionExpired]
+    [client, status, user, sessionExpired, signedOutOnPurpose]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

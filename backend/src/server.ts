@@ -2,6 +2,8 @@ import "dotenv/config";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { AccountService } from "./account/service.js";
+import { FirestoreAccountStore, MemoryAccountStore, type AccountStore } from "./account/store.js";
 import { createApp } from "./app.js";
 import { FirebaseTokenVerifier } from "./auth/verifier.js";
 import { EvidenceService } from "./placement/evidence.js";
@@ -52,8 +54,8 @@ function backendRoot(): string {
   return here.includes(`${join("dist", "src")}`) ? join(here, "..", "..") : join(here, "..");
 }
 
-function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore; github: GithubStore; placement: PlacementStore; career: CareerStore; leetcode: LeetCodeStore; resume: ResumeStore; learn: LearnStore } {
-  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore(), mentor: new MemoryMentorStore(), github: new MemoryGithubStore(), placement: new MemoryPlacementStore(), career: new MemoryCareerStore(), leetcode: new MemoryLeetCodeStore(), resume: new MemoryResumeStore(), learn: new MemoryLearnStore() };
+function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore; github: GithubStore; placement: PlacementStore; career: CareerStore; leetcode: LeetCodeStore; resume: ResumeStore; learn: LearnStore; account: AccountStore } {
+  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore(), mentor: new MemoryMentorStore(), github: new MemoryGithubStore(), placement: new MemoryPlacementStore(), career: new MemoryCareerStore(), leetcode: new MemoryLeetCodeStore(), resume: new MemoryResumeStore(), learn: new MemoryLearnStore(), account: new MemoryAccountStore() };
   const account = config.FIREBASE_SERVICE_ACCOUNT_JSON ? parseServiceAccount(config.FIREBASE_SERVICE_ACCOUNT_JSON) : null;
   const projectId = config.GOOGLE_CLOUD_PROJECT ?? account?.project_id ?? config.FIREBASE_PROJECT_ID;
   // Without a service-account secret, Application Default Credentials apply (Cloud Run identity, gcloud login, emulator).
@@ -62,7 +64,7 @@ function createStores(config: Config): { sessions: SessionStore; progress: Progr
     ignoreUndefinedProperties: true,
     ...(account ? { credentials: { client_email: account.client_email, private_key: account.private_key } } : {}),
   });
-  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db), mentor: new FirestoreMentorStore(undefined, db), github: new FirestoreGithubStore(db), placement: new FirestorePlacementStore(db), career: new FirestoreCareerStore(db), leetcode: new FirestoreLeetCodeStore(db), resume: new FirestoreResumeStore(db), learn: new FirestoreLearnStore(db) };
+  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db), mentor: new FirestoreMentorStore(undefined, db), github: new FirestoreGithubStore(db), placement: new FirestorePlacementStore(db), career: new FirestoreCareerStore(db), leetcode: new FirestoreLeetCodeStore(db), resume: new FirestoreResumeStore(db), learn: new FirestoreLearnStore(db), account: new FirestoreAccountStore(db) };
 }
 
 /**
@@ -220,6 +222,29 @@ function main(): void {
     logger.warn("ALLOW_EPHEMERAL_STORE is set: sessions are lost on restart/redeploy and are not shared between instances");
   }
   const service = new AssessmentService({ store: stores.sessions, llm, roles, logger });
+  const account = new AccountService({
+    profiles: stores.account,
+    roles,
+    sessions: stores.sessions,
+    progress: stores.progress,
+    submissions: stores.submissions,
+    stats: stores.stats,
+    revisions: stores.revisions,
+    mentorStore: stores.mentor,
+    mentor,
+    githubStore: stores.github,
+    github,
+    placementStore: stores.placement,
+    placement,
+    careerStore: stores.career,
+    career,
+    leetcodeStore: stores.leetcode,
+    leetcode,
+    resumeStore: stores.resume,
+    learnStore: stores.learn,
+    learn,
+    logger,
+  });
 
   const app = createApp({
     service,
@@ -236,6 +261,7 @@ function main(): void {
     leetcode,
     resume,
     learn,
+    account,
     llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
   const server = app.listen(config.PORT, "0.0.0.0", (err?: Error) => {
     if (err) {

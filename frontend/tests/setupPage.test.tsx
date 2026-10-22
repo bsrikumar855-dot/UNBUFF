@@ -43,7 +43,7 @@ function renderSetup() {
         <MemoryRouter initialEntries={["/setup"]}>
           <Routes>
             <Route path="/setup" element={<SetupPage />} />
-            <Route path="/ledger" element={<div>LEDGER_PLACEHOLDER</div>} />
+            <Route path="/ledger/:sessionId" element={<div>LEDGER_PLACEHOLDER</div>} />
           </Routes>
         </MemoryRouter>
       </InterrogationProvider>

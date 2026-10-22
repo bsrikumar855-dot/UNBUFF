@@ -133,7 +133,7 @@ describe("session history and deletion", () => {
     expect(res.body.sessions).toHaveLength(2);
     expect(res.body.sessions[0]).toMatchObject({ session_id: second.session_id, role_id: "frontend_developer", claims_done: 0 });
     expect(res.body.sessions[0].claims_total).toBe(second.claims.length);
-    expect(Object.keys(res.body.sessions[0]).sort()).toEqual(["claims_done", "claims_total", "created_at", "mode", "role_id", "session_id"]);
+    expect(Object.keys(res.body.sessions[0]).sort()).toEqual(["claims_done", "claims_total", "created_at", "mode", "role_id", "session_id", "stage"]);
   });
 
   it("delete removes the whole record (resume text, answers) and is owner-only", async () => {

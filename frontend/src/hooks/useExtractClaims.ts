@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/api/endpoints";
+import { routes } from "@/lib/routes";
 import { useSessionState } from "@/state/useSession";
 import type { ExtractRequest } from "@/types/contract";
 
@@ -33,7 +34,7 @@ export function useExtractClaims() {
             progress: res.progress,
           },
         });
-        navigate("/ledger");
+        navigate(routes.ledgerFor(res.session_id));
       } catch (err) {
         setError(err);
       } finally {

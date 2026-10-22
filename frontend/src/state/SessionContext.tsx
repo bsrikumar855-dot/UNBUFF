@@ -41,6 +41,11 @@ export type SessionAction =
       payload: Progress;
     }
   | {
+      /** One claim changed (a turn): replace it in place, or append it if this list hasn't seen it yet. */
+      type: "UPSERT_CLAIM";
+      payload: { claim: Claim; progress: Progress };
+    }
+  | {
       type: "CLEAR_SESSION";
     };
 
@@ -72,6 +77,15 @@ function sessionReducer(state: SessionState, action: SessionAction): SessionStat
         blindSpots: action.payload.blindSpots ?? state.blindSpots,
         progress: action.payload.progress ?? state.progress,
       };
+    case "UPSERT_CLAIM": {
+      const { claim } = action.payload;
+      const known = state.claims.some((c) => c.id === claim.id);
+      return {
+        ...state,
+        claims: known ? state.claims.map((c) => (c.id === claim.id ? claim : c)) : [...state.claims, claim],
+        progress: action.payload.progress,
+      };
+    }
     case "UPDATE_PROGRESS":
       return {
         ...state,

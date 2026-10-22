@@ -4,7 +4,7 @@ import { GlassCard, TILE } from "@/components/ui/GlassCard";
 import { Page, PageHeader } from "@/components/ui/Page";
 import { Link } from "react-router-dom";
 import { api } from "@/api/endpoints";
-import type { SessionSummary } from "@/types/contract";
+import type { SessionStage, SessionSummary } from "@/types/contract";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -12,7 +12,16 @@ import { buttonClasses } from "@/lib/buttonClasses";
 import { cn } from "@/lib/cn";
 import { routes } from "@/lib/routes";
 
-/** The signed-in student's past sessions, with owner-only deletion of resume-derived data. */
+const STAGE: Record<SessionStage, { label: string; action: string; to: (id: string) => string }> = {
+  review: { label: "Claims to review", action: "Review claims", to: routes.ledgerFor },
+  interrogate: { label: "In progress", action: "Continue interview", to: (id) => routes.workspace(id) },
+  complete: { label: "Complete", action: "Open report", to: routes.report },
+};
+
+const roleName = (id: string) => id.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const modeName = (mode: SessionSummary["mode"]) => (mode === "prepare" ? "Teach me" : "Interview defense");
+
+/** The signed-in student's past sessions: pick one up where it was left, open its report, or delete it. */
 const SessionsPage: React.FC = () => {
   const [sessions, setSessions] = useState<SessionSummary[] | null>(null);
   const [error, setError] = useState<unknown>(null);
@@ -88,20 +97,39 @@ const SessionsPage: React.FC = () => {
               >
                 <div className="text-sm">
                   <p className="font-medium text-ink-primary">
-                    {s.role_id.replace(/_/g, " ")} · {s.mode}
+                    {roleName(s.role_id)} · {modeName(s.mode)}
+                    <span className="ml-2 rounded-full bg-surface-100 px-2 py-0.5 text-xs font-normal text-ink-secondary">
+                      {STAGE[s.stage].label}
+                    </span>
                   </p>
                   <p className="text-ink-secondary">
                     {new Date(s.created_at).toLocaleString()} · {s.claims_done}/
                     {s.claims_total} claims checked
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Link
-                    to={routes.report(s.session_id)}
-                    className={buttonClasses("secondary", "sm", "rounded-full bg-white/70")}
+                    to={STAGE[s.stage].to(s.session_id)}
+                    className={buttonClasses("primary", "sm", "rounded-full")}
                   >
-                    Open report
+                    {STAGE[s.stage].action}
                   </Link>
+                  {s.stage !== "complete" && s.claims_done > 0 && (
+                    <Link
+                      to={routes.report(s.session_id)}
+                      className={buttonClasses("secondary", "sm", "rounded-full bg-white/70")}
+                    >
+                      Report so far
+                    </Link>
+                  )}
+                  {s.stage === "complete" && (
+                    <Link
+                      to={routes.workspace(s.session_id)}
+                      className={buttonClasses("secondary", "sm", "rounded-full bg-white/70")}
+                    >
+                      Workspace
+                    </Link>
+                  )}
                   {confirmId === s.session_id ? (
                     <>
                       <Button

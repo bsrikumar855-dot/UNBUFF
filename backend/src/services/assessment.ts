@@ -10,7 +10,9 @@ import type {
   Report,
   Role,
   RoleSkill,
+  SessionDetailResponse,
   SessionMode,
+  SessionStage,
   SessionSummary,
   SessionsResponse,
   TurnResponse,
@@ -199,6 +201,7 @@ export class AssessmentService {
       for (const id of Object.keys(session.schedule)) if (!kept.has(id)) delete session.schedule[id];
       session.history = session.history.filter((h) => kept.has(h.claim_id));
       session.claims = next;
+      session.confirmed_at ??= this.now().toISOString();
       refreshSchedule(session);
       return claimsResponse(session, role);
     });
@@ -439,8 +442,24 @@ export class AssessmentService {
         created_at: s.created_at,
         claims_total: s.claims.length,
         claims_done: s.claims.filter((c) => c.verdict !== "pending").length,
+        stage: sessionStage(s),
       }));
     return { sessions };
+  }
+
+  /** Read-only: the full claim list and where the student left off, so the ledger and workspace survive a reload. */
+  getSession(uid: string, sessionId: string): Promise<SessionDetailResponse> {
+    return this.serialize(sessionId, async () => {
+      const session = await this.deps.store.get(sessionId);
+      if (!session || session.owner_uid !== uid) throw sessionNotFound(sessionId);
+      const open = Object.keys(session.cursors).find((id) => session.claims.some((c) => c.id === id)) ?? null;
+      return {
+        ...claimsResponse(session, this.role(session.role_id)),
+        created_at: session.created_at,
+        stage: sessionStage(session),
+        open_claim_id: open,
+      };
+    });
   }
 
   /** Deletes an owned session document (resume text, answers, grades, report cache). Not-owned looks like not-found. */
@@ -595,6 +614,17 @@ function evidenceSummary(claim: Claim): string {
   const shown = claim.evidence.filter((e) => e.passed).map((e) => `L${e.level} ${e.criterion}: "${e.quote}"`);
   const passed = `Levels passed: ${claim.levels_passed} of 3.`;
   return shown.length > 0 ? `${passed} Demonstrated: ${shown.join("; ")}` : `${passed} Could not demonstrate any level.`;
+}
+
+/**
+ * review: claims extracted but not yet confirmed. interrogate: confirmed with a claim still pending or a question open.
+ * complete: every claim has a verdict. Sessions from before `confirmed_at` existed count as confirmed once any claim moved.
+ */
+function sessionStage(session: Session): SessionStage {
+  const started = Object.keys(session.cursors).length > 0 || session.claims.some((c) => c.verdict !== "pending");
+  if (!session.confirmed_at && !started) return "review";
+  const open = Object.keys(session.cursors).length > 0 || session.claims.some((c) => c.verdict === "pending");
+  return open || session.claims.length === 0 ? "interrogate" : "complete";
 }
 
 function claimsResponse(session: Session, role: Role): ClaimsResponse {
