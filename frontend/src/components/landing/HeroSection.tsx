@@ -6,6 +6,7 @@ import { Magnetic } from "@/components/motion/Magnetic";
 import { MaskedText } from "@/components/motion/MaskedText";
 import { EASE, canObserve } from "@/components/motion/ease";
 import { buttonClasses } from "@/lib/buttonClasses";
+import { SlatsBackdrop } from "./SlatsBackdrop";
 import { VerdictKey } from "./VerdictKey";
 
 /**
@@ -30,6 +31,7 @@ export const HeroSection: React.FC = () => {
       aria-labelledby="hero-title"
       className="relative isolate overflow-hidden border-b border-line"
     >
+      <SlatsBackdrop />
       {/* Liquid light behind the headline: the same red glass as the sidebar, drifting slowly. */}
       <span
         aria-hidden="true"
