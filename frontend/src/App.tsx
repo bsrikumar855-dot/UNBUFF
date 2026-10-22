@@ -70,6 +70,7 @@ export const AppRoutes: React.FC = () => (
       <Route element={<RequireAuth />}>
         <Route path="/setup" element={<SetupPage />} />
         <Route path="/ledger" element={<LedgerPage />} />
+        <Route path="/ledger/:sessionId" element={<LedgerPage />} />
         <Route path="/workspace/:sessionId" element={<WorkspacePage />} />
         <Route path="/report/:sessionId" element={<ReportPage />} />
         <Route path="/sessions" element={<SessionsPage />} />

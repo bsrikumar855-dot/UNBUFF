@@ -7,12 +7,18 @@ import { cn } from "@/lib/cn";
 import { Link, useSearchParams } from "react-router-dom";
 import { GithubConnectionPanel } from "@/components/github/GithubConnectionPanel";
 import { LeetCodeConnectionPanel } from "@/components/leetcode/LeetCodeConnectionPanel";
+import { DataPanel } from "@/components/settings/DataPanel";
+import { ProfilePanel } from "@/components/settings/ProfilePanel";
+import { SecurityPanel } from "@/components/settings/SecurityPanel";
 import { CALLBACK_REASON_COPY, isCallbackReason } from "@/lib/github";
 import { routes } from "@/lib/routes";
 
 type Returned = { kind: "connected" } | { kind: "error"; message: string } | null;
 
-/** Settings: connected accounts and a pointer to mentor memory. GitHub returns the browser here after authorising. */
+/**
+ * Settings: profile, sign-in and security, connected accounts, and the student's data (export, delete everything).
+ * GitHub returns the browser here after authorising.
+ */
 const SettingsPage: React.FC = () => {
   const [params, setParams] = useSearchParams();
   const [returned, setReturned] = useState<Returned>(null);
@@ -45,7 +51,7 @@ const SettingsPage: React.FC = () => {
             Your <em>settings</em>
           </>
         }
-        description="Connected accounts and the data UNBLUFF keeps about you."
+        description="Your profile, sign-in, connected accounts and the data UNBLUFF keeps about you."
       />
 
       {returned?.kind === "connected" && (
@@ -65,6 +71,12 @@ const SettingsPage: React.FC = () => {
         </p>
       )}
 
+      <div className="mb-5 grid grid-cols-[minmax(0,1fr)] items-start gap-5 xl:grid-cols-2">
+        <ProfilePanel />
+        <SecurityPanel />
+      </div>
+
+      <h2 className="eyebrow mb-3 mt-8">Connected accounts</h2>
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 xl:grid-cols-2">
         <GithubConnectionPanel autoSync={autoSync} />
         <LeetCodeConnectionPanel showInsightsLink />
@@ -83,6 +95,9 @@ const SettingsPage: React.FC = () => {
           AI mentor memory
         </Link>
       </p>
+
+      <h2 className="eyebrow mb-3 mt-8">Data and privacy</h2>
+      <DataPanel />
     </Page>
   );
 };

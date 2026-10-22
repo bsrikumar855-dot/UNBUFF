@@ -41,21 +41,13 @@ const WorkspacePage: React.FC = () => {
   const [fixTask, setFixTask] = useState<FixTask | null>(null);
   const started = useRef(false);
 
-  /** Keep the session's claim list and progress in sync with each response. */
+  /** Keep the session's claim list and progress in sync with each response (merged in the reducer, never from a stale copy). */
   const applyTurn = useCallback(
     (t: TurnResponse) => {
       setTurn(t);
-      dispatch({
-        type: "UPDATE_CLAIMS",
-        payload: {
-          claims: state.claims.length
-            ? state.claims.map((c) => (c.id === t.claim.id ? t.claim : c))
-            : [t.claim],
-          progress: t.progress,
-        },
-      });
+      dispatch({ type: "UPSERT_CLAIM", payload: { claim: t.claim, progress: t.progress } });
     },
-    [dispatch, state.claims]
+    [dispatch]
   );
 
   const call = useCallback(
@@ -86,7 +78,8 @@ const WorkspacePage: React.FC = () => {
     [call]
   );
 
-  // First visit / refresh: rehydrate from the report if needed, then start the right claim.
+  // First visit / refresh: rehydrate from the server if needed (read-only, no LLM call), then open the right claim. An
+  // open question is resumed first (free); otherwise the next claim the backend chose.
   useEffect(() => {
     if (started.current || !sessionId) return;
     started.current = true;
@@ -94,21 +87,24 @@ const WorkspacePage: React.FC = () => {
     const urlMode = search.get("mode") === "retest" ? "retest" : "assess";
     const go = async () => {
       let progress = state.sessionId === sessionId ? state.progress : null;
+      let openClaim: string | null = null;
       if (!progress || state.claims.length === 0) {
-        const report = await api.getReport(sessionId);
+        const detail = await api.getSession(sessionId);
         dispatch({
           type: "SET_SESSION",
           payload: {
             sessionId,
-            roleId: report.role.id,
-            mode: report.mode,
-            claims: report.claims,
-            progress: report.progress,
+            roleId: detail.role_id,
+            mode: detail.mode,
+            claims: detail.claims,
+            blindSpots: detail.blind_spots,
+            progress: detail.progress,
           },
         });
-        progress = report.progress;
+        progress = detail.progress;
+        openClaim = detail.open_claim_id;
       }
-      const claimId = urlClaim ?? progress.next_claim_id;
+      const claimId = urlClaim ?? openClaim ?? progress.next_claim_id;
       if (claimId)
         await startClaim(claimId, urlClaim ? urlMode : (progress.next_mode ?? "assess"));
     };

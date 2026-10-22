@@ -1,3 +1,4 @@
+import { AuthError } from "@/auth/types";
 import { ApiError } from "@/api/types";
 import type { ErrorCode } from "@/types/contract";
 
@@ -25,7 +26,7 @@ const ERROR_COPY: Record<ErrorCode, string> = {
   COMPANY_NOT_FOUND: "We couldn't find that company.",
   QUESTION_NOT_FOUND: "We couldn't find that question. It may have been removed from the catalogue.",
   ROLE_NOT_FOUND: "We couldn't find that role. Pick another one.",
-  SESSION_NOT_FOUND: "This session has expired. Start over from Setup.",
+  SESSION_NOT_FOUND: "We couldn't find this session. It may have been deleted, or it belongs to a different account. Check My sessions or start a new audit.",
   CLAIM_NOT_FOUND: "That claim is no longer in this session.",
   CAREER_UNAVAILABLE: "The job source could not be reached or answered unexpectedly. Nothing was changed; try again in a moment.",
   CAREER_RATE_LIMITED: "The job source is receiving too many requests right now. Wait a little, then try again.",
@@ -54,6 +55,8 @@ export function getErrorMessage(error: unknown): string {
     if ((error.code === "BAD_REQUEST" || error.code === "LEETCODE_IMPORT_INVALID" || error.code === "LEETCODE_IMPORT_CONFLICT") && error.message) return error.message;
     return ERROR_COPY[error.code as ErrorCode] ?? error.message;
   }
+  // Auth errors carry copy written for students (see toAuthError), never the raw SDK message.
+  if (error instanceof AuthError) return error.message;
   if (error instanceof Error) {
     return "Something went wrong. Try again.";
   }

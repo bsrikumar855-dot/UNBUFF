@@ -23,6 +23,8 @@ export interface RateLimitOptions {
   resumeCompilePerMinute?: number;
   learnReadPerMinute?: number;
   learnWritePerMinute?: number;
+  accountWritePerMinute?: number;
+  accountBulkPerMinute?: number;
 }
 
 export const DEFAULT_RATE_LIMITS: RateLimitOptions = { globalPerMinute: 300, llmPerMinute: 40 };
@@ -86,6 +88,11 @@ export function createLearnLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS
 /** Résumé builder: saving and scoring are cheap, compiling runs TeX in a container so it is limited more tightly than saving. Per student; the page also builds automatically after edits. */
 export function createResumeLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
   return { read: userLimiter(opts.resumeReadPerMinute ?? 90), write: userLimiter(opts.resumeWritePerMinute ?? 40), compile: userLimiter(opts.resumeCompilePerMinute ?? 20) };
+}
+
+/** Account: profile saves are cheap; export and delete-everything read or touch every store, so they are limited tightly. Per student. */
+export function createAccountLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
+  return { write: userLimiter(opts.accountWritePerMinute ?? 30), bulk: userLimiter(opts.accountBulkPerMinute ?? 5) };
 }
 
 /** GitHub: connecting/disconnecting and manual syncs are per user; the OAuth callback (no token) is per IP. */

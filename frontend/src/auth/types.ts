@@ -19,6 +19,12 @@ export interface AuthClient {
   sendPasswordReset(email: string): Promise<void>;
   /** A fresh (auto-refreshed) ID token, or null when signed out. */
   getIdToken(): Promise<string | null>;
+  /** Re-checks the current password, then sets a new one. Optional so lightweight test fakes need not implement it. */
+  changePassword?(currentPassword: string, newPassword: string): Promise<void>;
+  /** Re-checks the password (a recent sign-in is required before deleting the account). */
+  verifyPassword?(password: string): Promise<void>;
+  /** Permanently deletes the sign-in account. Call verifyPassword first; the app deletes its own data in between. */
+  deleteAccount?(): Promise<void>;
 }
 
 export type AuthStatus = "loading" | "signedIn" | "signedOut";

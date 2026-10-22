@@ -2,6 +2,7 @@ import React, { useId, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { LogOut, Search } from "lucide-react";
 import { useAuth } from "@/auth/context";
+import { useAccountProfile } from "@/hooks/useAccountProfile";
 import { cn } from "@/lib/cn";
 import { routes } from "@/lib/routes";
 import { isPlainClick, useRouteNavigate } from "@/lib/viewTransition";
@@ -58,6 +59,7 @@ export const Sidebar: React.FC<{ onSearch: () => void }> = ({ onSearch }) => {
   const regionId = useId();
   const groups = navGroups(state.sessionId);
   const email = auth.user?.email ?? "Signed in";
+  const name = useAccountProfile().profile?.display_name ?? null;
 
   return (
     <aside
@@ -205,11 +207,11 @@ export const Sidebar: React.FC<{ onSearch: () => void }> = ({ onSearch }) => {
             <div className="flex items-center">
               <span
                 role="img"
-                aria-label={`Signed in as ${email}`}
+                aria-label={`Signed in as ${name ?? email}`}
                 title={email}
                 className="grid size-10 shrink-0 place-items-center rounded-full bg-white font-mono text-xs font-semibold uppercase text-redline shadow-[0_4px_10px_-6px_rgba(60,8,4,0.6)]"
               >
-                {email.slice(0, 1)}
+                {(name ?? email).slice(0, 1)}
               </span>
               <div className={cn(LABEL, "ml-2 flex items-center gap-1")}>
                 <div className="min-w-0 flex-1">
@@ -217,9 +219,11 @@ export const Sidebar: React.FC<{ onSearch: () => void }> = ({ onSearch }) => {
                     className="truncate text-sm font-medium text-[#3b0f0a]"
                     title={email}
                   >
-                    {email}
+                    {name ?? email}
                   </p>
-                  <p className="eyebrow text-[#3b0f0a]/65!">Student</p>
+                  <p className="eyebrow truncate text-[#3b0f0a]/65!" title={name ? email : undefined}>
+                    {name ? email : "Student"}
+                  </p>
                 </div>
                 <button
                   type="button"

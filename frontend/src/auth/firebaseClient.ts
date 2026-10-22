@@ -1,7 +1,11 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import {
+  EmailAuthProvider,
   connectAuthEmulator,
   createUserWithEmailAndPassword,
+  deleteUser,
+  reauthenticateWithCredential,
+  updatePassword,
   getAuth,
   onAuthStateChanged,
   sendPasswordResetEmail,
@@ -35,6 +39,7 @@ const FRIENDLY: Record<string, string> = {
   "auth/too-many-requests": "Too many attempts. Wait a few minutes and try again.",
   "auth/network-request-failed": "Network problem. Check your connection and try again.",
   "auth/operation-not-allowed": "Email/password sign-in isn't enabled for this project.",
+  "auth/requires-recent-login": "For your security, sign out and sign in again, then retry.",
 };
 
 /** Maps a Firebase error to copy that is safe to show (never the raw SDK message). */
@@ -117,6 +122,38 @@ export const firebaseAuthClient: AuthClient = {
       const mapped = toAuthError(err);
       if (mapped.code === "auth/user-not-found") return;
       throw mapped;
+    }
+  },
+
+  async changePassword(currentPassword, newPassword) {
+    const user = getFirebase()?.currentUser;
+    if (!user?.email) throw NOT_CONFIGURED;
+    try {
+      // Firebase requires a recent sign-in for sensitive changes; re-checking the password also proves it's the owner.
+      await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, currentPassword));
+      await updatePassword(user, newPassword);
+    } catch (err) {
+      throw toAuthError(err);
+    }
+  },
+
+  async verifyPassword(password) {
+    const user = getFirebase()?.currentUser;
+    if (!user?.email) throw NOT_CONFIGURED;
+    try {
+      await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+    } catch (err) {
+      throw toAuthError(err);
+    }
+  },
+
+  async deleteAccount() {
+    const user = getFirebase()?.currentUser;
+    if (!user) throw NOT_CONFIGURED;
+    try {
+      await deleteUser(user);
+    } catch (err) {
+      throw toAuthError(err);
     }
   },
 

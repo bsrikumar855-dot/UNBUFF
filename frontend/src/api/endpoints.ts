@@ -49,6 +49,11 @@ import type {
   FixTaskRequest,
   FixTaskResponse,
   SessionsResponse,
+  SessionDetailResponse,
+  AccountProfileResponse,
+  AccountProfileUpdate,
+  AccountExport,
+  AccountDeleteResponse,
   CompaniesResponse,
   CompanyDetailResponse,
   QuestionsResponse,
@@ -481,10 +486,32 @@ export const api = {
   },
 
   /**
+   * GET /api/sessions/:sessionId: the full claim list and where the student left off (read-only, no LLM call).
+   */
+  async getSession(sessionId: string): Promise<SessionDetailResponse> {
+    return apiClient<SessionDetailResponse>(`/sessions/${encodeURIComponent(sessionId)}`, { method: "GET" });
+  },
+
+  /**
    * DELETE /api/sessions/:sessionId: deletes an owned session and its resume-derived data.
    */
   async deleteSession(sessionId: string): Promise<void> {
     return apiClient<void>(`/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" });
+  },
+
+  /** Account: the student's own profile, a full JSON export, and deleting everything. */
+  async getAccountProfile(): Promise<AccountProfileResponse> {
+    return apiClient<AccountProfileResponse>("/me/profile", { method: "GET" });
+  },
+  async saveAccountProfile(profile: AccountProfileUpdate): Promise<AccountProfileResponse> {
+    return apiClient<AccountProfileResponse>("/me/profile", { method: "PUT", body: JSON.stringify(profile) });
+  },
+  async exportAccount(): Promise<AccountExport> {
+    return apiClient<AccountExport>("/me/export", { method: "GET", timeoutMs: 60_000 });
+  },
+  /** The phrase must be typed by the student; the server refuses anything else. */
+  async deleteAccountData(confirm: string): Promise<AccountDeleteResponse> {
+    return apiClient<AccountDeleteResponse>("/me", { method: "DELETE", body: JSON.stringify({ confirm }), timeoutMs: 60_000 });
   },
 
   /** Unified placement planner: everything is calculated by the backend from stored records. */

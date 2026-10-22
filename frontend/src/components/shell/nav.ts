@@ -153,7 +153,7 @@ export function navGroups(sessionId: string | null): NavGroup[] {
           ? [
               {
                 label: "Ledger",
-                to: routes.ledger,
+                to: routes.ledgerFor(sessionId),
                 icon: FileText,
                 hint: "Your confirmed claims",
                 match: is("/ledger"),

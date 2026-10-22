@@ -11,7 +11,7 @@ import { EvidenceService } from "../../src/placement/evidence.js";
 import { PlacementService } from "../../src/placement/service.js";
 import { MemoryPlacementStore, type PlacementStore } from "../../src/placement/store.js";
 import { GithubService } from "../../src/github/service.js";
-import { MemoryGithubStore } from "../../src/github/store.js";
+import { MemoryGithubStore, type GithubStore } from "../../src/github/store.js";
 import { MentorService } from "../../src/mentor/service.js";
 import { MemoryMentorStore, type MentorStore } from "../../src/mentor/store.js";
 import { AnalyticsService } from "../../src/analytics/service.js";
@@ -33,6 +33,8 @@ import { LearnService } from "../../src/learn/service.js";
 import { MemoryLearnStore, type LearnStore } from "../../src/learn/store.js";
 import { ResumeService } from "../../src/resume/service.js";
 import { MemoryResumeStore, type ResumeStore } from "../../src/resume/store.js";
+import { AccountService } from "../../src/account/service.js";
+import { MemoryAccountStore, type AccountStore } from "../../src/account/store.js";
 import { AssessmentService } from "../../src/services/assessment.js";
 import type { SessionStore } from "../../src/store/SessionStore.js";
 import { MemoryStore } from "../../src/store/memoryStore.js";
@@ -84,11 +86,19 @@ export const DEFAULT_TEST_UID = "student-a";
  * 401 behaviour. The wrapper only touches headers; the app under test is unchanged.
  */
 export function testApp(
-  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService; placement?: PlacementService; placementStore?: PlacementStore; career?: CareerService; careerStore?: CareerStore; leetcode?: LeetCodeService; leetcodeStore?: LeetCodeStore; resume?: ResumeService; resumeStore?: ResumeStore; learn?: LearnService; learnStore?: LearnStore; latex?: LatexCompiler; freehire?: Pick<FreehireClient, "search" | "getJob" | "facets">; execution?: { configured: boolean; verified: boolean }; llmMode?: "live" | "mock"; now?: () => Date } = {},
+  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService; placement?: PlacementService; placementStore?: PlacementStore; career?: CareerService; careerStore?: CareerStore; leetcode?: LeetCodeService; leetcodeStore?: LeetCodeStore; resume?: ResumeService; resumeStore?: ResumeStore; learn?: LearnService; learnStore?: LearnStore; latex?: LatexCompiler; accountStore?: AccountStore; githubStore?: GithubStore; freehire?: Pick<FreehireClient, "search" | "getJob" | "facets">; execution?: { configured: boolean; verified: boolean }; llmMode?: "live" | "mock"; now?: () => Date } = {},
 ): Express {
   const llm = opts.llm ?? new MockProvider();
   const catalogue = opts.catalogue ?? fixtureCatalogue();
-  const dsaProgress = new DsaProgressService(opts.progressStore ?? new MemoryProgressStore(), () => catalogue);
+  const progressStore = opts.progressStore ?? new MemoryProgressStore();
+  const dsaProgress = new DsaProgressService(progressStore, () => catalogue);
+  const githubStore = opts.githubStore ?? new MemoryGithubStore();
+  const mentorStore = opts.mentorStore ?? new MemoryMentorStore();
+  const placementStore = opts.placementStore ?? new MemoryPlacementStore();
+  const careerStore = opts.careerStore ?? new MemoryCareerStore();
+  const leetcodeStore = opts.leetcodeStore ?? new MemoryLeetCodeStore();
+  const resumeStore = opts.resumeStore ?? new MemoryResumeStore();
+  const learnStore = opts.learnStore ?? new MemoryLearnStore();
   const submissions = opts.submissionStore ?? new MemorySubmissionStore();
   const statsStore = opts.statsStore ?? new MemoryStatsStore();
   const revisionStore = opts.revisionStore ?? new MemoryRevisionStore();
@@ -106,12 +116,12 @@ export function testApp(
   // Default: GitHub is not configured (no OAuth app, no key), which is also how a fresh deployment starts.
   const github =
     opts.github ??
-    new GithubService({ store: new MemoryGithubStore(), gql: new GithubGraphQL(), oauth: null, vault: null, logger: silentLogger, frontendUrl: "http://localhost:5173" });
+    new GithubService({ store: githubStore, gql: new GithubGraphQL(), oauth: null, vault: null, logger: silentLogger, frontendUrl: "http://localhost:5173" });
   // LeetCode: only a saved username and numbers the student imports. It never contacts LeetCode.
   const leetcode =
     opts.leetcode ??
     new LeetCodeService({
-      store: opts.leetcodeStore ?? new MemoryLeetCodeStore(),
+      store: leetcodeStore,
       logger: silentLogger,
       judged: async (uid) => {
         const o = await analytics.overview(uid);
@@ -121,13 +131,13 @@ export function testApp(
     });
   const resume =
     opts.resume ??
-    new ResumeService({ store: opts.resumeStore ?? new MemoryResumeStore(), compiler: opts.latex ?? new UnavailableLatex(), role: (id) => roles.get(id) ?? null, logger: silentLogger, now: opts.now });
-  const learn = opts.learn ?? new LearnService({ store: opts.learnStore ?? new MemoryLearnStore(), now: opts.now });
+    new ResumeService({ store: resumeStore, compiler: opts.latex ?? new UnavailableLatex(), role: (id) => roles.get(id) ?? null, logger: silentLogger, now: opts.now });
+  const learn = opts.learn ?? new LearnService({ store: learnStore, now: opts.now });
   const careerHolder: { current?: CareerService } = {}; // the Career service needs the placement service, which needs the mentor
   const mentor =
     opts.mentor ??
     new MentorService({
-      store: opts.mentorStore ?? new MemoryMentorStore(),
+      store: mentorStore,
       llm,
       stats: statsStore,
       revisions: revisionStore,
@@ -145,7 +155,7 @@ export function testApp(
   const placement =
     opts.placement ??
     new PlacementService({
-      store: opts.placementStore ?? new MemoryPlacementStore(),
+      store: placementStore,
       evidence: new EvidenceService({
         analytics,
         sessions: sessionStore,
@@ -175,13 +185,37 @@ export function testApp(
     opts.career ??
     new CareerService({
       freehire: opts.freehire ?? { search: unreachable, getJob: unreachable, facets: unreachable },
-      store: opts.careerStore ?? new MemoryCareerStore(),
+      store: careerStore,
       placement,
       logger: silentLogger,
       now: opts.now,
     });
   careerHolder.current = career;
   const service = new AssessmentService({ store: sessionStore, llm, roles, logger: silentLogger });
+  const account = new AccountService({
+    profiles: opts.accountStore ?? new MemoryAccountStore(),
+    roles,
+    sessions: sessionStore,
+    progress: progressStore,
+    submissions,
+    stats: statsStore,
+    revisions: revisionStore,
+    mentorStore,
+    mentor,
+    githubStore,
+    github,
+    placementStore,
+    placement,
+    careerStore,
+    career,
+    leetcodeStore,
+    leetcode,
+    resumeStore,
+    learnStore,
+    learn,
+    logger: silentLogger,
+    now: opts.now,
+  });
   const app = createApp({
     service,
     roles,
@@ -205,6 +239,7 @@ export function testApp(
     leetcode,
     resume,
     learn,
+    account,
     llm,
     logger: silentLogger,
     demoReportJson,

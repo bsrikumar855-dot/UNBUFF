@@ -14,7 +14,8 @@ import type { Logger } from "./logger.js";
 import type { LLMProvider } from "./llm/provider.js";
 import { requireAuth } from "./middleware/auth.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
-import { createCareerLimiters, createCodeLimiters, createGithubLimiters, createLeetcodeLimiters, createLearnLimiters, createMentorLimiter, createResumeLimiters, createPlacementLimiters, createRateLimiters, DEFAULT_RATE_LIMITS, type RateLimitOptions } from "./middleware/rateLimit.js";
+import { createAccountLimiters, createCareerLimiters, createCodeLimiters, createGithubLimiters, createLeetcodeLimiters, createLearnLimiters, createMentorLimiter, createResumeLimiters, createPlacementLimiters, createRateLimiters, DEFAULT_RATE_LIMITS, type RateLimitOptions } from "./middleware/rateLimit.js";
+import { accountRouter } from "./routes/account.js";
 import { claimsRouter } from "./routes/claims.js";
 import { demoRouter } from "./routes/demo.js";
 import { fixTaskRouter } from "./routes/fixTask.js";
@@ -37,6 +38,7 @@ import { learnPrivateRouter, learnPublicRouter } from "./routes/learn.js";
 import type { LearnService } from "./learn/service.js";
 import type { ResumeService } from "./resume/service.js";
 import type { LeetCodeService } from "./leetcode/service.js";
+import type { AccountService } from "./account/service.js";
 import type { AssessmentService } from "./services/assessment.js";
 import type { RoleRegistry } from "./services/roles.js";
 
@@ -65,6 +67,8 @@ export interface AppDeps {
   resume: ResumeService;
   /** DSA patterns and DBMS topics: public content, and per-student progress. */
   learn: LearnService;
+  /** The student's profile, full data export and delete-everything. */
+  account: AccountService;
   llm: LLMProvider;
   logger: Logger;
   demoReportJson: string;
@@ -113,6 +117,7 @@ export function createApp(deps: AppDeps): Express {
   // deliberately mounts it above this line (and the route audit test lists it as public).
   api.use(requireAuth(deps.verifier));
   api.use(sessionsRouter(deps.service));
+  api.use(accountRouter(deps.account, createAccountLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS)));
   api.use(dsaProgressRouter(deps.dsaProgress));
   api.use(analyticsRouter(deps.analytics));
   api.use(githubRouter(deps.github, githubLimiters));

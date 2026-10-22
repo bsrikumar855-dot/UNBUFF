@@ -386,6 +386,9 @@ export interface FixTaskRequest {
 
 export type FixTaskResponse = FixTask;
 
+/** Where a session stands, so a student can pick it up again: reviewing extracted claims, mid-interview, or finished. */
+export type SessionStage = "review" | "interrogate" | "complete";
+
 export interface SessionSummary {
   session_id: string;
   role_id: string;
@@ -393,10 +396,49 @@ export interface SessionSummary {
   created_at: string;
   claims_total: number;
   claims_done: number; // claims whose verdict is not "pending"
+  stage: SessionStage;
 }
 
 export interface SessionsResponse {
   sessions: SessionSummary[]; // the caller's own sessions, newest first
+}
+
+/** GET /api/sessions/:id: everything the ledger and workspace need to resume after a reload or on another device. */
+export interface SessionDetailResponse extends ClaimsResponse {
+  created_at: string;
+  stage: SessionStage;
+  /** The claim with an open question, if any (resuming it costs no LLM call). */
+  open_claim_id: string | null;
+}
+
+// ---------- Account ----------
+export interface AccountProfile {
+  display_name: string | null;
+  college: string | null;
+  graduation_year: number | null;
+  target_role_id: string | null;
+  updated_at: string | null;
+}
+
+export interface AccountProfileResponse {
+  profile: AccountProfile;
+}
+
+export type AccountProfileUpdate = Omit<AccountProfile, "updated_at">;
+
+/** GET /api/me/export: every record UNBLUFF keeps for the caller, as stored. Secrets (e.g. GitHub tokens) are never included. */
+export interface AccountExport {
+  format: "unbluff-export/1";
+  exported_at: string;
+  uid: string;
+  profile: AccountProfile;
+  data: Record<string, unknown>;
+}
+
+/** DELETE /api/me: the caller's data in every domain is gone. Counts are per domain (records, or 1 for a single document). */
+export interface AccountDeleteResponse {
+  deleted: true;
+  removed: Record<string, number>;
 }
 
 // ---------- Company-wise DSA Arena ----------
@@ -1700,8 +1742,13 @@ export interface LeetCodeInsightsResponse {
 | POST | `/api/fix-task` | `FixTaskRequest` | `FixTaskResponse` |
 | GET | `/api/report/:sessionId` | — | `Report` |
 | GET | `/api/demo/report` | — | `Report` (the §7 mock, verbatim) |
-| GET | `/api/sessions` | — | `SessionsResponse` (caller's own sessions, newest first) |
+| GET | `/api/sessions` | — | `SessionsResponse` (caller's own sessions, newest first, each with its `stage`) |
+| GET | `/api/sessions/:sessionId` | — | `SessionDetailResponse` (owned sessions only; read-only, no LLM call; lets the ledger and workspace resume after a reload) |
 | DELETE | `/api/sessions/:sessionId` | — | `204 No Content` (owned sessions only; removes resume text, answers and report data) |
+| GET | `/api/me/profile` | — | `AccountProfileResponse` (all fields `null` until saved) |
+| PUT | `/api/me/profile` | `AccountProfileUpdate` | `AccountProfileResponse` (strict; `target_role_id` must exist) |
+| GET | `/api/me/export` | — | `AccountExport` (downloaded as a JSON attachment; never includes GitHub tokens) |
+| DELETE | `/api/me` | `{ "confirm": "DELETE MY DATA" }` | `AccountDeleteResponse` (every domain; idempotent; 400 without the exact phrase). The browser then deletes the Firebase sign-in account. |
 
 Public (no token): `/api/health`, `/api/roles`, `/api/roles/:roleId`, `/api/demo/report`, and the read-only DSA catalogue (`/api/companies*`, `/api/questions*`). Everything else needs a bearer token.
 

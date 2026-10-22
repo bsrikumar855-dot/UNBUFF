@@ -54,6 +54,7 @@ async function seedAlice(app: ReturnType<typeof testApp>) {
   ok(await request(app).put("/api/resume").set(alice).send({ latex: `\\documentclass{article}\\begin{document}${CANARY}-resume\\end{document}` }), "resume");
   ok(await request(app).put("/api/learn/patterns/two-pointers-opposite/progress").set(alice).send({ done: true }), "learn progress");
   ok(await request(app).post("/api/learn/dbms/joins/quiz").set(alice).send({ answers: [0, 0, 0, 0] }), "dbms quiz");
+  ok(await request(app).put("/api/me/profile").set(alice).send({ display_name: `${CANARY}-name`, college: `${CANARY}-college`, graduation_year: 2026, target_role_id: "frontend_developer" }), "account profile");
   return ids;
 }
 
@@ -78,6 +79,8 @@ const READ_ROUTES = [
   "/api/leetcode/import-history",
   "/api/resume",
   "/api/learn/progress",
+  "/api/me/profile",
+  "/api/me/export",
 ];
 
 describe("tenant isolation", () => {
@@ -102,6 +105,7 @@ describe("tenant isolation", () => {
     const notFound = [404, 403];
     const attempts: [string, request.Test][] = [
       ["report", request(app).get(`/api/report/${ids.session}`).set(bob)],
+      ["resume session", request(app).get(`/api/sessions/${ids.session}`).set(bob)],
       ["delete session", request(app).delete(`/api/sessions/${ids.session}`).set(bob)],
       ["get conversation", request(app).get(`/api/mentor/conversations/${ids.conversation}`).set(bob)],
       ["summarise conversation", request(app).post(`/api/mentor/conversations/${ids.conversation}/summary`).set(bob).send({})],
@@ -135,12 +139,13 @@ describe("tenant isolation", () => {
       ["delete", "/api/resume"],
       ["delete", "/api/mentor/memories"],
       ["delete", "/api/github/connection"],
+      ["delete", "/api/me"],
     ] as const) {
-      const res = await request(app)[method](path).set(bob);
+      const res = await request(app)[method](path).set(bob).send(path === "/api/me" ? { confirm: "DELETE MY DATA" } : {});
       expect(res.status, `${method} ${path}`).toBeLessThan(500);
     }
     const after = await Promise.all(READ_ROUTES.map(async (p) => JSON.stringify((await request(app).get(p).set(alice)).body)));
-    for (const canary of [`${CANARY}-note`, `${CANARY}-topic`, `${CANARY}-city`, `${CANARY}-resume`, `${CANARY}-goal`, "CanaryAlice77"]) {
+    for (const canary of [`${CANARY}-note`, `${CANARY}-topic`, `${CANARY}-city`, `${CANARY}-resume`, `${CANARY}-goal`, `${CANARY}-college`, "CanaryAlice77"]) {
       expect(after.some((b) => b.includes(canary)), canary).toBe(true);
     }
   });

@@ -7,6 +7,8 @@ export const routes = {
   home: "/",
   setup: "/setup",
   ledger: "/ledger",
+  /** The ledger for one session: survives a reload because the id is in the address. */
+  ledgerFor: (sessionId: string) => `/ledger/${encodeURIComponent(sessionId)}`,
   login: "/login",
   sessions: "/sessions",
   dsa: "/dsa",
