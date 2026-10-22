@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { AccountService } from "../account/service.js";
 import { ApiError } from "../errors.js";
 import { uidOf } from "../middleware/auth.js";
+import type { LlmBudget } from "../security/budget.js";
 
 const noStore = { "Cache-Control": "no-store" };
 
@@ -10,9 +11,17 @@ const noStore = { "Cache-Control": "no-store" };
 export const DELETE_CONFIRMATION = "DELETE MY DATA";
 const DeleteBody = z.strictObject({ confirm: z.literal(DELETE_CONFIRMATION) });
 
-/** The caller's profile, data export and delete-everything. Every route needs a verified student; the owner is the token's uid. */
-export function accountRouter(account: AccountService, limiters: { write: RequestHandler; bulk: RequestHandler }): Router {
+/** The caller's profile, AI usage, signing out everywhere, data export and delete-everything. Every route needs a verified student; the owner is the token's uid. */
+export function accountRouter(account: AccountService, limiters: { write: RequestHandler; bulk: RequestHandler }, budget: LlmBudget): Router {
   const router = Router();
+  router.get("/me/usage", async (_req, res) => {
+    res.set(noStore).json(await budget.status(uidOf(res)));
+  });
+  /** Ends every session of this student on every device (this one included): their tokens stop working within a minute. */
+  router.post("/me/sign-out-everywhere", limiters.bulk, async (_req, res) => {
+    await account.revokeSessions(uidOf(res));
+    res.status(204).end();
+  });
   router.get("/me/profile", async (_req, res) => {
     res.set(noStore).json(await account.getProfile(uidOf(res)));
   });

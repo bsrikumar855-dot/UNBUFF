@@ -48,8 +48,11 @@ export const AuthProvider: React.FC<{
       configured: client.configured,
       sessionExpired,
       signedOutOnPurpose,
-      signIn: (e, p) => client.signIn(e, p),
-      signUp: (e, p) => client.signUp(e, p),
+      signIn: (e, p, remember) => client.signIn(e, p, remember),
+      signUp: (e, p, remember) => client.signUp(e, p, remember),
+      sendVerificationEmail: () =>
+        client.sendVerificationEmail ? client.sendVerificationEmail() : Promise.reject(UNSUPPORTED),
+      refreshUser: () => (client.refreshUser ? client.refreshUser() : Promise.resolve()),
       signOut: () => {
         setSignedOutOnPurpose(true);
         return client.signOut();

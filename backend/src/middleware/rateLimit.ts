@@ -25,6 +25,8 @@ export interface RateLimitOptions {
   learnWritePerMinute?: number;
   accountWritePerMinute?: number;
   accountBulkPerMinute?: number;
+  /** Model-backed requests per signed-in student (in addition to llmPerMinute per IP). */
+  llmUserPerMinute?: number;
 }
 
 export const DEFAULT_RATE_LIMITS: RateLimitOptions = { globalPerMinute: 300, llmPerMinute: 40 };
@@ -100,7 +102,7 @@ export function createGithubLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMIT
   return { connect: userLimiter(opts.githubConnectPerMinute ?? 10), sync: userLimiter(opts.githubSyncPerMinute ?? 6), callback: limiter(30) };
 }
 
-/** Global limiter for all routes, plus a tighter one for routes that call the LLM (cost control). */
+/** Global limiter for all routes, plus tighter ones for routes that call the LLM (cost control): per IP, and per student (mount `llmUser` after requireAuth). */
 export function createRateLimiters(opts: RateLimitOptions = DEFAULT_RATE_LIMITS) {
-  return { global: limiter(opts.globalPerMinute), llm: limiter(opts.llmPerMinute) };
+  return { global: limiter(opts.globalPerMinute), llm: limiter(opts.llmPerMinute), llmUser: userLimiter(opts.llmUserPerMinute ?? 20) };
 }

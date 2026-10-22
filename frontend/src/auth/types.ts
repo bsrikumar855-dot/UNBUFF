@@ -1,6 +1,8 @@
 export interface AuthUser {
   uid: string;
   email: string | null;
+  /** False until the student follows the link in the verification email. Absent means "not reported" (treated as verified). */
+  emailVerified?: boolean;
 }
 
 /**
@@ -13,14 +15,19 @@ export interface AuthClient {
   readonly configured: boolean;
   /** Calls back with the persisted user (or null) once known, then on every change. Returns an unsubscribe. */
   onChange(callback: (user: AuthUser | null) => void): () => void;
-  signIn(email: string, password: string): Promise<void>;
-  signUp(email: string, password: string): Promise<void>;
+  /** `remember` false keeps the sign-in for this tab only (shared computers). */
+  signIn(email: string, password: string, remember?: boolean): Promise<void>;
+  /** Also sends the verification email. */
+  signUp(email: string, password: string, remember?: boolean): Promise<void>;
   signOut(): Promise<void>;
   sendPasswordReset(email: string): Promise<void>;
   /** A fresh (auto-refreshed) ID token, or null when signed out. */
   getIdToken(): Promise<string | null>;
   /** Re-checks the current password, then sets a new one. Optional so lightweight test fakes need not implement it. */
   changePassword?(currentPassword: string, newPassword: string): Promise<void>;
+  sendVerificationEmail?(): Promise<void>;
+  /** Re-reads the account (e.g. after the email link was followed) and refreshes the ID token. */
+  refreshUser?(): Promise<void>;
   /** Re-checks the password (a recent sign-in is required before deleting the account). */
   verifyPassword?(password: string): Promise<void>;
   /** Permanently deletes the sign-in account. Call verifyPassword first; the app deletes its own data in between. */

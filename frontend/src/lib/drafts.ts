@@ -2,7 +2,11 @@
  * Code drafts live only in this browser, under a key that includes the signed-in uid, so one account never
  * loads another account's code. Everything is wrapped in try/catch: storage can be missing or blocked.
  */
+import { rememberThisDevice } from "./remember";
+
 const PREFIX = "unbluff:draft:";
+/** Session storage on a device the student chose not to be remembered on, so closing the browser drops the drafts. */
+const store = (): Storage => (rememberThisDevice() ? window.localStorage : window.sessionStorage);
 const key = (uid: string, questionId: string, language: string) =>
   `${PREFIX}${uid}:${questionId}:${language}`;
 
@@ -12,7 +16,7 @@ export function loadDraft(
   language: string
 ): string | null {
   try {
-    return window.localStorage.getItem(key(uid, questionId, language));
+    return store().getItem(key(uid, questionId, language));
   } catch {
     return null;
   }
@@ -25,7 +29,7 @@ export function saveDraft(
   source: string
 ): void {
   try {
-    window.localStorage.setItem(key(uid, questionId, language), source);
+    store().setItem(key(uid, questionId, language), source);
   } catch {
     // storage full or blocked: the draft just isn't kept
   }
@@ -33,23 +37,26 @@ export function saveDraft(
 
 export function removeDraft(uid: string, questionId: string, language: string): void {
   try {
-    window.localStorage.removeItem(key(uid, questionId, language));
+    store().removeItem(key(uid, questionId, language));
   } catch {
     // ignore
   }
 }
 
-/** Removes every draft saved for this account on this browser (called on sign-out). */
+/** Removes every draft saved for this account on this browser, in either storage area (called on sign-out). */
 export function clearDrafts(uid: string): void {
-  try {
-    const mine = `${PREFIX}${uid}:`;
-    const doomed: string[] = [];
-    for (let i = 0; i < window.localStorage.length; i++) {
-      const k = window.localStorage.key(i);
-      if (k && k.startsWith(mine)) doomed.push(k);
+  for (const area of ["localStorage", "sessionStorage"] as const) {
+    try {
+      const storage = window[area];
+      const mine = `${PREFIX}${uid}:`;
+      const doomed: string[] = [];
+      for (let i = 0; i < storage.length; i++) {
+        const k = storage.key(i);
+        if (k && k.startsWith(mine)) doomed.push(k);
+      }
+      doomed.forEach((k) => storage.removeItem(k));
+    } catch {
+      // ignore
     }
-    doomed.forEach((k) => window.localStorage.removeItem(k));
-  } catch {
-    // ignore
   }
 }

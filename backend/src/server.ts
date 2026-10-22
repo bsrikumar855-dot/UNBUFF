@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { AccountService } from "./account/service.js";
+import { budgetedProvider, LlmBudget } from "./security/budget.js";
+import { RevocationGuard } from "./security/revocation.js";
+import { FirestoreUsageStore, MemoryUsageStore, type UsageStore } from "./security/usageStore.js";
+import { sweepInactiveSessions } from "./services/retention.js";
 import { FirestoreAccountStore, MemoryAccountStore, type AccountStore } from "./account/store.js";
 import { createApp } from "./app.js";
 import { FirebaseTokenVerifier } from "./auth/verifier.js";
@@ -54,8 +58,8 @@ function backendRoot(): string {
   return here.includes(`${join("dist", "src")}`) ? join(here, "..", "..") : join(here, "..");
 }
 
-function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore; github: GithubStore; placement: PlacementStore; career: CareerStore; leetcode: LeetCodeStore; resume: ResumeStore; learn: LearnStore; account: AccountStore } {
-  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore(), mentor: new MemoryMentorStore(), github: new MemoryGithubStore(), placement: new MemoryPlacementStore(), career: new MemoryCareerStore(), leetcode: new MemoryLeetCodeStore(), resume: new MemoryResumeStore(), learn: new MemoryLearnStore(), account: new MemoryAccountStore() };
+function createStores(config: Config): { sessions: SessionStore; progress: ProgressStore; submissions: SubmissionStore; stats: StatsStore; revisions: RevisionStore; mentor: MentorStore; github: GithubStore; placement: PlacementStore; career: CareerStore; leetcode: LeetCodeStore; resume: ResumeStore; learn: LearnStore; account: AccountStore; usage: UsageStore } {
+  if (config.STORE !== "firestore") return { sessions: new MemoryStore(), progress: new MemoryProgressStore(), submissions: new MemorySubmissionStore(), stats: new MemoryStatsStore(), revisions: new MemoryRevisionStore(), mentor: new MemoryMentorStore(), github: new MemoryGithubStore(), placement: new MemoryPlacementStore(), career: new MemoryCareerStore(), leetcode: new MemoryLeetCodeStore(), resume: new MemoryResumeStore(), learn: new MemoryLearnStore(), account: new MemoryAccountStore(), usage: new MemoryUsageStore() };
   const account = config.FIREBASE_SERVICE_ACCOUNT_JSON ? parseServiceAccount(config.FIREBASE_SERVICE_ACCOUNT_JSON) : null;
   const projectId = config.GOOGLE_CLOUD_PROJECT ?? account?.project_id ?? config.FIREBASE_PROJECT_ID;
   // Without a service-account secret, Application Default Credentials apply (Cloud Run identity, gcloud login, emulator).
@@ -64,7 +68,7 @@ function createStores(config: Config): { sessions: SessionStore; progress: Progr
     ignoreUndefinedProperties: true,
     ...(account ? { credentials: { client_email: account.client_email, private_key: account.private_key } } : {}),
   });
-  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db), mentor: new FirestoreMentorStore(undefined, db), github: new FirestoreGithubStore(db), placement: new FirestorePlacementStore(db), career: new FirestoreCareerStore(db), leetcode: new FirestoreLeetCodeStore(db), resume: new FirestoreResumeStore(db), learn: new FirestoreLearnStore(db), account: new FirestoreAccountStore(db) };
+  return { sessions: new FirestoreStore(undefined, db), progress: new FirestoreProgressStore(undefined, db), submissions: new FirestoreSubmissionStore(undefined, db), stats: new FirestoreStatsStore(undefined, db), revisions: new FirestoreRevisionStore(undefined, db), mentor: new FirestoreMentorStore(undefined, db), github: new FirestoreGithubStore(db), placement: new FirestorePlacementStore(db), career: new FirestoreCareerStore(db), leetcode: new FirestoreLeetCodeStore(db), resume: new FirestoreResumeStore(db), learn: new FirestoreLearnStore(db), account: new FirestoreAccountStore(db), usage: new FirestoreUsageStore(db) };
 }
 
 /**
@@ -139,7 +143,9 @@ function main(): void {
   const stores = createStores(config);
   const catalogue = loadCatalogue(config, root, logger);
   const dsaProgress = new DsaProgressService(stores.progress, () => catalogue);
-  const llm = createProvider(config, logger);
+  // Every model call made while serving a student is charged to that student's daily budget, whichever service makes it.
+  const budget = new LlmBudget({ store: stores.usage, limit: config.LLM_DAILY_BUDGET, logger });
+  const llm = budgetedProvider(createProvider(config, logger), budget, logger);
   const analytics = new AnalyticsService({
     stats: stores.stats,
     revisions: stores.revisions,
@@ -217,11 +223,15 @@ function main(): void {
   });
   const career = new CareerService({ freehire: new FreehireClient(), store: stores.career, placement, logger });
   careerHolder.current = career;
-  const verifier = new FirebaseTokenVerifier(config.FIREBASE_PROJECT_ID);
+  const serviceAccount = config.FIREBASE_SERVICE_ACCOUNT_JSON ? parseServiceAccount(config.FIREBASE_SERVICE_ACCOUNT_JSON) : null;
+  const verifier = new FirebaseTokenVerifier(config.FIREBASE_PROJECT_ID ?? serviceAccount?.project_id ?? "", undefined, serviceAccount);
+  const admin = verifier.admin();
+  const revocation = admin ? new RevocationGuard({ admin, logger }) : null;
+  if (!config.REQUIRE_EMAIL_VERIFICATION) logger.warn("REQUIRE_EMAIL_VERIFICATION is off: unverified accounts can use every feature, including the language model");
   if (config.NODE_ENV === "production" && config.STORE === "memory") {
     logger.warn("ALLOW_EPHEMERAL_STORE is set: sessions are lost on restart/redeploy and are not shared between instances");
   }
-  const service = new AssessmentService({ store: stores.sessions, llm, roles, logger });
+  const service = new AssessmentService({ store: stores.sessions, llm, roles, logger, maxSessionsPerStudent: config.MAX_SESSIONS_PER_STUDENT });
   const account = new AccountService({
     profiles: stores.account,
     roles,
@@ -243,6 +253,7 @@ function main(): void {
     resumeStore: stores.resume,
     learnStore: stores.learn,
     learn,
+    revokeSessions: revocation ? (uid) => revocation.revokeAll(uid) : undefined,
     logger,
   });
 
@@ -262,6 +273,10 @@ function main(): void {
     resume,
     learn,
     account,
+    budget,
+    revocation,
+    requireEmailVerification: config.REQUIRE_EMAIL_VERIFICATION,
+    exposeModel: config.NODE_ENV !== "production",
     llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
   const server = app.listen(config.PORT, "0.0.0.0", (err?: Error) => {
     if (err) {
@@ -284,6 +299,14 @@ function main(): void {
     server.close(() => process.exit(0));
   };
   process.on("SIGTERM", () => shutdown("SIGTERM"));
+
+  // Retention: audits untouched for SESSION_RETENTION_DAYS are deleted, shortly after start and then twice a day.
+  const sweep = () =>
+    void sweepInactiveSessions(stores.sessions, config.SESSION_RETENTION_DAYS, logger).catch((err: unknown) =>
+      logger.error({ err: (err as Error).message }, "session retention sweep failed"),
+    );
+  setTimeout(sweep, 60_000).unref();
+  setInterval(sweep, 12 * 3_600_000).unref();
   process.on("SIGINT", () => shutdown("SIGINT"));
 
   // A bug that slips through must be logged (with the same redaction as everything else) and then restart the process

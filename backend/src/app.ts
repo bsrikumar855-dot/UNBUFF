@@ -12,7 +12,9 @@ import type { Catalogue } from "./dsa/catalogue.js";
 import type { DsaProgressService } from "./dsa/progressService.js";
 import type { Logger } from "./logger.js";
 import type { LLMProvider } from "./llm/provider.js";
-import { requireAuth } from "./middleware/auth.js";
+import { requireAuth, requireVerifiedEmail } from "./middleware/auth.js";
+import { requireLlmBudget, type LlmBudget } from "./security/budget.js";
+import type { RevocationGuard } from "./security/revocation.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 import { createAccountLimiters, createCareerLimiters, createCodeLimiters, createGithubLimiters, createLeetcodeLimiters, createLearnLimiters, createMentorLimiter, createResumeLimiters, createPlacementLimiters, createRateLimiters, DEFAULT_RATE_LIMITS, type RateLimitOptions } from "./middleware/rateLimit.js";
 import { accountRouter } from "./routes/account.js";
@@ -69,6 +71,14 @@ export interface AppDeps {
   learn: LearnService;
   /** The student's profile, full data export and delete-everything. */
   account: AccountService;
+  /** Daily per-student language-model budget. The provider handed to the services must already be wrapped with it. */
+  budget: LlmBudget;
+  /** Refuses revoked tokens (deleted/disabled account, signed out everywhere, password changed). Null in tests. */
+  revocation?: RevocationGuard | null;
+  /** Private routes other than the account ones need a verified email (default true). */
+  requireEmailVerification?: boolean;
+  /** Report the model name on /api/health (default false; production keeps it private). */
+  exposeModel?: boolean;
   llm: LLMProvider;
   logger: Logger;
   demoReportJson: string;
@@ -104,7 +114,7 @@ export function createApp(deps: AppDeps): Express {
   const limiters = createRateLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS);
   const api = express.Router();
   api.use(limiters.global);
-  api.use(healthRouter(deps.llm));
+  api.use(healthRouter(deps.llm, { exposeModel: deps.exposeModel ?? false }));
   api.use(rolesRouter(deps.roles));
   api.use(demoRouter(deps.demoReportJson)); // synthetic data only; public by design
   api.use(dsaCatalogueRouter(() => deps.catalogue)); // public, read-only catalogue
@@ -115,9 +125,17 @@ export function createApp(deps: AppDeps): Express {
   // Everything below is private student data, so it is private by default: a verified Firebase ID token is required for
   // any request that no public router above answered. A route added later is therefore protected unless someone
   // deliberately mounts it above this line (and the route audit test lists it as public).
-  api.use(requireAuth(deps.verifier));
+  api.use(requireAuth(deps.verifier, { revocation: deps.revocation ?? null, logger: deps.logger }));
+  // The account routes stay reachable before the email is verified, so a student can always see, export or delete their data.
+  api.use(accountRouter(deps.account, createAccountLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS), deps.budget));
+  if (deps.requireEmailVerification ?? true) api.use(requireVerifiedEmail(deps.logger));
+  // Model-backed routes: a per-student rate limit on top of the per-IP one, and a fast refusal once today's budget is used.
+  // (The budget itself is enforced per model call by the provider wrapper; interview turns and the report rely on that
+  // alone, so resuming an open question or reading a report still works when the allowance is used up.)
+  const llmGuards = [limiters.llmUser, requireLlmBudget(deps.budget)];
+  api.post(["/claims/extract", "/fix-task", "/mentor/chat", "/mentor/conversations/:conversationId/summary", "/placement/assistant"], llmGuards);
+  api.post("/interrogate", limiters.llmUser);
   api.use(sessionsRouter(deps.service));
-  api.use(accountRouter(deps.account, createAccountLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS)));
   api.use(dsaProgressRouter(deps.dsaProgress));
   api.use(analyticsRouter(deps.analytics));
   api.use(githubRouter(deps.github, githubLimiters));

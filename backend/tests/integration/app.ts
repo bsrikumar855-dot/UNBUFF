@@ -36,6 +36,9 @@ import { MemoryResumeStore, type ResumeStore } from "../../src/resume/store.js";
 import { AccountService } from "../../src/account/service.js";
 import { MemoryAccountStore, type AccountStore } from "../../src/account/store.js";
 import { AssessmentService } from "../../src/services/assessment.js";
+import { budgetedProvider, LlmBudget } from "../../src/security/budget.js";
+import type { RevocationGuard } from "../../src/security/revocation.js";
+import { MemoryUsageStore, type UsageStore } from "../../src/security/usageStore.js";
 import type { SessionStore } from "../../src/store/SessionStore.js";
 import { MemoryStore } from "../../src/store/memoryStore.js";
 import { roles, silentLogger } from "../helpers.js";
@@ -68,14 +71,18 @@ export const fixtureSuites = () =>
 
 export { ExecutionError };
 
-/** Test verifier: "test:<uid>" is a valid token; anything else (including "expired") is rejected. */
+/**
+ * Test verifier: "test:<uid>" is a valid token for a verified email, "unverified:<uid>" one whose email is not verified
+ * yet, and "test:<uid>@<auth_time>" one signed in at that time (seconds). Anything else (including "expired") is rejected.
+ */
 export const fakeVerifier: TokenVerifier = {
   async verify(token) {
-    const m = /^test:([\w-]+)$/.exec(token);
+    const m = /^(test|unverified):([\w-]+)(?:@(\d+))?$/.exec(token);
     if (!m) throw new Error("invalid token");
-    return { uid: m[1]! };
+    return { uid: m[2]!, email_verified: m[1] === "test", ...(m[3] ? { auth_time: Number(m[3]) } : {}) };
   },
 };
+export const unverifiedBearer = (uid: string) => `Bearer unverified:${uid}`;
 
 export const bearer = (uid: string) => `Bearer test:${uid}`;
 export const DEFAULT_TEST_UID = "student-a";
@@ -86,9 +93,11 @@ export const DEFAULT_TEST_UID = "student-a";
  * 401 behaviour. The wrapper only touches headers; the app under test is unchanged.
  */
 export function testApp(
-  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService; placement?: PlacementService; placementStore?: PlacementStore; career?: CareerService; careerStore?: CareerStore; leetcode?: LeetCodeService; leetcodeStore?: LeetCodeStore; resume?: ResumeService; resumeStore?: ResumeStore; learn?: LearnService; learnStore?: LearnStore; latex?: LatexCompiler; accountStore?: AccountStore; githubStore?: GithubStore; freehire?: Pick<FreehireClient, "search" | "getJob" | "facets">; execution?: { configured: boolean; verified: boolean }; llmMode?: "live" | "mock"; now?: () => Date } = {},
+  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService; placement?: PlacementService; placementStore?: PlacementStore; career?: CareerService; careerStore?: CareerStore; leetcode?: LeetCodeService; leetcodeStore?: LeetCodeStore; resume?: ResumeService; resumeStore?: ResumeStore; learn?: LearnService; learnStore?: LearnStore; latex?: LatexCompiler; accountStore?: AccountStore; githubStore?: GithubStore; usageStore?: UsageStore; llmDailyBudget?: number; maxSessionsPerStudent?: number; requireEmailVerification?: boolean; revocation?: RevocationGuard; revokeSessions?: (uid: string) => Promise<void>; freehire?: Pick<FreehireClient, "search" | "getJob" | "facets">; execution?: { configured: boolean; verified: boolean }; llmMode?: "live" | "mock"; now?: () => Date } = {},
 ): Express {
-  const llm = opts.llm ?? new MockProvider();
+  // Like production, every model call is charged to the student's daily budget (generous by default so flow tests never hit it).
+  const budget = new LlmBudget({ store: opts.usageStore ?? new MemoryUsageStore(), limit: opts.llmDailyBudget ?? 100_000, logger: silentLogger, now: opts.now });
+  const llm = budgetedProvider(opts.llm ?? new MockProvider(), budget, silentLogger);
   const catalogue = opts.catalogue ?? fixtureCatalogue();
   const progressStore = opts.progressStore ?? new MemoryProgressStore();
   const dsaProgress = new DsaProgressService(progressStore, () => catalogue);
@@ -191,7 +200,7 @@ export function testApp(
       now: opts.now,
     });
   careerHolder.current = career;
-  const service = new AssessmentService({ store: sessionStore, llm, roles, logger: silentLogger });
+  const service = new AssessmentService({ store: sessionStore, llm, roles, logger: silentLogger, maxSessionsPerStudent: opts.maxSessionsPerStudent });
   const account = new AccountService({
     profiles: opts.accountStore ?? new MemoryAccountStore(),
     roles,
@@ -213,6 +222,7 @@ export function testApp(
     resumeStore,
     learnStore,
     learn,
+    revokeSessions: opts.revokeSessions,
     logger: silentLogger,
     now: opts.now,
   });
@@ -240,11 +250,15 @@ export function testApp(
     resume,
     learn,
     account,
+    budget,
+    revocation: opts.revocation ?? null,
+    requireEmailVerification: opts.requireEmailVerification ?? true,
+    exposeModel: true,
     llm,
     logger: silentLogger,
     demoReportJson,
     corsOrigin: opts.corsOrigin,
-    rateLimits: opts.rateLimits ?? { globalPerMinute: 10_000, llmPerMinute: 10_000 },
+    rateLimits: opts.rateLimits ?? { globalPerMinute: 10_000, llmPerMinute: 10_000, llmUserPerMinute: 10_000 },
   });
   if (opts.autoAuth === false) return app;
   const wrapper = express();

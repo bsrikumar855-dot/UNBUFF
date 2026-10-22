@@ -18,6 +18,7 @@ import type {
   TurnResponse,
 } from "../types.js";
 import { ApiError } from "../errors.js";
+import { audit } from "../security/audit.js";
 import type { Logger } from "../logger.js";
 import {
   clampText,
@@ -61,12 +62,16 @@ import { levelCriteria, LlmError, type LLMProvider, type QuestionContext } from 
 import type { Session, SessionStore } from "../store/SessionStore.js";
 import type { RoleRegistry } from "./roles.js";
 
+const DEFAULT_MAX_SESSIONS = 50;
+
 export interface AssessmentDeps {
   store: SessionStore;
   llm: LLMProvider;
   roles: RoleRegistry;
   logger: Logger;
   now?: () => Date;
+  /** Saved audits per student; extraction is refused beyond this (default 50). */
+  maxSessionsPerStudent?: number;
 }
 
 export interface ExtractInput {
@@ -99,6 +104,12 @@ export class AssessmentService {
 
   async extract(uid: string, input: ExtractInput): Promise<ClaimsResponse> {
     const role = this.role(input.role_id);
+    const cap = this.deps.maxSessionsPerStudent ?? DEFAULT_MAX_SESSIONS;
+    const owned = (await this.deps.store.listByOwner(uid)).length;
+    if (owned >= cap) {
+      audit(this.deps.logger, "sessions.limit_reached", uid, { cap });
+      throw new ApiError("BAD_REQUEST", `You have ${owned} saved audits, the most you can keep. Delete some in My sessions to start a new one.`);
+    }
     const resume = input.resume_text?.trim() ? normalizeResume(input.resume_text) || null : null;
     const chips = dedupe((input.declared_skills ?? []).map((s) => s.trim()).filter(Boolean));
     if (!resume && chips.length === 0) {

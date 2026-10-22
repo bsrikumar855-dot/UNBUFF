@@ -43,6 +43,8 @@ function fakeAuth(initial: AuthUser | null) {
     signUp: vi.fn(),
     signOut: vi.fn(async () => listener?.(null)),
     sendPasswordReset: vi.fn(async () => undefined),
+    sendVerificationEmail: vi.fn(async () => undefined),
+    refreshUser: vi.fn(async () => undefined),
     getIdToken: vi.fn(async () => "t"),
     changePassword: vi.fn(async () => undefined),
     verifyPassword: vi.fn(async () => undefined),

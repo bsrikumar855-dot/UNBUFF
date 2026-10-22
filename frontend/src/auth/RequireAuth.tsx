@@ -3,10 +3,11 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { routes } from "@/lib/routes";
 import { useAuth } from "./context";
+import { VerifyEmailGate } from "./VerifyEmailGate";
 
 /** Layout route: renders child routes for signed-in students, otherwise sends them to /login and back. */
 export const RequireAuth: React.FC = () => {
-  const { status, signedOutOnPurpose } = useAuth();
+  const { status, signedOutOnPurpose, user } = useAuth();
   const location = useLocation();
 
   if (status === "loading") {
@@ -29,5 +30,8 @@ export const RequireAuth: React.FC = () => {
       />
     );
   }
+  // Student features need a verified email (the backend enforces it too). Settings stays open so an account can still be
+  // exported or deleted.
+  if (user?.emailVerified === false && location.pathname !== routes.settings) return <VerifyEmailGate />;
   return <Outlet />;
 };

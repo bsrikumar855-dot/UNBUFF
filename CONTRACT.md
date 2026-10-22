@@ -138,6 +138,8 @@ export type ErrorCode =
   | "LEARN_NOT_FOUND"
   | "LLM_INVALID_OUTPUT"
   | "LLM_TIMEOUT"
+  | "EMAIL_NOT_VERIFIED" // added (security): the Firebase email address is not verified yet
+  | "DAILY_LIMIT_REACHED" // added (security): the student's daily AI budget is used up
   | "INTERNAL";
 
 // ---------- Roles ----------
@@ -433,6 +435,14 @@ export interface AccountExport {
   uid: string;
   profile: AccountProfile;
   data: Record<string, unknown>;
+}
+
+/** GET /api/me/usage: today's AI budget (UTC day). `used` counts language-model calls made for this student. */
+export interface UsageResponse {
+  date: string; // YYYY-MM-DD (UTC)
+  used: number;
+  limit: number;
+  resets_at: string; // ISO time of the next UTC midnight
 }
 
 /** DELETE /api/me: the caller's data in every domain is gone. Counts are per domain (records, or 1 for a single document). */

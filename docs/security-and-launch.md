@@ -90,6 +90,34 @@ configured origin; emulator hosts refused), `npm audit --omit=dev` 0 vulnerabili
 suite (44 tests). The new Firestore collection `unbluff_profiles` is read by document id only, so it needs no index, and
 `firestore.rules` already denies all browser access.
 
+## Security layers added before launch (22 October 2026)
+
+Threat model, ranked by real risk for this app (an open sign-up in front of a paid language model and students' resumes):
+
+| Risk | Before | Layer now |
+| --- | --- | --- |
+| Gemini bill run up by scripted accounts | 40 model requests/min **per IP**, no daily cap, open sign-up | **Per-student daily budget** (`LLM_DAILY_BUDGET`, default 150 model calls per UTC day), charged on every model call by a provider wrapper (so no route can bypass it), stored atomically in Firestore (`unbluff_llm_usage`, shared by every instance, TTL 2 days). Plus a per-student model rate limit (20/min) on top of the per-IP one, and a fast refusal on model-only routes once the budget is used. Over budget, reports still render (template text) and an open question can still be resumed. `GET /api/me/usage` and Settings show the allowance. |
+| Unlimited throwaway / impersonating accounts | No email verification | **Verified email required** for every private route except the account ones (profile, usage, export, delete, sign out everywhere), so an unverified student can still see or erase their data. The link is sent at sign-up; the app shows a verify screen with resend (60 s cooldown) and re-check. `REQUIRE_EMAIL_VERIFICATION` (default true). |
+| Stolen / old tokens keep working after password change, "sign out", or account deletion | Signature + expiry only (valid up to 1 h) | **Revocation guard**: tokens from before the account's `tokensValidAfterTime`, and tokens of deleted or disabled accounts, are refused. State is cached per student for 60 s (one Admin lookup per student per minute). **Sign out of all devices** in Settings. A password change signs other devices out; the device that changed it re-authenticates so it stays signed in (verified on the Auth emulator). If Firebase cannot be reached the guard allows verified tokens and logs an error (at most every 5 min): alert on it. |
+| Unbounded storage of resumes | Unlimited audits per student, kept forever | **Cap** of `MAX_SESSIONS_PER_STUDENT` (50) audits, and **retention**: audits untouched for `SESSION_RETENTION_DAYS` (365) are deleted by a sweep that runs a minute after start and every 12 h. |
+| Shared / lab computers | Always "remembered"; drafts in localStorage until sign-out | **"Keep me signed in on this device"** at sign-in. Off: Firebase keeps the session for the tab only and drafts go to sessionStorage, so closing the browser leaves nothing. |
+| Information disclosure | `/api/health` named the model | The model is only reported outside production. |
+| Unnoticed abuse | Ordinary request logs | **Audit events** (`jsonPayload.audit`): profile update, export, account deletion, sign out everywhere, revoked-token and unverified-email refusals, daily-limit hits, session-cap hits, retention deletions. uid only; never tokens, emails or content. |
+| Stale dependencies | `npm audit` in CI only | **Dependabot**: weekly grouped npm updates for both apps, monthly GitHub Actions updates. |
+
+Tested: `tests/integration/securityLayers.test.ts` (budget per call, per student, reset at UTC midnight, not reset by deleting data, no partial save when refused mid-turn, per-student rate limit, session cap, verification gate and its exemptions, revocation incl. deleted/disabled accounts, caching and fail-open throttling, retention, health, audit shape); `tests/emulator/security.emulator.test.ts` with the **real Admin SDK and Auth/Firestore emulators** (unverified tokens refused, sign-out-everywhere revokes real tokens, a deleted account's unexpired token is refused, the usage transaction never overshoots under concurrency, retention query); frontend `securityLayers.test.tsx`.
+
+### Console steps that complete these layers (operator)
+
+1. **Admin role for the backend's service account:** the revocation guard calls `getUser` / `revokeRefreshTokens`, so the account in `FIREBASE_SERVICE_ACCOUNT_JSON` (or the Cloud Run identity) needs **Firebase Authentication Admin** in addition to Firestore access. Without it the guard fails open and logs `revocation check unavailable`.
+2. **Firebase Authentication → Settings:** turn on **email enumeration protection**; under **Authorized domains** keep only your production domain(s) (remove `localhost` for production); if your project offers a **password policy** (Identity Platform), require at least 8 characters so the client-side minimum cannot be bypassed through the REST API.
+3. **Gemini key:** in Google Cloud → APIs & Services → Credentials, restrict the key to the Generative Language API; set a **quota cap** and a **billing budget alert**. The per-student budget limits each account; the quota caps the total.
+4. **Firestore:** `firebase deploy --only firestore:indexes` also creates the **TTL policy** on `unbluff_llm_usage.expires_at`. Turn on point-in-time recovery or scheduled exports.
+5. **Alerts:** log-based alerts on `severity>=ERROR`, on `jsonPayload.message="revocation check unavailable…"`, and on bursts of `jsonPayload.audit="llm.daily_limit_reached"` or `"auth.revoked_token_refused"`.
+6. **Not added in code (next step):** Firebase **App Check** (reCAPTCHA Enterprise) would stop scripts that never load your site. It needs a site key from your Google Cloud project and enforcement on the backend; the daily budget and email verification already bound the cost of a scripted account.
+
+Residual: the per-minute rate limits are per instance (in memory); the daily budget, which is what bounds cost, is shared through Firestore. The CSP `connect-src` still allows any `https:` origin until the production domains are fixed (step 5 below).
+
 ## Before you launch (operator)
 
 1. **Rotate exposed credentials.** The Firebase service-account key and the GitHub OAuth client secret were pasted into a

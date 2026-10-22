@@ -6,9 +6,14 @@ import {
   deleteUser,
   reauthenticateWithCredential,
   updatePassword,
+  browserLocalPersistence,
+  browserSessionPersistence,
   getAuth,
-  onAuthStateChanged,
+  onIdTokenChanged,
+  reload,
+  sendEmailVerification,
   sendPasswordResetEmail,
+  setPersistence,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   type Auth,
@@ -82,26 +87,51 @@ export const firebaseAuthClient: AuthClient = {
       callback(null);
       return () => undefined;
     }
-    return onAuthStateChanged(auth, (u) =>
-      callback(u ? { uid: u.uid, email: u.email } : null)
+    // ID-token changes include sign-in/out and token refreshes, so a newly verified email shows up after refreshUser().
+    return onIdTokenChanged(auth, (u) =>
+      callback(u ? { uid: u.uid, email: u.email, emailVerified: u.emailVerified } : null)
     );
   },
 
-  async signIn(email, password) {
+  async signIn(email, password, remember = true) {
     const auth = getFirebase();
     if (!auth) throw NOT_CONFIGURED;
     try {
+      await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
       throw toAuthError(err);
     }
   },
 
-  async signUp(email, password) {
+  async signUp(email, password, remember = true) {
     const auth = getFirebase();
     if (!auth) throw NOT_CONFIGURED;
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+      const { user } = await createUserWithEmailAndPassword(auth, email, password);
+      await sendEmailVerification(user).catch(() => undefined); // can be resent from the verification screen
+    } catch (err) {
+      throw toAuthError(err);
+    }
+  },
+
+  async sendVerificationEmail() {
+    const user = getFirebase()?.currentUser;
+    if (!user) throw NOT_CONFIGURED;
+    try {
+      await sendEmailVerification(user);
+    } catch (err) {
+      throw toAuthError(err);
+    }
+  },
+
+  async refreshUser() {
+    const user = getFirebase()?.currentUser;
+    if (!user) return;
+    try {
+      await reload(user);
+      await user.getIdToken(true); // a new token carries the new email_verified claim (and notifies onChange)
     } catch (err) {
       throw toAuthError(err);
     }
@@ -132,6 +162,9 @@ export const firebaseAuthClient: AuthClient = {
       // Firebase requires a recent sign-in for sensitive changes; re-checking the password also proves it's the owner.
       await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, currentPassword));
       await updatePassword(user, newPassword);
+      // Changing the password revokes every session, including the token this device holds (it keeps the old sign-in
+      // time). Signing in again with the new password gives this device a fresh session; other devices stay signed out.
+      await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, newPassword));
     } catch (err) {
       throw toAuthError(err);
     }
