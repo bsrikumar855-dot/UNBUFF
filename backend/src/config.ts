@@ -110,7 +110,7 @@ const EnvSchema = z
     GITHUB_TIMEOUT_MS: z.coerce.number().int().min(2_000).max(30_000).default(10_000),
     /** AI mentor model settings (the same Gemini provider and key as the interview features). */
     MENTOR_MODEL: z.string().trim().min(1).optional(),
-    MENTOR_TEMPERATURE: z.coerce.number().min(0).max(1).default(0.5),
+    MENTOR_TEMPERATURE: z.coerce.number().min(0).max(1).default(0.7),
     MENTOR_TIMEOUT_MS: z.coerce.number().int().min(5_000).max(60_000).default(30_000),
     /** Retention: conversations are deleted this many days after their last message. */
     MENTOR_CONVERSATION_RETENTION_DAYS: z.coerce.number().int().min(7).max(365).default(90),

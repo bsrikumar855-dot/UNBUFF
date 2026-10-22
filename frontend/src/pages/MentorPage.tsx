@@ -21,6 +21,7 @@ import {
 import { api } from "@/api/endpoints";
 import { ApiError } from "@/api/types";
 import { Button } from "@/components/ui/button";
+import { InlineMarkdown } from "@/components/common/InlineMarkdown";
 import { m } from "motion/react";
 import { canObserve } from "@/components/motion/ease";
 import { DUR, RISE, settle } from "@/components/motion/tokens";
@@ -75,7 +76,7 @@ const Note: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </p>
 );
 
-/** Renders a message: plain paragraphs, and fenced code blocks as scrollable monospace blocks (text only, never HTML). */
+/** Renders a message: light markdown (bold, code, lists), and fenced code blocks as scrollable monospace blocks (text only, never HTML). */
 const MessageBody: React.FC<{ text: string }> = ({ text }) => {
   const parts = text.split(/```[a-zA-Z0-9+#-]*\n?([\s\S]*?)```/g);
   return (
@@ -90,9 +91,7 @@ const MessageBody: React.FC<{ text: string }> = ({ text }) => {
             <code>{part.replace(/\n$/, "")}</code>
           </pre>
         ) : part.trim() === "" ? null : (
-          <p key={i} className="whitespace-pre-wrap wrap-break-word">
-            {part.replace(/^\n+|\n+$/g, "")}
-          </p>
+          <InlineMarkdown key={i} text={part.replace(/^\n+|\n+$/g, "")} className="[&>*:last-child]:mb-0" />
         )
       )}
     </div>
