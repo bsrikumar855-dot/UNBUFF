@@ -19,7 +19,7 @@ const LABEL = cn(
   "motion-reduce:transition-none motion-reduce:delay-0"
 );
 const ROW =
-  "group/row relative flex h-10 w-full items-center rounded-full text-sm font-medium text-ink-secondary outline-none transition-colors hover:text-ink-primary focus-visible:ring-2 focus-visible:ring-ink-primary";
+  "group/row relative flex h-10 w-full items-center rounded-full text-sm font-medium text-white/80 outline-none transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-white";
 
 /** A round icon, the width of the collapsed rail, so icons stay put while the rail widens around them. */
 const Dot: React.FC<{ active?: boolean; children: React.ReactNode }> = ({
@@ -31,13 +31,13 @@ const Dot: React.FC<{ active?: boolean; children: React.ReactNode }> = ({
     className={cn(
       "relative grid size-10 shrink-0 place-items-center rounded-full transition-[background-color,color,box-shadow] duration-300",
       active
-        ? "bg-white text-redline shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08),0_4px_10px_-5px_rgba(24,24,27,0.3)]"
-        : "text-ink-muted group-hover/row:bg-white/70 group-hover/row:text-ink-primary"
+        ? "bg-white text-redline shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6),0_6px_14px_-6px_rgba(60,8,4,0.55)]"
+        : "text-white/75 group-hover/row:bg-white/20 group-hover/row:text-white group-hover/row:shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]"
     )}
   >
     {children}
     {active && (
-      <span className="absolute -left-1 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-redline" />
+      <span className="absolute -left-1 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-white" />
     )}
   </span>
 );
@@ -67,16 +67,29 @@ export const Sidebar: React.FC<{ onSearch: () => void }> = ({ onSearch }) => {
     >
       <div
         className={cn(
-          "flex h-full w-14 flex-col overflow-hidden rounded-[1.75rem] bg-[rgba(246,243,236,0.9)] backdrop-blur-xl backdrop-saturate-150",
-          "shadow-[0_14px_30px_-18px_rgba(24,24,27,0.35),0_4px_12px_-8px_rgba(24,24,27,0.18),inset_0_0_0_1px_rgba(24,24,27,0.07),inset_0_1px_0_rgba(255,255,255,0.95)]",
+          "relative isolate flex h-full w-14 flex-col overflow-hidden rounded-[1.75rem] backdrop-blur-xl backdrop-saturate-200 bg-[linear-gradient(165deg,rgba(226,68,48,0.94)_0%,rgba(184,40,27,0.93)_42%,rgba(112,18,12,0.96)_100%)]",
+          "shadow-[0_18px_36px_-16px_rgba(140,22,12,0.7),0_6px_14px_-8px_rgba(100,14,8,0.5),inset_0_0_0_1px_rgba(255,255,255,0.28),inset_0_1px_0_rgba(255,255,255,0.55),inset_0_-14px_28px_-14px_rgba(70,6,2,0.6)]",
           "transition-[width,box-shadow] delay-75 duration-500",
           EASE,
-          "group-hover/rail:w-64 group-hover/rail:delay-0 group-hover/rail:shadow-[0_28px_56px_-24px_rgba(24,24,27,0.45),0_8px_20px_-10px_rgba(24,24,27,0.22),inset_0_0_0_1px_rgba(24,24,27,0.08),inset_0_1px_0_rgba(255,255,255,0.95)]",
+          "group-hover/rail:w-64 group-hover/rail:delay-0 group-hover/rail:shadow-[0_30px_60px_-22px_rgba(140,22,12,0.75),0_8px_20px_-10px_rgba(100,14,8,0.5),inset_0_0_0_1px_rgba(255,255,255,0.32),inset_0_1px_0_rgba(255,255,255,0.6),inset_0_-14px_28px_-14px_rgba(70,6,2,0.6)]",
           "group-focus-within/rail:w-64 group-focus-within/rail:delay-0",
           "group-data-[pinned]/rail:w-64 group-data-[pinned]/rail:delay-0",
           "motion-reduce:transition-none"
         )}
       >
+        {/* Liquid light: two soft blobs drift under the glass, and a specular arc catches the top edge. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-8 -top-10 -z-10 size-56 rounded-full bg-[radial-gradient(circle,rgba(255,150,120,0.75),rgba(255,150,120,0)_68%)] blur-xl motion-safe:animate-[liquid-drift-a_14s_ease-in-out_infinite]"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-12 -right-10 -z-10 size-64 rounded-full bg-[radial-gradient(circle,rgba(70,6,4,0.8),rgba(70,6,4,0)_68%)] blur-xl motion-safe:animate-[liquid-drift-b_18s_ease-in-out_infinite]"
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-24 bg-[linear-gradient(180deg,rgba(255,255,255,0.32),rgba(255,255,255,0))]"
+        />
         {/* Fixed width, so nothing re-wraps while the capsule widens; the capsule clips it. */}
         <div className="flex h-full w-64 flex-col">
           <div className="flex shrink-0 items-center gap-1 px-2 pt-2">
@@ -98,7 +111,7 @@ export const Sidebar: React.FC<{ onSearch: () => void }> = ({ onSearch }) => {
               tabIndex={-1}
               className={cn(
                 LABEL,
-                "ml-2 flex-none text-lg font-semibold uppercase tracking-[-0.04em] text-ink-primary"
+                "ml-2 flex-none text-lg font-semibold uppercase tracking-[-0.04em] text-white"
               )}
             >
               Un
@@ -106,7 +119,7 @@ export const Sidebar: React.FC<{ onSearch: () => void }> = ({ onSearch }) => {
                 bluff
                 <span
                   aria-hidden="true"
-                  className="absolute inset-x-0 -bottom-0.5 h-[3px] bg-redline"
+                  className="absolute inset-x-0 -bottom-0.5 h-[3px] bg-white"
                 />
               </span>
             </Link>
@@ -117,14 +130,14 @@ export const Sidebar: React.FC<{ onSearch: () => void }> = ({ onSearch }) => {
               type="button"
               onClick={onSearch}
               aria-label="Go to a screen"
-              className={cn(ROW, "text-ink-muted")}
+              className={cn(ROW, "text-white/80")}
             >
               <Dot>
                 <Search size={16} strokeWidth={1.75} />
               </Dot>
               <span className={cn(LABEL, "ml-2 flex items-center")}>
                 Go to…
-                <kbd className="ml-auto mr-4 font-mono text-[10px] text-ink-subtle">
+                <kbd className="ml-auto mr-4 font-mono text-[10px] text-white/60">
                   Ctrl K
                 </kbd>
               </span>
@@ -141,13 +154,16 @@ export const Sidebar: React.FC<{ onSearch: () => void }> = ({ onSearch }) => {
                 <div className="relative h-7">
                   <h2
                     id={`rail-${g.id}`}
-                    className={cn(LABEL, "eyebrow absolute inset-x-4 bottom-1 flex-none")}
+                    className={cn(
+                      LABEL,
+                      "eyebrow absolute inset-x-4 bottom-1 flex-none text-white/65!"
+                    )}
                   >
                     {g.label}
                   </h2>
                   <span
                     aria-hidden="true"
-                    className="absolute inset-x-3 bottom-2.5 h-px bg-line-strong/60 transition-opacity duration-200 group-hover/rail:opacity-0 group-focus-within/rail:opacity-0 group-data-[pinned]/rail:opacity-0"
+                    className="absolute inset-x-3 bottom-2.5 h-px bg-white/30 transition-opacity duration-200 group-hover/rail:opacity-0 group-focus-within/rail:opacity-0 group-data-[pinned]/rail:opacity-0"
                   />
                 </div>
                 <ul aria-labelledby={`rail-${g.id}`} className="flex flex-col gap-0.5">
@@ -168,7 +184,7 @@ export const Sidebar: React.FC<{ onSearch: () => void }> = ({ onSearch }) => {
                               go(item.to);
                             }
                           }}
-                          className={cn(ROW, active && "text-ink-primary")}
+                          className={cn(ROW, active && "text-white")}
                         >
                           <Dot active={active}>
                             <item.icon size={17} strokeWidth={1.75} />
@@ -185,30 +201,27 @@ export const Sidebar: React.FC<{ onSearch: () => void }> = ({ onSearch }) => {
             ))}
           </nav>
 
-          <div className="shrink-0 border-t border-black/5 px-2 py-2">
+          <div className="shrink-0 border-t border-white/20 px-2 py-2">
             <div className="flex items-center">
               <span
                 role="img"
                 aria-label={`Signed in as ${email}`}
                 title={email}
-                className="grid size-10 shrink-0 place-items-center rounded-full bg-ink-primary font-mono text-xs font-medium uppercase text-surface-50"
+                className="grid size-10 shrink-0 place-items-center rounded-full bg-white font-mono text-xs font-semibold uppercase text-redline shadow-[0_4px_10px_-6px_rgba(60,8,4,0.6)]"
               >
                 {email.slice(0, 1)}
               </span>
               <div className={cn(LABEL, "ml-2 flex items-center gap-1")}>
                 <div className="min-w-0 flex-1">
-                  <p
-                    className="truncate text-sm font-medium text-ink-primary"
-                    title={email}
-                  >
+                  <p className="truncate text-sm font-medium text-white" title={email}>
                     {email}
                   </p>
-                  <p className="eyebrow">Student</p>
+                  <p className="eyebrow text-white/65!">Student</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => void signOut()}
-                  className="mr-1 inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-ink-secondary outline-none transition-colors hover:bg-white/70 hover:text-ink-primary focus-visible:ring-2 focus-visible:ring-ink-primary"
+                  className="mr-1 inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-white/85 outline-none transition-colors hover:bg-white/20 hover:text-white focus-visible:ring-2 focus-visible:ring-white"
                 >
                   <LogOut size={14} aria-hidden="true" />
                   Sign out
