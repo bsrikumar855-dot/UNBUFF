@@ -74,6 +74,28 @@ export const GithubConnectionPanel: React.FC<GithubConnectionPanelProps> = ({
     }
   }, [autoSync, conn, sync]);
 
+  // A sync that was already running when the page opened (or that another tab started) finishes without this page
+  // being told: keep checking until it is done, then hand over so the calendar and repositories reload.
+  const waitingOnSync = conn?.sync_in_progress === true && busy !== "sync";
+  useEffect(() => {
+    if (!waitingOnSync) return;
+    let cancelled = false;
+    const timer = window.setInterval(() => {
+      api
+        .getGithubConnection()
+        .then((c) => {
+          if (cancelled) return;
+          setConn(c);
+          if (!c.sync_in_progress) onSynced?.();
+        })
+        .catch(() => undefined);
+    }, 3000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [waitingOnSync, onSynced]);
+
   const connect = async () => {
     setBusy("connect");
     setActionError(null);

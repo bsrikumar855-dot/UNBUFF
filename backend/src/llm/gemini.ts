@@ -85,7 +85,7 @@ export class GeminiProvider implements LLMProvider {
     this.fallbackModel = opts.fallbackModel;
     this.logger = opts.logger;
     this.timeoutMs = opts.timeoutMs ?? LLM_TIMEOUT_MS;
-    this.mentor = { model: opts.mentorModel ?? opts.model, temperature: opts.mentorTemperature ?? 0.5, timeoutMs: opts.mentorTimeoutMs ?? 30_000 };
+    this.mentor = { model: opts.mentorModel ?? opts.model, temperature: opts.mentorTemperature ?? 0.7, timeoutMs: opts.mentorTimeoutMs ?? 30_000 };
     this.ai = opts.client ?? (opts.vertexai
       ? new GoogleGenAI({ vertexai: true, apiKey: opts.apiKey, project: opts.project, location: opts.location })
       : new GoogleGenAI({ apiKey: opts.apiKey }));
