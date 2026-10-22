@@ -92,19 +92,15 @@ describe("the sidebar for signed-in students", () => {
 });
 
 describe("the marketing header", () => {
-  it("is used on the landing page even when signed in, with the account and no sidebar", async () => {
+  it("is minimal on the landing page when signed in: only Open my plan and Sign out, no navigation or sidebar", async () => {
     window.history.pushState({}, "", "/");
     render(<App authClient={signedIn} />);
-    expect(
-      await screen.findByRole("img", { name: "Signed in as a@b.co" })
-    ).toBeInTheDocument();
-    const nav = screen.getByRole("navigation", { name: "Primary" });
-    for (const name of ["DSA", "Patterns", "DBMS", "Roadmap"])
-      expect(within(nav).getByRole("link", { name })).toBeInTheDocument();
-    expect(within(nav).queryByRole("link", { name: "Settings" })).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Open navigation" })
-    ).not.toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Open my plan" })).toHaveAttribute("href", "/placement");
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "Primary" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "UNBLUFF home" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "Signed in as a@b.co" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Open navigation" })).not.toBeInTheDocument();
   });
 
   it("shows the public pages and the audit call to action to visitors, with no account", async () => {
