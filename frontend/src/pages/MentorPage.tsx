@@ -25,7 +25,7 @@ import { InlineMarkdown } from "@/components/common/InlineMarkdown";
 import { m } from "motion/react";
 import { canObserve } from "@/components/motion/ease";
 import { DUR, RISE, settle } from "@/components/motion/tokens";
-import { Thinking } from "@/components/motion/Thinking";
+import LatticeLoader from "@/components/reactbits/LatticeLoader";
 import { useNewIds } from "@/components/motion/useNewIds";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { GLASS, TILE } from "@/components/ui/GlassCard";
@@ -699,7 +699,11 @@ const MentorPage: React.FC = () => {
                 <MessageBody text={msg.content} />
               </m.div>
             ))}
-            {sending && <Thinking message="The mentor is thinking…" />}
+            {sending && (
+              <div className="self-start rounded-full bg-white/70 px-4 py-2.5 text-ink-secondary shadow-[inset_0_0_0_1px_rgba(24,24,27,0.07),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-sm">
+                <LatticeLoader label="The mentor is thinking" pattern="orbit" grid={3} shape="round" color="#b3291a" cellSize={7} gap={2} fontSize={14} />
+              </div>
+            )}
           </div>
 
           {error !== null && (

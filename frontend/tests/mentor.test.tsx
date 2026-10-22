@@ -257,6 +257,19 @@ describe("mentor chat", () => {
     expect(await box()).toHaveValue("Explain the Two Pointers pattern");
   });
 
+  it("shows the lattice loader with a live timer while the mentor answers, announced as a status", async () => {
+    let finish: (r: ReturnType<typeof reply>) => void = () => undefined;
+    mocked.mentorChat.mockReturnValue(new Promise((resolve) => (finish = resolve)));
+    renderAt("/mentor");
+    fireEvent.change(await box(), { target: { value: "Explain two pointers" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    expect(await screen.findByText("The mentor is thinking, in progress")).toBeInTheDocument();
+    expect(screen.getAllByRole("status").some((el) => /thinking/i.test(el.textContent ?? ""))).toBe(true);
+    finish(reply());
+    expect(await screen.findByText("Think about moving two indexes inward.")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("The mentor is thinking, in progress")).not.toBeInTheDocument());
+  });
+
   it("Shift+Enter does not send", async () => {
     renderAt("/mentor");
     fireEvent.change(await box(), { target: { value: "draft" } });
