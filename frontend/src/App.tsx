@@ -13,6 +13,7 @@ import { DsaArenaPage } from "@/pages/DsaArenaPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ServerWakeGate } from "@/components/common/ServerWakeGate";
+import { IntroLoader } from "@/components/common/IntroLoader";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { AppShell } from "@/components/shell/AppShell";
 import { MotionProvider } from "@/components/motion/MotionProvider";
@@ -101,6 +102,8 @@ export const App: React.FC<{ authClient?: AuthClient }> = ({ authClient }) => (
               <AppRoutes />
             </AppShell>
             <Toaster position="bottom-right" />
+            {/* Tests render the app directly and must not wait behind an intro. */}
+            {import.meta.env.MODE !== "test" && <IntroLoader />}
           </MotionProvider>
         </BrowserRouter>
       </InterrogationProvider>
