@@ -1,5 +1,6 @@
 import React from "react";
 import { LogOut } from "lucide-react";
+import { cn } from "@/lib/cn";
 import { useAuth } from "@/auth/context";
 import { useSignOut } from "./useSignOut";
 
@@ -28,7 +29,11 @@ export const AccountMenu: React.FC<{ variant?: "full" | "compact" | "button" }> 
     <button
       type="button"
       onClick={() => void signOut()}
-      className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium text-ink-secondary transition-colors hover:bg-surface-100 hover:text-ink-primary"
+      className={cn(
+        "inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium text-ink-secondary transition-colors hover:bg-surface-100 hover:text-ink-primary",
+        variant === "button" &&
+          "rounded-full bg-white/60 px-4 text-ink-primary shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08),inset_0_1px_0_rgba(255,255,255,0.95)] backdrop-blur-md hover:bg-white/80"
+      )}
     >
       <LogOut size={14} aria-hidden="true" />
       <span className={variant === "compact" ? "max-sm:sr-only" : undefined}>

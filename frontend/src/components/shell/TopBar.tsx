@@ -44,10 +44,17 @@ export const TopBar: React.FC<{
   const items: PillNavItem[] = PUBLIC.map(({ match: _m, ...item }) => item);
   const active = PUBLIC.find((e) => e.match?.(pathname));
 
-  // Signed in on the landing or sign-in page: no navigation, just the way into the app and the way out.
+  // Signed in on the landing or sign-in page: no navigation, just the way into the app and the way out. On the landing
+  // page the header floats, fully transparent, over the hero so the background runs to the top edge.
   if (status === "signedIn")
     return (
-      <header className="sticky top-0 z-40 flex h-(--topbar-h) items-center justify-end gap-2 bg-surface-50/55 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-5">
+      <header
+        className={
+          pathname === "/"
+            ? "fixed inset-x-0 top-0 z-40 flex h-(--topbar-h) items-center justify-end gap-2 px-3 sm:px-5"
+            : "sticky top-0 z-40 flex h-(--topbar-h) items-center justify-end gap-2 bg-surface-50/55 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-5"
+        }
+      >
         {right}
         <AccountMenu variant="button" />
       </header>
