@@ -246,12 +246,30 @@ function main(): void {
     logger.info({ port: config.PORT, llm_mode: llm.mode, model: llm.model, store: config.STORE }, "UNBLUFF backend listening");
   });
 
+  // Platform load balancers (Render, Cloud Run) keep idle connections open for about a minute. Node's default of 5 s would
+  // close them first and surface as sporadic 502s, so stay open longer than the proxy does.
+  server.keepAliveTimeout = 65_000;
+  server.headersTimeout = 66_000;
+
   const shutdown = (signal: string) => {
     logger.info({ signal }, "shutting down");
+    // Stop taking new connections and let in-flight requests finish, but never hang a deploy: leave after 10 s regardless.
+    setTimeout(() => process.exit(1), 10_000).unref();
     server.close(() => process.exit(0));
   };
   process.on("SIGTERM", () => shutdown("SIGTERM"));
   process.on("SIGINT", () => shutdown("SIGINT"));
+
+  // A bug that slips through must be logged (with the same redaction as everything else) and then restart the process
+  // cleanly rather than leave it half-working.
+  process.on("unhandledRejection", (reason) => {
+    logger.fatal({ err: reason instanceof Error ? reason : new Error(String(reason)) }, "unhandled promise rejection");
+    process.exit(1);
+  });
+  process.on("uncaughtException", (err) => {
+    logger.fatal({ err }, "uncaught exception");
+    process.exit(1);
+  });
 }
 
 main();

@@ -83,8 +83,17 @@ describe("every route requires a verified student unless it is explicitly public
   });
 
   it("an unknown route is a plain 404 and does not reveal the route table", async () => {
-    const res = await request(app).get("/api/does/not/exist");
+    // Signed out, an unknown path is indistinguishable from a private one (401); signed in it is a plain 404.
+    expect((await request(app).get("/api/does/not/exist")).status).toBe(401);
+    const res = await request(app).get("/api/does/not/exist").set({ Authorization: "Bearer test:alice" });
     expect(res.status).toBe(404);
     expect(JSON.stringify(res.body)).not.toMatch(/router|express|stack/i);
+  });
+
+  it("fails closed: an unknown path needs a token too, so a route added without protection is never public", async () => {
+    expect((await request(app).get("/api/some/new/private/thing")).status).toBe(401);
+    expect((await request(app).post("/api/some/new/private/thing").send({})).status).toBe(401);
+    const signedIn = testApp({ autoAuth: false });
+    expect((await request(signedIn).get("/api/some/new/private/thing").set({ Authorization: "Bearer test:alice" })).status).toBe(404);
   });
 });

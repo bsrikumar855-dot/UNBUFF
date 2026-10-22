@@ -57,3 +57,25 @@ jobs:
       - if: steps.detect.outputs.present == 'true'
         continue-on-error: true
         run: npm audit --omit=dev --audit-level=high
+
+  # The Firestore store classes (every per-student query) are exercised against the emulators. Informational for now:
+  # a failure here is reported but does not block a merge until the job has proven stable.
+  emulator:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - run: npm ci
+      - run: npm run test:emulator

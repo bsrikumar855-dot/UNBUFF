@@ -1,5 +1,8 @@
 # Production readiness (18 October 2026)
 
+> **Update, 22 October 2026:** a full data-isolation and hardening audit, with the launch checklist, is in
+> [`security-and-launch.md`](security-and-launch.md). Read that first; this page is the earlier baseline.
+
 ## Verdict
 
 **The code is release-quality and CI is green. The deployment is not yet verified against the real services, so this is not a "ship it" without the operator steps below.** Everything that can be proven without credentials was proven. Four dependencies could not be, because their configuration does not exist where this was built.
