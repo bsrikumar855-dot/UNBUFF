@@ -147,6 +147,22 @@ describe("learn: patterns", () => {
     expect(screen.getByText("Marked solved")).toBeInTheDocument();
   });
 
+  it("keeps a mark saved when the progress load answers while the save is still in flight", async () => {
+    let finishLoad: (r: LearnProgressResponse) => void = () => undefined;
+    let finishSave: (r: LearnProgressResponse) => void = () => undefined;
+    mocked.getLearnProgress.mockReturnValue(new Promise((resolve) => (finishLoad = resolve)));
+    mocked.getLearnPattern.mockResolvedValue(pattern);
+    mocked.setPatternProgress.mockReturnValue(new Promise((resolve) => (finishSave = resolve)));
+    renderAt("/learn/patterns/sliding-window-fixed");
+    fireEvent.click((await screen.findAllByRole("button", { name: "Mark solved" }))[0]!);
+    await waitFor(() => expect(mocked.setPatternProgress).toHaveBeenCalled());
+    await act(async () => finishLoad(progress())); // the older, empty load answers first
+    await act(async () =>
+      finishSave(progress({ progress: { patterns: { [pattern.id]: { done: false, problems_done: ["maximum-average-subarray-i"] } }, dbms: {}, updated_at: "now" } }))
+    );
+    expect(await screen.findByText("Marked solved")).toBeInTheDocument();
+  });
+
   it("shows an error with a retry when the pattern cannot be loaded", async () => {
     mocked.getLearnPattern.mockRejectedValueOnce(new Error("boom")).mockResolvedValueOnce(pattern);
     renderAt("/learn/patterns/sliding-window-fixed", null);
