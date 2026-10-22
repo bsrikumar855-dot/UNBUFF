@@ -91,7 +91,7 @@ describe("protected routes", () => {
     fill(/^Password/, "hunter2hunter2");
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
     expect(await screen.findByText("SETUP_SCREEN")).toBeInTheDocument();
-    expect(client.signIn).toHaveBeenCalledWith("me@example.com", "hunter2hunter2");
+    expect(client.signIn).toHaveBeenCalledWith("me@example.com", "hunter2hunter2", true);
   });
 });
 
@@ -132,7 +132,7 @@ describe("LoginPage", () => {
 
     fill(/^Confirm password/, "longenough1");
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
-    await waitFor(() => expect(client.signUp).toHaveBeenCalledWith("new@example.com", "longenough1"));
+    await waitFor(() => expect(client.signUp).toHaveBeenCalledWith("new@example.com", "longenough1", true));
   });
 
   it("sends a password reset and answers the same way for every address", async () => {

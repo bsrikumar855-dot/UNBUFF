@@ -53,9 +53,8 @@ describe("Firebase Auth emulator + firebase-admin verifier", () => {
     await request(app).post("/api/claims/extract").send({ role_id: "frontend_developer", declared_skills: ["React"] }).expect(401);
   });
 
-  it("a valid token stays valid until it expires (revocation is not checked per request; see docs)", async () => {
+  it("without the revocation guard, a valid token stays valid until it expires (production mounts the guard: see security.emulator.test.ts)", async () => {
     const user = await createEmulatorUser(authHost, `dave-${randomUUID()}@example.test`);
-    // Same token, still valid until it expires: revocation is not checked per request (see docs).
     await create(user.idToken).expect(200);
   });
 });

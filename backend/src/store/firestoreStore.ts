@@ -42,4 +42,11 @@ export class FirestoreStore implements SessionStore {
   async delete(id: string): Promise<void> {
     await this.collection.doc(id).delete();
   }
+
+  /** Single-field range query on the top-level `updated_at` (automatically indexed). */
+  async deleteInactiveBefore(cutoff: Date, limit: number): Promise<number> {
+    const snap = await this.collection.where("updated_at", "<", cutoff).limit(limit).get();
+    await Promise.all(snap.docs.map((d) => d.ref.delete()));
+    return snap.size;
+  }
 }

@@ -21,6 +21,7 @@ import type { ResumeStore } from "../resume/store.js";
 import type { RoleRegistry } from "../services/roles.js";
 import type { SessionStore } from "../store/SessionStore.js";
 import type { AccountDeleteResponse, AccountExport, AccountProfile, AccountProfileResponse } from "../types.js";
+import { audit } from "../security/audit.js";
 import type { AccountStore } from "./store.js";
 
 /** Large enough to cover any one student's records; the stores cap their own pages below this. */
@@ -64,6 +65,8 @@ export interface AccountDeps {
   resumeStore: ResumeStore;
   learnStore: LearnStore;
   learn: LearnService;
+  /** Revokes every Firebase session of the student. Absent where there is no Admin access (tests, misconfiguration). */
+  revokeSessions?: (uid: string) => Promise<void>;
   logger: Logger;
   now?: () => Date;
 }
@@ -95,7 +98,14 @@ export class AccountService {
     }
     const profile: AccountProfile = { ...input, updated_at: this.now().toISOString() };
     await this.deps.profiles.put({ ...profile, owner_uid: uid });
+    audit(this.deps.logger, "account.profile_updated", uid);
     return { profile };
+  }
+
+  async revokeSessions(uid: string): Promise<void> {
+    if (!this.deps.revokeSessions) throw new ApiError("INTERNAL", "Signing out of all devices isn't available right now.");
+    await this.deps.revokeSessions(uid);
+    audit(this.deps.logger, "account.sessions_revoked", uid);
   }
 
   /** Everything stored for this student, as stored. GitHub credentials (encrypted tokens) are deliberately left out. */
@@ -127,6 +137,7 @@ export class AccountService {
       d.resumeStore.get(uid),
       d.learnStore.get(uid),
     ]);
+    audit(d.logger, "account.exported", uid);
     return {
       format: "unbluff-export/1",
       exported_at: this.now().toISOString(),
@@ -229,6 +240,7 @@ export class AccountService {
       throw new ApiError("INTERNAL", `Some data could not be deleted (${failed.join(", ")}). Please try again.`);
     }
     d.logger.info({ removed }, "account data deleted");
+    audit(d.logger, "account.deleted", uid, { removed });
     return { deleted: true, removed };
   }
 }

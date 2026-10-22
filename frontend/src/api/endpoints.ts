@@ -54,6 +54,7 @@ import type {
   AccountProfileUpdate,
   AccountExport,
   AccountDeleteResponse,
+  UsageResponse,
   CompaniesResponse,
   CompanyDetailResponse,
   QuestionsResponse,
@@ -505,6 +506,14 @@ export const api = {
   },
   async saveAccountProfile(profile: AccountProfileUpdate): Promise<AccountProfileResponse> {
     return apiClient<AccountProfileResponse>("/me/profile", { method: "PUT", body: JSON.stringify(profile) });
+  },
+  /** Today's AI allowance (UTC day). */
+  async getUsage(): Promise<UsageResponse> {
+    return apiClient<UsageResponse>("/me/usage", { method: "GET" });
+  },
+  /** Revokes every session of this account on every device (this one included). */
+  async signOutEverywhere(): Promise<void> {
+    await apiClient<unknown>("/me/sign-out-everywhere", { method: "POST" });
   },
   async exportAccount(): Promise<AccountExport> {
     return apiClient<AccountExport>("/me/export", { method: "GET", timeoutMs: 60_000 });

@@ -9,8 +9,10 @@ export interface AuthContextValue {
   sessionExpired: boolean;
   /** True after the student chose to sign out (not after an expired token). The next sign-in must not return to their last page. */
   signedOutOnPurpose: boolean;
-  signIn(email: string, password: string): Promise<void>;
-  signUp(email: string, password: string): Promise<void>;
+  signIn(email: string, password: string, remember?: boolean): Promise<void>;
+  signUp(email: string, password: string, remember?: boolean): Promise<void>;
+  sendVerificationEmail(): Promise<void>;
+  refreshUser(): Promise<void>;
   signOut(): Promise<void>;
   sendPasswordReset(email: string): Promise<void>;
   changePassword(currentPassword: string, newPassword: string): Promise<void>;

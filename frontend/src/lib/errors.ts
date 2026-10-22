@@ -39,6 +39,9 @@ const ERROR_COPY: Record<ErrorCode, string> = {
   RATE_LIMITED: "Too many requests — wait a moment and try again.",
   LLM_INVALID_OUTPUT: "The model returned something we couldn't grade. Try again.",
   LLM_TIMEOUT: "The model took too long to respond. Try again.",
+  EMAIL_NOT_VERIFIED: "Verify your email address to continue. Check your inbox for the link.",
+  DAILY_LIMIT_REACHED: "You've used today's AI allowance. It resets at midnight UTC.",
+  APP_CHECK_FAILED: "We couldn't confirm this request came from the UNBLUFF app. Reload the page and try again.",
   INTERNAL: "Something went wrong on our side. Try again.",
 };
 
@@ -52,7 +55,7 @@ export function isRetryableError(error: unknown): boolean {
 export function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     // 400 messages are written for users by the backend (e.g. "Retest unlocks after 2 more concepts").
-    if ((error.code === "BAD_REQUEST" || error.code === "LEETCODE_IMPORT_INVALID" || error.code === "LEETCODE_IMPORT_CONFLICT") && error.message) return error.message;
+    if ((error.code === "BAD_REQUEST" || error.code === "LEETCODE_IMPORT_INVALID" || error.code === "LEETCODE_IMPORT_CONFLICT" || error.code === "DAILY_LIMIT_REACHED") && error.message) return error.message;
     return ERROR_COPY[error.code as ErrorCode] ?? error.message;
   }
   // Auth errors carry copy written for students (see toAuthError), never the raw SDK message.

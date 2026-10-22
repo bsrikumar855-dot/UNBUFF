@@ -112,8 +112,8 @@ cd backend  && npm run lint && npm run typecheck && npm test
 cd frontend && npm run lint && npm run typecheck && npm test && npm run build
 ```
 
-Latest run (22 October 2026): **backend 1,147 tests** (75 files), **frontend 367 tests** (25 files) and
-**44 Firestore/Auth emulator tests** (11 files, `npm run test:emulator`, needs Java), all passing. The backend's
+Latest run (22 October 2026): **backend 1,168 tests** (76 files), **frontend 382 tests** (27 files) and
+**51 Firestore/Auth emulator tests** (12 files, `npm run test:emulator`, needs Java), all passing. The backend's
 deterministic core (`src/core`) is at 100% line coverage, and CI enforces ≥ 95%.
 
 - Backend: level rules, evidence guard, turn state machine, retest scheduler, scoring, plan,

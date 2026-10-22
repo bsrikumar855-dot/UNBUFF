@@ -1,0 +1,21 @@
+# Weekly dependency updates. Minor and patch updates are grouped per app to keep the PR count low; security updates
+# arrive as their own PRs regardless of this schedule. CI (lint, typecheck, tests, build, npm audit) gates every one.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /backend
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+    groups:
+      backend-minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+    groups:
+      frontend-minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }

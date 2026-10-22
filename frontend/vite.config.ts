@@ -1,6 +1,7 @@
-import { defineConfig, type UserConfig } from "vite";
+import { defineConfig, loadEnv, type Plugin, type UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
+import { cspMetaTag } from "./src/lib/csp";
 
 interface VitestConfig extends UserConfig {
   test: {
@@ -13,9 +14,19 @@ interface VitestConfig extends UserConfig {
   };
 }
 
+/** Builds only: pins the page's allowed connections to the configured API and Firebase (see src/lib/csp.ts). */
+function connectSrcPolicy(mode: string): Plugin {
+  const env = loadEnv(mode, process.cwd(), "VITE_");
+  return {
+    name: "unbluff-connect-src-policy",
+    apply: "build",
+    transformIndexHtml: (html) => html.replace("<head>", `<head>\n    ${cspMetaTag(env, { production: mode === "production" })}`),
+  };
+}
+
 // https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
+export default defineConfig(({ mode }) => ({
+  plugins: [react(), connectSrcPolicy(mode)],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -38,4 +49,4 @@ export default defineConfig({
     testTimeout: 20_000,
     hookTimeout: 20_000,
   },
-} as VitestConfig);
+}) as VitestConfig);

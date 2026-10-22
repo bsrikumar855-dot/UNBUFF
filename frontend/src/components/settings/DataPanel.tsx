@@ -1,4 +1,4 @@
-import React, { useId, useState } from "react";
+import React, { useEffect, useId, useState } from "react";
 import { Download, ShieldAlert, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { GlassCard, TILE } from "@/components/ui/GlassCard";
 import { cn } from "@/lib/cn";
 import { getErrorMessage } from "@/lib/errors";
 import { routes } from "@/lib/routes";
+import type { UsageResponse } from "@/types/contract";
 import { FIELD } from "./ProfilePanel";
 
 /** Must match the backend (routes/account.ts). The student types it, so deleting is never one click. */
@@ -36,6 +37,18 @@ export const DataPanel: React.FC = () => {
   const [step, setStep] = useState<Step>("idle");
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const ids = { phrase: useId(), password: useId() };
+  const [usage, setUsage] = useState<UsageResponse | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    Promise.resolve()
+      .then(() => api.getUsage())
+      .then((u) => live && setUsage(u))
+      .catch(() => undefined); // informational only
+    return () => {
+      live = false;
+    };
+  }, []);
 
   const download = async () => {
     setExporting(true);
@@ -89,6 +102,27 @@ export const DataPanel: React.FC = () => {
 
   return (
     <GlassCard id="data" icon={ShieldAlert} title="Your data" sub="Take a copy of everything, or delete all of it.">
+      {usage && (
+        <div className={cn(TILE, "mb-4 px-4 py-3.5 text-sm")}>
+          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+            <p className="font-medium text-ink-primary">AI allowance today</p>
+            <p className="text-ink-secondary">
+              {usage.used} of {usage.limit} used · resets{" "}
+              {new Date(usage.resets_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </p>
+          </div>
+          <div
+            role="meter"
+            aria-label="AI allowance used today"
+            aria-valuemin={0}
+            aria-valuemax={usage.limit}
+            aria-valuenow={usage.used}
+            className="h-1.5 overflow-hidden rounded-full bg-surface-100"
+          >
+            <div className="h-full rounded-full bg-redline" style={{ width: `${Math.min(100, (usage.used / usage.limit) * 100)}%` }} />
+          </div>
+        </div>
+      )}
       <div className={cn(TILE, "mb-4 flex flex-wrap items-center justify-between gap-3 px-4 py-3.5")}>
         <div className="text-sm">
           <p className="font-medium text-ink-primary">Download my data</p>
