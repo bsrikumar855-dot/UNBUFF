@@ -6,7 +6,6 @@ import { Magnetic } from "@/components/motion/Magnetic";
 import { MaskedText } from "@/components/motion/MaskedText";
 import { EASE, canObserve } from "@/components/motion/ease";
 import { buttonClasses } from "@/lib/buttonClasses";
-import { CropMarks, Ruler } from "./Decor";
 import { VerdictKey } from "./VerdictKey";
 
 /**
@@ -31,8 +30,19 @@ export const HeroSection: React.FC = () => {
       aria-labelledby="hero-title"
       className="relative isolate overflow-hidden border-b border-line"
     >
-      <CropMarks className="inset-3 sm:inset-6" />
-      <Ruler className="left-3 text-foreground sm:left-6" />
+      {/* Liquid light behind the headline: the same red glass as the sidebar, drifting slowly. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-24 top-10 -z-10 size-[34rem] rounded-full bg-[radial-gradient(circle,rgba(255,150,132,0.55),rgba(255,150,132,0)_68%)] blur-2xl motion-safe:animate-[liquid-drift-a_16s_ease-in-out_infinite]"
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-20 bottom-0 -z-10 size-[38rem] rounded-full bg-[radial-gradient(circle,rgba(226,80,64,0.4),rgba(226,80,64,0)_68%)] blur-2xl motion-safe:animate-[liquid-drift-b_20s_ease-in-out_infinite]"
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/3 top-0 -z-10 size-[26rem] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.9),rgba(255,255,255,0)_68%)] blur-2xl"
+      />
       <div className="mx-auto flex min-h-[calc(100svh-3.6rem)] max-w-384 flex-col justify-between px-6 pb-10 pt-12 sm:px-14 sm:pt-16">
         <div className="eyebrow flex flex-wrap items-center justify-between gap-x-6 gap-y-1 text-ink-secondary">
           <span>Audit № 001</span>
@@ -71,11 +81,22 @@ export const HeroSection: React.FC = () => {
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Magnetic>
-                <Link to="/setup" className={buttonClasses("primary", "lg")}>
+                <Link
+                  to="/setup"
+                  className={buttonClasses(
+                    "primary",
+                    "lg",
+                    "rounded-full bg-[linear-gradient(135deg,#f0604e_0%,#c9362a_100%)] text-white shadow-[0_14px_28px_-12px_rgba(201,54,42,0.7),inset_0_1px_0_rgba(255,255,255,0.45)] hover:brightness-110"
+                  )}
+                >
                   Audit My Readiness
                 </Link>
               </Magnetic>
-              <DemoReportButton variant="secondary" size="lg" />
+              <DemoReportButton
+                variant="secondary"
+                size="lg"
+                className="[&_button]:rounded-full [&_button]:bg-white/60 [&_button]:backdrop-blur-md [&_button]:shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08),inset_0_1px_0_rgba(255,255,255,0.95)]"
+              />
             </div>
             <p className="mt-4 max-w-md text-sm text-ink-muted">
               The demo report uses synthetic data and is labelled as such. Nothing is

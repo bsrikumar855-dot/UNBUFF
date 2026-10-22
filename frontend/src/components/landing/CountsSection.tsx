@@ -16,14 +16,22 @@ const NEVER = [
 ];
 
 /** The text with a red pen drawn through it when it scrolls into view: this is what never counts. */
-const Struck: React.FC<{ children: React.ReactNode; delay: number }> = ({ children, delay }) => {
+const Struck: React.FC<{ children: React.ReactNode; delay: number }> = ({
+  children,
+  delay,
+}) => {
   const animated = canObserve();
   return (
     <m.span
       initial={animated ? { backgroundSize: "0% 2px", opacity: 1 } : false}
       whileInView={{ backgroundSize: "100% 2px", opacity: 0.6 }}
       viewport={{ once: true, margin: "0px 0px -15% 0px" }}
-      transition={{ delay, duration: 0.8, ease: EASE, opacity: { delay: delay + 0.4, duration: 0.5 } }}
+      transition={{
+        delay,
+        duration: 0.8,
+        ease: EASE,
+        opacity: { delay: delay + 0.4, duration: 0.5 },
+      }}
       // A background line per text line (box-decoration-break: clone), so wrapped text is struck on every line.
       className="[box-decoration-break:clone] bg-[linear-gradient(var(--color-accent),var(--color-accent))] bg-no-repeat bg-position-[0_58%] bg-size-[100%_2px]"
     >
@@ -60,7 +68,7 @@ const Tick: React.FC<{ delay: number }> = ({ delay }) => {
 
 /** The evidence rules, stated plainly and shown with the red pen: what counts is ticked, what never counts is struck. */
 export const CountsSection: React.FC = () => (
-  <section aria-labelledby="counts-title" className="border-b border-line bg-card">
+  <section aria-labelledby="counts-title" className="border-b border-line">
     <div className="mx-auto max-w-384 px-6 py-20 sm:px-14 sm:py-32">
       <p className="eyebrow">02 · Evidence</p>
       <h2
@@ -74,8 +82,8 @@ export const CountsSection: React.FC = () => (
         stand behind. When there is not enough evidence, the page says so instead of
         guessing a score.
       </p>
-      <div className="mt-16 grid border-t border-foreground md:grid-cols-2">
-        <div className="border-b border-line py-8 md:border-b-0 md:border-r md:pr-12">
+      <div className="mt-16 grid gap-6 md:grid-cols-2">
+        <div className="rounded-[1.75rem] bg-white/55 p-8 shadow-[inset_0_0_0_1px_rgba(24,24,27,0.07),inset_0_1px_0_rgba(255,255,255,0.95),0_16px_32px_-24px_rgba(24,24,27,0.35)] backdrop-blur-sm sm:p-10">
           <h3 className="eyebrow text-verified">Counts toward your progress</h3>
           <ul className="mt-6 space-y-5">
             {COUNTS.map((c, i) => (
@@ -89,7 +97,7 @@ export const CountsSection: React.FC = () => (
             ))}
           </ul>
         </div>
-        <div className="py-8 md:pl-12">
+        <div className="rounded-[1.75rem] bg-[linear-gradient(160deg,rgba(255,214,205,0.7),rgba(255,255,255,0.45))] p-8 shadow-[inset_0_0_0_1px_rgba(179,41,26,0.14),inset_0_1px_0_rgba(255,255,255,0.95),0_16px_32px_-24px_rgba(179,41,26,0.35)] backdrop-blur-sm sm:p-10">
           <h3 className="eyebrow text-redline">Never counts</h3>
           <ul className="mt-6 space-y-5">
             {NEVER.map((c, i) => (

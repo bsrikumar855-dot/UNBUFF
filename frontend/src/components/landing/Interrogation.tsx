@@ -78,9 +78,9 @@ const Specimen: React.FC<{ progress?: MotionValue<number>; stamped: boolean }> =
   return (
     <figure
       aria-label="A specimen proof sheet: one claim, three questions, the evidence found, and the verdict"
-      className="relative border border-foreground bg-card"
+      className="relative overflow-hidden rounded-[1.75rem] bg-white/55 shadow-[inset_0_0_0_1px_rgba(24,24,27,0.07),inset_0_1px_0_rgba(255,255,255,0.95),0_20px_40px_-28px_rgba(24,24,27,0.4)] backdrop-blur-sm"
     >
-      <div className="flex items-center justify-between border-b border-foreground px-5 py-2.5">
+      <div className="flex items-center justify-between border-b border-line px-5 py-2.5">
         <span className="eyebrow text-foreground">Proof sheet</span>
         <span className="eyebrow">Specimen, not a student</span>
       </div>
@@ -228,7 +228,14 @@ const Pinned: React.FC = () => {
                   className="transition-colors duration-300"
                   aria-current={i === step ? "step" : undefined}
                 >
-                  <p className={cn("num text-xs", i === step ? "text-redline" : "text-ink-muted")}>{s.n}</p>
+                  <p
+                    className={cn(
+                      "num text-xs",
+                      i === step ? "text-redline" : "text-ink-muted"
+                    )}
+                  >
+                    {s.n}
+                  </p>
                   <p
                     className={cn(
                       "serif text-2xl font-medium transition-colors duration-300",
@@ -261,7 +268,7 @@ const Static: React.FC = () => (
       <h2 id="interrogation-title" className="serif mt-4 text-title font-medium">
         How a claim is tested
       </h2>
-      <ol className="mt-8 border-t border-foreground">
+      <ol className="mt-8 border-t border-line">
         {STEPS.map((s) => (
           <li
             key={s.n}
