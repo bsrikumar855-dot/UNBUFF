@@ -5,10 +5,10 @@ import { useSignOut } from "./useSignOut";
 
 /**
  * Who is signed in, and a plain, always-visible Sign out. The full form sits at the foot of the sidebar; the compact
- * form (an initial and the sign-out button) sits in the marketing header. Settings and mentor memory are pages in the
+ * form (an initial and the sign-out button) is for tight headers, and the button form is the sign-out button alone. Settings and mentor memory are pages in the
  * navigation like any other, so nothing here is hidden behind a menu.
  */
-export const AccountMenu: React.FC<{ variant?: "full" | "compact" }> = ({
+export const AccountMenu: React.FC<{ variant?: "full" | "compact" | "button" }> = ({
   variant = "full",
 }) => {
   const auth = useAuth();
@@ -36,6 +36,7 @@ export const AccountMenu: React.FC<{ variant?: "full" | "compact" }> = ({
       </span>
     </button>
   );
+  if (variant === "button") return button;
   if (variant === "compact") {
     return (
       <div className="flex items-center gap-1.5">

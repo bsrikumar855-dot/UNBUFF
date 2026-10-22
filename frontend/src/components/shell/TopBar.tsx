@@ -32,7 +32,7 @@ RouterLink.displayName = "RouterLink";
 /**
  * The marketing header: the landing page, sign-in and what a signed-out visitor can open. A pill navigation (a fill
  * rises through each link on hover, a dot slides to the page you are on) with the public places, and at the right the
- * call to action, or the account when someone is signed in. Signed-in students use the sidebar everywhere else. If the
+ * call to action, or for someone who is signed in, only the way into the app and Sign out. Signed-in students use the sidebar everywhere else. If the
  * pills do not fit, the component folds them into its own menu.
  */
 export const TopBar: React.FC<{
@@ -43,6 +43,15 @@ export const TopBar: React.FC<{
   const { status } = useAuth();
   const items: PillNavItem[] = PUBLIC.map(({ match: _m, ...item }) => item);
   const active = PUBLIC.find((e) => e.match?.(pathname));
+
+  // Signed in on the landing or sign-in page: no navigation, just the way into the app and the way out.
+  if (status === "signedIn")
+    return (
+      <header className="sticky top-0 z-40 flex h-(--topbar-h) items-center justify-end gap-2 bg-surface-50/55 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-5">
+        {right}
+        <AccountMenu variant="button" />
+      </header>
+    );
 
   return (
     <header className="sticky top-0 z-40 grid h-(--topbar-h) grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-x-clip bg-surface-50/55 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-5">
@@ -87,7 +96,6 @@ export const TopBar: React.FC<{
             <TooltipContent side="bottom">Go to a screen (Ctrl K)</TooltipContent>
           </Tooltip>
         )}
-        {status === "signedIn" && <AccountMenu variant="compact" />}
       </div>
     </header>
   );
