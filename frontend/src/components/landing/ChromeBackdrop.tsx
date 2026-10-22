@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
 
 // WebGL, so it is code-split and only loaded in browsers that can run it.
-const FluxLines = lazy(() => import("@/components/reactbits/FluxLines"));
+const LiquidChrome = lazy(() => import("@/components/reactbits/LiquidChrome"));
 
 function canRunWebGL(): boolean {
   try {
@@ -12,12 +12,12 @@ function canRunWebGL(): boolean {
 }
 
 /**
- * Glowing flux lines tracing a slow, churning fluid behind the hero (React Bits' Flux Lines), drawn in the app's red on
- * the paper colour so it belongs to the same glass theme. The cursor curls the lines. It fades out towards the bottom
- * edge, stays still for people who ask for reduced motion, and is left out where WebGL is unavailable (the soft red
- * light behind it remains).
+ * Soft ribbons of liquid chrome swirling behind the hero (React Bits' Liquid Chrome), tinted in the app's red and
+ * kept light so the headline stays readable. The cursor ripples it. It fades out towards the bottom edge, stays still
+ * for people who ask for reduced motion, is left out where WebGL is unavailable, and is dropped if the graphics
+ * context is lost (the soft red light behind it remains).
  */
-export const FluxBackdrop: React.FC = () => {
+export const ChromeBackdrop: React.FC = () => {
   const [ready, setReady] = useState(false);
   const [still, setStill] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -25,7 +25,6 @@ export const FluxBackdrop: React.FC = () => {
     setReady(canRunWebGL());
     setStill(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
   }, []);
-  // If the graphics context is lost (a very slow or busy GPU), drop the effect rather than show a blank canvas.
   useEffect(() => {
     if (!ready) return;
     let canvas: HTMLCanvasElement | null = null;
@@ -35,7 +34,7 @@ export const FluxBackdrop: React.FC = () => {
       if (!canvas) return;
       canvas.addEventListener("webglcontextlost", lose);
       if (canvas.getContext("webgl2")?.isContextLost()) lose();
-    }, 1500);
+    }, 2500);
     return () => {
       window.clearTimeout(timer);
       canvas?.removeEventListener("webglcontextlost", lose);
@@ -46,23 +45,16 @@ export const FluxBackdrop: React.FC = () => {
     <div
       ref={box}
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,black_60%,transparent_100%)]"
+      className="pointer-events-none absolute inset-0 -z-10 opacity-50 [mask-image:linear-gradient(to_bottom,black_55%,transparent_100%)]"
     >
       <Suspense fallback={null}>
-        <FluxLines
-          colors={["#FF5A45", "#E5604F", "#F08A78"]}
+        <LiquidChrome
+          color="#E5604F"
           lightMode
-          transparent
-          speed={0.45}
-          scale={1.5}
-          glow={1.2}
-          lineWidth={1.1}
-          flowDirection="down"
-          opacity={0.6}
-          mouseInteraction
-          mouseStrength={1}
-          dpr={1}
-          paused={still}
+          speed={still ? 0 : 0.2}
+          amplitude={0.3}
+          interactive
+          maxDevicePixelRatio={1}
           className="h-full w-full"
         />
       </Suspense>
