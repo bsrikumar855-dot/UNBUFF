@@ -114,9 +114,23 @@ Tested: `tests/integration/securityLayers.test.ts` (budget per call, per student
 3. **Gemini key:** in Google Cloud → APIs & Services → Credentials, restrict the key to the Generative Language API; set a **quota cap** and a **billing budget alert**. The per-student budget limits each account; the quota caps the total.
 4. **Firestore:** `firebase deploy --only firestore:indexes` also creates the **TTL policy** on `unbluff_llm_usage.expires_at`. Turn on point-in-time recovery or scheduled exports.
 5. **Alerts:** log-based alerts on `severity>=ERROR`, on `jsonPayload.message="revocation check unavailable…"`, and on bursts of `jsonPayload.audit="llm.daily_limit_reached"` or `"auth.revoked_token_refused"`.
-6. **Not added in code (next step):** Firebase **App Check** (reCAPTCHA Enterprise) would stop scripts that never load your site. It needs a site key from your Google Cloud project and enforcement on the backend; the daily budget and email verification already bound the cost of a scripted account.
+6. **Firebase App Check** (built in, off by default): in the Firebase console, App Check → register the web app with
+   **reCAPTCHA Enterprise** and copy the site key. Build the frontend with `VITE_FIREBASE_APPCHECK_SITE_KEY=<key>`, deploy,
+   set the backend's `APP_CHECK=monitor` and watch `jsonPayload.audit="appcheck.failed"` for a few days; when only
+   scripts show up there, set `APP_CHECK=enforce`. Enforced, every API call except `/api/health` and GitHub's OAuth redirect
+   needs a valid App Check token, and a failure is a 403 (`APP_CHECK_FAILED`), never a sign-out.
 
-Residual: the per-minute rate limits are per instance (in memory); the daily budget, which is what bounds cost, is shared through Firestore. The CSP `connect-src` still allows any `https:` origin until the production domains are fixed (step 5 below).
+Closed since the first pass (22 October 2026, later):
+- **Revocation can no longer be silently off in production.** At startup the backend proves it can use the Admin API (a
+  lookup of a uid that cannot exist must answer "not found"). Missing credentials or a missing IAM role stop the process
+  with a CRITICAL log naming the fix; a transient network failure is only logged.
+- **The browser may only connect where it must.** The production build writes a `connect-src` policy into `index.html`
+  from its own settings: this site, the `VITE_API_URL` origin, Firebase Authentication, and (only with App Check)
+  reCAPTCHA and the App Check exchange. Browsers enforce it together with the hosting header, so the narrower list wins.
+  A production build refuses a plain-http API URL or the Auth emulator. The hosting header now allows reCAPTCHA's script
+  and frame (needed by App Check).
+
+Residual: the per-minute rate limits are per instance (in memory); the daily budget, which is what bounds cost, is shared through Firestore.
 
 ## Before you launch (operator)
 

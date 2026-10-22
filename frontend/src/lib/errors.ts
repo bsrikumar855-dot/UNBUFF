@@ -41,6 +41,7 @@ const ERROR_COPY: Record<ErrorCode, string> = {
   LLM_TIMEOUT: "The model took too long to respond. Try again.",
   EMAIL_NOT_VERIFIED: "Verify your email address to continue. Check your inbox for the link.",
   DAILY_LIMIT_REACHED: "You've used today's AI allowance. It resets at midnight UTC.",
+  APP_CHECK_FAILED: "We couldn't confirm this request came from the UNBLUFF app. Reload the page and try again.",
   INTERNAL: "Something went wrong on our side. Try again.",
 };
 

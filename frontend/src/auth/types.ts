@@ -21,6 +21,8 @@ export interface AuthClient {
   signUp(email: string, password: string, remember?: boolean): Promise<void>;
   signOut(): Promise<void>;
   sendPasswordReset(email: string): Promise<void>;
+  /** A Firebase App Check token for this web app, or null when App Check isn't configured. */
+  getAppCheckToken?(): Promise<string | null>;
   /** A fresh (auto-refreshed) ID token, or null when signed out. */
   getIdToken(): Promise<string | null>;
   /** Re-checks the current password, then sets a new one. Optional so lightweight test fakes need not implement it. */

@@ -4,6 +4,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { AccountService } from "./account/service.js";
 import { budgetedProvider, LlmBudget } from "./security/budget.js";
+import { checkAdminAccess } from "./security/adminCheck.js";
+import { audit } from "./security/audit.js";
 import { RevocationGuard } from "./security/revocation.js";
 import { FirestoreUsageStore, MemoryUsageStore, type UsageStore } from "./security/usageStore.js";
 import { sweepInactiveSessions } from "./services/retention.js";
@@ -227,6 +229,7 @@ function main(): void {
   const verifier = new FirebaseTokenVerifier(config.FIREBASE_PROJECT_ID ?? serviceAccount?.project_id ?? "", undefined, serviceAccount);
   const admin = verifier.admin();
   const revocation = admin ? new RevocationGuard({ admin, logger }) : null;
+  if (config.NODE_ENV === "production" && config.APP_CHECK === "off") logger.warn("APP_CHECK is off: any script can call the API with a valid sign-in (set APP_CHECK=monitor, then enforce, once the web app sends App Check tokens)");
   if (!config.REQUIRE_EMAIL_VERIFICATION) logger.warn("REQUIRE_EMAIL_VERIFICATION is off: unverified accounts can use every feature, including the language model");
   if (config.NODE_ENV === "production" && config.STORE === "memory") {
     logger.warn("ALLOW_EPHEMERAL_STORE is set: sessions are lost on restart/redeploy and are not shared between instances");
@@ -276,8 +279,23 @@ function main(): void {
     budget,
     revocation,
     requireEmailVerification: config.REQUIRE_EMAIL_VERIFICATION,
+    appCheck: { mode: config.APP_CHECK, verifier: verifier.appCheck() },
     exposeModel: config.NODE_ENV !== "production",
     llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
+  // Revocation needs Admin access. In production a configuration that cannot provide it is refused at startup, rather
+  // than running with revoked sessions silently accepted; a transient failure to reach Firebase is only logged.
+  if (admin) {
+    void checkAdminAccess(admin).then((r) => {
+      if (r.ok) return logger.info("Firebase Admin access verified (token revocation is active)");
+      audit(logger, "startup.admin_check_failed", null, { error_code: r.code, transient: r.transient });
+      if (config.NODE_ENV === "production" && !r.transient) {
+        logger.fatal({ error_code: r.code }, "Firebase Admin access is not available: give the backend's service account the Firebase Authentication Admin role (or set FIREBASE_SERVICE_ACCOUNT_JSON). Refusing to run without token revocation.");
+        process.exit(1);
+      }
+      logger.error({ error_code: r.code }, "Firebase Admin access check failed: revoked sessions are accepted until this is fixed");
+    });
+  }
+
   const server = app.listen(config.PORT, "0.0.0.0", (err?: Error) => {
     if (err) {
       // Express 5 reports bind errors (e.g. EADDRINUSE) here instead of throwing.

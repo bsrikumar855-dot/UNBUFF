@@ -1,5 +1,7 @@
 import { cert, getApp, getApps, initializeApp } from "firebase-admin/app";
+import { getAppCheck } from "firebase-admin/app-check";
 import { getAuth, type Auth } from "firebase-admin/auth";
+import type { AppCheckVerifier } from "../security/appCheck.js";
 
 export interface VerifiedToken {
   uid: string;
@@ -36,6 +38,7 @@ export interface ServiceAccountCredentials {
 export class FirebaseTokenVerifier implements TokenVerifier {
   private readonly verifyIdToken: (token: string) => Promise<VerifiedToken>;
   private readonly auth: Auth | null = null;
+  private readonly appCheckVerifier: AppCheckVerifier | null = null;
 
   /** `verifyIdToken` is injectable for unit tests; production uses the Admin SDK. */
   constructor(projectId: string, verifyIdToken?: (token: string) => Promise<VerifiedToken>, credentials?: ServiceAccountCredentials | null) {
@@ -49,6 +52,8 @@ export class FirebaseTokenVerifier implements TokenVerifier {
         : initializeApp({ projectId, ...(credentials ? { credential: cert({ projectId: credentials.project_id ?? projectId, clientEmail: credentials.client_email, privateKey: credentials.private_key }) } : {}) });
     const auth = getAuth(app);
     this.auth = auth;
+    const appCheck = getAppCheck(app);
+    this.appCheckVerifier = { verify: async (token) => void (await appCheck.verifyToken(token)) };
     this.verifyIdToken = async (token) => {
       const d = await auth.verifyIdToken(token);
       return { uid: d.uid, email_verified: d.email_verified === true, auth_time: d.auth_time };
@@ -57,6 +62,11 @@ export class FirebaseTokenVerifier implements TokenVerifier {
 
   verify(token: string): Promise<VerifiedToken> {
     return this.verifyIdToken(token);
+  }
+
+  /** Firebase App Check token verification, or null when built with an injected verifier (tests). */
+  appCheck(): AppCheckVerifier | null {
+    return this.appCheckVerifier;
   }
 
   /** Admin operations for the revocation guard, or null when built with an injected verifier (tests). */

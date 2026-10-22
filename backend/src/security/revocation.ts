@@ -66,7 +66,7 @@ export class RevocationGuard {
       } else {
         if (now - this.lastErrorLogAt >= ERROR_LOG_EVERY_MS) {
           this.lastErrorLogAt = now;
-          this.deps.logger.error({ code: code || "unknown" }, "revocation check unavailable: allowing verified tokens without it (logged at most every 5 minutes)");
+          this.deps.logger.error({ error_code: code || "unknown" }, "revocation check unavailable: allowing verified tokens without it (logged at most every 5 minutes)");
         }
         return null;
       }

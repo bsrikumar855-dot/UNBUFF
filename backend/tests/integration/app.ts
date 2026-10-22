@@ -37,6 +37,7 @@ import { AccountService } from "../../src/account/service.js";
 import { MemoryAccountStore, type AccountStore } from "../../src/account/store.js";
 import { AssessmentService } from "../../src/services/assessment.js";
 import { budgetedProvider, LlmBudget } from "../../src/security/budget.js";
+import type { AppCheckMode, AppCheckVerifier } from "../../src/security/appCheck.js";
 import type { RevocationGuard } from "../../src/security/revocation.js";
 import { MemoryUsageStore, type UsageStore } from "../../src/security/usageStore.js";
 import type { SessionStore } from "../../src/store/SessionStore.js";
@@ -93,7 +94,7 @@ export const DEFAULT_TEST_UID = "student-a";
  * 401 behaviour. The wrapper only touches headers; the app under test is unchanged.
  */
 export function testApp(
-  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService; placement?: PlacementService; placementStore?: PlacementStore; career?: CareerService; careerStore?: CareerStore; leetcode?: LeetCodeService; leetcodeStore?: LeetCodeStore; resume?: ResumeService; resumeStore?: ResumeStore; learn?: LearnService; learnStore?: LearnStore; latex?: LatexCompiler; accountStore?: AccountStore; githubStore?: GithubStore; usageStore?: UsageStore; llmDailyBudget?: number; maxSessionsPerStudent?: number; requireEmailVerification?: boolean; revocation?: RevocationGuard; revokeSessions?: (uid: string) => Promise<void>; freehire?: Pick<FreehireClient, "search" | "getJob" | "facets">; execution?: { configured: boolean; verified: boolean }; llmMode?: "live" | "mock"; now?: () => Date } = {},
+  opts: { llm?: LLMProvider; rateLimits?: RateLimitOptions; corsOrigin?: string; store?: SessionStore; autoAuth?: boolean; catalogue?: Catalogue; progressStore?: ProgressStore; verifier?: TokenVerifier; provider?: ExecutionProvider; suites?: SuiteRegistry; submissionStore?: SubmissionStore; code?: CodeService; statsStore?: StatsStore; revisionStore?: RevisionStore; analytics?: AnalyticsService; mentorStore?: MentorStore; mentor?: MentorService; github?: GithubService; placement?: PlacementService; placementStore?: PlacementStore; career?: CareerService; careerStore?: CareerStore; leetcode?: LeetCodeService; leetcodeStore?: LeetCodeStore; resume?: ResumeService; resumeStore?: ResumeStore; learn?: LearnService; learnStore?: LearnStore; latex?: LatexCompiler; accountStore?: AccountStore; githubStore?: GithubStore; usageStore?: UsageStore; llmDailyBudget?: number; maxSessionsPerStudent?: number; requireEmailVerification?: boolean; revocation?: RevocationGuard; revokeSessions?: (uid: string) => Promise<void>; appCheck?: { mode: AppCheckMode; verifier: AppCheckVerifier | null }; freehire?: Pick<FreehireClient, "search" | "getJob" | "facets">; execution?: { configured: boolean; verified: boolean }; llmMode?: "live" | "mock"; now?: () => Date } = {},
 ): Express {
   // Like production, every model call is charged to the student's daily budget (generous by default so flow tests never hit it).
   const budget = new LlmBudget({ store: opts.usageStore ?? new MemoryUsageStore(), limit: opts.llmDailyBudget ?? 100_000, logger: silentLogger, now: opts.now });
@@ -253,6 +254,7 @@ export function testApp(
     budget,
     revocation: opts.revocation ?? null,
     requireEmailVerification: opts.requireEmailVerification ?? true,
+    appCheck: opts.appCheck,
     exposeModel: true,
     llm,
     logger: silentLogger,

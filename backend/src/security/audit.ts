@@ -14,7 +14,9 @@ export type AuditEvent =
   | "auth.unverified_email_refused"
   | "llm.daily_limit_reached"
   | "sessions.limit_reached"
-  | "retention.sessions_deleted";
+  | "retention.sessions_deleted"
+  | "appcheck.failed"
+  | "startup.admin_check_failed";
 
 export function audit(logger: Logger, event: AuditEvent, uid: string | null, details: Record<string, unknown> = {}): void {
   logger.info({ audit: event, uid, ...details }, `audit: ${event}`);

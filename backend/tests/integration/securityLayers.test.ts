@@ -230,3 +230,54 @@ describe("hygiene", () => {
     expect(info).toHaveBeenCalledWith({ audit: "account.exported", uid: "alice", extra: 1 }, "audit: account.exported");
   });
 });
+
+describe("Firebase App Check", () => {
+  const realVerifier = { verify: async (t: string) => { if (t !== "good-app-token") throw new Error("bad"); } };
+
+  it("enforce: refuses requests without a valid token (403, not 401, so the student isn't signed out), exempting health", async () => {
+    const app = testApp({ autoAuth: false, appCheck: { mode: "enforce", verifier: realVerifier } });
+    const missing = await request(app).get("/api/me/profile").set(alice).expect(403);
+    expect(missing.body.error.code).toBe("APP_CHECK_FAILED");
+    await request(app).get("/api/me/profile").set(alice).set("X-Firebase-AppCheck", "forged").expect(403);
+    await request(app).get("/api/roles").expect(403); // public routes too: only the web app may call the API
+    await request(app).get("/api/me/profile").set(alice).set("X-Firebase-AppCheck", "good-app-token").expect(200);
+    await request(app).get("/api/health").expect(200);
+    await request(app).options("/api/me/profile").expect((r) => expect(r.status).toBeLessThan(400)); // CORS preflight
+  });
+
+  it("monitor: verifies and logs but never refuses", async () => {
+    const app = testApp({ autoAuth: false, appCheck: { mode: "monitor", verifier: realVerifier } });
+    await request(app).get("/api/me/profile").set(alice).expect(200);
+    await request(app).get("/api/me/profile").set(alice).set("X-Firebase-AppCheck", "forged").expect(200);
+  });
+
+  it("logs failures in the audit shape, throttled", async () => {
+    const { appCheckGuard } = await import("../../src/security/appCheck.js");
+    const info = vi.fn();
+    const guard = appCheckGuard("monitor", realVerifier, { ...silentLogger, info } as never);
+    const next = vi.fn();
+    const req = (token?: string) => ({ path: "/sessions", method: "GET", header: () => token }) as never;
+    await guard(req(), {} as never, next);
+    await guard(req("forged"), {} as never, next);
+    expect(next).toHaveBeenCalledTimes(2);
+    expect(info).toHaveBeenCalledTimes(1);
+    expect(info).toHaveBeenCalledWith(expect.objectContaining({ audit: "appcheck.failed", reason: "missing", mode: "monitor" }), expect.any(String));
+  });
+
+  it("enforce without a verifier refuses everything except health (fails closed)", async () => {
+    const app = testApp({ autoAuth: false, appCheck: { mode: "enforce", verifier: null } });
+    await request(app).get("/api/me/profile").set(alice).set("X-Firebase-AppCheck", "good-app-token").expect(403);
+    await request(app).get("/api/health").expect(200);
+  });
+});
+
+describe("startup Admin access check", () => {
+  it("accepts 'user not found' as proof of access and classifies failures", async () => {
+    const { checkAdminAccess } = await import("../../src/security/adminCheck.js");
+    const failing = (code: string) => ({ getUser: async () => Promise.reject(Object.assign(new Error("x"), { code })), revokeRefreshTokens: async () => undefined });
+    expect(await checkAdminAccess(failing("auth/user-not-found"))).toEqual({ ok: true });
+    expect(await checkAdminAccess(failing("auth/insufficient-permission"))).toEqual({ ok: false, transient: false, code: "auth/insufficient-permission" });
+    expect(await checkAdminAccess(failing("app/invalid-credential"))).toEqual({ ok: false, transient: false, code: "app/invalid-credential" });
+    expect(await checkAdminAccess(failing("app/network-error"))).toEqual({ ok: false, transient: true, code: "app/network-error" });
+  });
+});

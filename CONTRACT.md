@@ -140,6 +140,7 @@ export type ErrorCode =
   | "LLM_TIMEOUT"
   | "EMAIL_NOT_VERIFIED" // added (security): the Firebase email address is not verified yet
   | "DAILY_LIMIT_REACHED" // added (security): the student's daily AI budget is used up
+  | "APP_CHECK_FAILED" // added (security): the request did not come from the UNBLUFF web app (Firebase App Check)
   | "INTERNAL";
 
 // ---------- Roles ----------

@@ -13,6 +13,7 @@ import type { DsaProgressService } from "./dsa/progressService.js";
 import type { Logger } from "./logger.js";
 import type { LLMProvider } from "./llm/provider.js";
 import { requireAuth, requireVerifiedEmail } from "./middleware/auth.js";
+import { appCheckGuard, type AppCheckMode, type AppCheckVerifier } from "./security/appCheck.js";
 import { requireLlmBudget, type LlmBudget } from "./security/budget.js";
 import type { RevocationGuard } from "./security/revocation.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
@@ -77,6 +78,8 @@ export interface AppDeps {
   revocation?: RevocationGuard | null;
   /** Private routes other than the account ones need a verified email (default true). */
   requireEmailVerification?: boolean;
+  /** Firebase App Check (default off). */
+  appCheck?: { mode: AppCheckMode; verifier: AppCheckVerifier | null };
   /** Report the model name on /api/health (default false; production keeps it private). */
   exposeModel?: boolean;
   llm: LLMProvider;
@@ -114,6 +117,8 @@ export function createApp(deps: AppDeps): Express {
   const limiters = createRateLimiters(deps.rateLimits ?? DEFAULT_RATE_LIMITS);
   const api = express.Router();
   api.use(limiters.global);
+  // Before every router: only the real web app may call the API once App Check is enforced (health and GitHub's redirect exempt).
+  api.use(appCheckGuard(deps.appCheck?.mode ?? "off", deps.appCheck?.verifier ?? null, deps.logger));
   api.use(healthRouter(deps.llm, { exposeModel: deps.exposeModel ?? false }));
   api.use(rolesRouter(deps.roles));
   api.use(demoRouter(deps.demoReportJson)); // synthetic data only; public by design

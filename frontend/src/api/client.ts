@@ -10,6 +10,8 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 export interface AuthHooks {
   /** Resolves with a fresh Firebase ID token, or null when signed out. */
   getToken: () => Promise<string | null>;
+  /** A Firebase App Check token, or null when App Check isn't configured. */
+  getAppCheckToken?: () => Promise<string | null>;
   /** Called when the backend answers 401 to a request that carried a token (expired or revoked). */
   onUnauthorized: () => void;
 }
@@ -74,6 +76,12 @@ export async function apiClient<T>(
     token = null; // a failed token refresh surfaces as a 401 from the server, handled below
   }
   if (token) (defaultHeaders as Record<string, string>).Authorization = `Bearer ${token}`;
+  try {
+    const appCheck = (await authHooks?.getAppCheckToken?.()) ?? null;
+    if (appCheck) (defaultHeaders as Record<string, string>)["X-Firebase-AppCheck"] = appCheck;
+  } catch {
+    // no App Check token: the backend decides
+  }
 
   try {
     const response = await fetch(url, {

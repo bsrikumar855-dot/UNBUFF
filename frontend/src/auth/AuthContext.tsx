@@ -31,6 +31,7 @@ export const AuthProvider: React.FC<{
   useEffect(() => {
     setAuthHooks({
       getToken: () => client.getIdToken(),
+      getAppCheckToken: client.getAppCheckToken ? () => client.getAppCheckToken!() : undefined,
       onUnauthorized: () => {
         // Only a request that carried a token can mean "expired"; a signed-out 401 is just "sign in".
         if (!signedIn.current) return;

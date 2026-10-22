@@ -35,6 +35,7 @@ const STATUS: Record<ErrorCode, number> = {
   LLM_TIMEOUT: 504,
   EMAIL_NOT_VERIFIED: 403,
   DAILY_LIMIT_REACHED: 429,
+  APP_CHECK_FAILED: 403,
   INTERNAL: 500,
 };
 

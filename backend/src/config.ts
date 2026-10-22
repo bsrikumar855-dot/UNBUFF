@@ -120,6 +120,11 @@ const EnvSchema = z
     MAX_SESSIONS_PER_STUDENT: z.coerce.number().int().min(1).max(1000).default(50),
     /** Readiness audits (with their resume text) untouched for this many days are deleted automatically. */
     SESSION_RETENTION_DAYS: z.coerce.number().int().min(30).max(1825).default(365),
+    /**
+     * Firebase App Check: off (default), monitor (verify and log, never refuse; use first in production) or enforce (refuse
+     * requests without a valid App Check token, except /api/health and GitHub's OAuth redirect).
+     */
+    APP_CHECK: z.enum(["off", "monitor", "enforce"]).default("off"),
     /** Private routes (except the account ones) need a verified email address. */
     REQUIRE_EMAIL_VERIFICATION: z
       .enum(["true", "false", "1", "0"])

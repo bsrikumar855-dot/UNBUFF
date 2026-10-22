@@ -1,4 +1,5 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
+import { getToken, initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from "firebase/app-check";
 import {
   EmailAuthProvider,
   connectAuthEmulator,
@@ -56,7 +57,20 @@ export function toAuthError(err: unknown): AuthError {
   return new AuthError(FRIENDLY[code] ?? "Something went wrong. Please try again.", code);
 }
 
-let cached: { app: FirebaseApp; auth: Auth } | null = null;
+let cached: { app: FirebaseApp; auth: Auth; appCheck: AppCheck | null } | null = null;
+
+/**
+ * Firebase App Check with reCAPTCHA Enterprise, only when a site key is configured. It proves to the backend that requests
+ * come from this web app (the backend enforces it with APP_CHECK=enforce). For local development against a project with
+ * enforcement on, set VITE_FIREBASE_APPCHECK_DEBUG_TOKEN to a debug token registered in the Firebase console.
+ */
+function startAppCheck(app: FirebaseApp): AppCheck | null {
+  const siteKey = import.meta.env.VITE_FIREBASE_APPCHECK_SITE_KEY;
+  if (!siteKey) return null;
+  const debug = import.meta.env.VITE_FIREBASE_APPCHECK_DEBUG_TOKEN;
+  if (debug) (self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string }).FIREBASE_APPCHECK_DEBUG_TOKEN = debug;
+  return initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(siteKey), isTokenAutoRefreshEnabled: true });
+}
 
 function getFirebase(): Auth | null {
   if (cached) return cached.auth;
@@ -66,7 +80,7 @@ function getFirebase(): Auth | null {
   const auth = getAuth(app);
   const emulator = import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_URL;
   if (emulator) connectAuthEmulator(auth, emulator, { disableWarnings: true });
-  cached = { app, auth };
+  cached = { app, auth, appCheck: startAppCheck(app) };
   return auth;
 }
 
@@ -187,6 +201,17 @@ export const firebaseAuthClient: AuthClient = {
       await deleteUser(user);
     } catch (err) {
       throw toAuthError(err);
+    }
+  },
+
+  async getAppCheckToken() {
+    getFirebase();
+    const appCheck = cached?.appCheck;
+    if (!appCheck) return null;
+    try {
+      return (await getToken(appCheck, false)).token;
+    } catch {
+      return null; // the backend decides (monitor logs it, enforce refuses it)
     }
   },
 

@@ -45,6 +45,8 @@ services:
         value: "50"
       - key: SESSION_RETENTION_DAYS
         value: "365" # audits (with resume text) untouched this long are deleted automatically
+      - key: APP_CHECK
+        value: "off" # after the frontend is built with VITE_FIREBASE_APPCHECK_SITE_KEY: "monitor" for a few days, then "enforce"
       - key: REQUIRE_EMAIL_VERIFICATION
         value: "true" # student features need a verified email; account export/deletion stay available
       - key: MENTOR_TEMPERATURE
