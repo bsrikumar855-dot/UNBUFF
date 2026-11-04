@@ -44,6 +44,9 @@ export const FixTaskOutput = z.object({
 });
 export type FixTaskOutput = z.infer<typeof FixTaskOutput>;
 
+export const PrimerOutput = z.object({ lesson: z.string().min(40).max(1800) });
+export type PrimerOutput = z.infer<typeof PrimerOutput>;
+
 export const RewriteOutput = z.object({ rewrite: z.string().min(1).max(400) });
 export type RewriteOutput = z.infer<typeof RewriteOutput>;
 

@@ -3,10 +3,11 @@ import { z } from "zod";
 import type { Logger } from "../logger.js";
 import type { RawGrade } from "../core/rules.js";
 import { LlmError, type LLMProvider } from "./provider.js";
-import { ExtractOutput, FixTaskOutput, GradeOutput, MentorChatOutput, MentorSummaryOutput, QuestionOutput, RewriteOutput } from "./schemas.js";
+import { ExtractOutput, FixTaskOutput, PrimerOutput, GradeOutput, MentorChatOutput, MentorSummaryOutput, QuestionOutput, RewriteOutput } from "./schemas.js";
 import { clarifyPrompt } from "./prompts/clarify.js";
 import { extractPrompt } from "./prompts/extract.js";
 import { fixTaskPrompt } from "./prompts/fixTask.js";
+import { primerPrompt } from "./prompts/primer.js";
 import { gradePrompt } from "./prompts/grade.js";
 import { questionPrompt } from "./prompts/question.js";
 import { retestPrompt } from "./prompts/retest.js";
@@ -41,6 +42,7 @@ class TransientError extends Error {
 }
 
 const MAX_COOLDOWN_MS = 60_000;
+const OVERLOAD_COOLDOWN_MS = 45_000;
 
 export interface GeminiOptions {
   apiKey?: string;
@@ -116,6 +118,10 @@ export class GeminiProvider implements LLMProvider {
     return this.call("grade", gradePrompt(ctx), GradeOutput, this.precise);
   }
 
+  async primer({ role, skill, claim }: Parameters<LLMProvider["primer"]>[0]) {
+    return this.call("primer", primerPrompt(role, skill, claim), PrimerOutput, this.creative);
+  }
+
   async fixTask({ role, claim, missingConcepts, rootCause }: Parameters<LLMProvider["fixTask"]>[0]) {
     return this.call("fixtask", fixTaskPrompt(role, claim, missingConcepts, rootCause), FixTaskOutput, this.precise);
   }
@@ -144,8 +150,10 @@ export class GeminiProvider implements LLMProvider {
         text = await this.generate(name, model, invalidBefore ? prompt + RETRY_NOTE : prompt, responseJsonSchema, opts, started, extra);
       } catch (err) {
         if (err instanceof TransientError && attempt === 1) {
-          if (err.retryAfterMs !== null && model === primary) {
-            this.primaryCooldownUntil = Date.now() + Math.min(err.retryAfterMs, MAX_COOLDOWN_MS);
+          if (model === primary && this.fallbackModel) {
+            // A quota 429 says how long to wait; an overloaded or timed-out primary (503/504) gets a short default, so the next
+            // calls go straight to the fallback instead of each waiting out the slow primary first.
+            this.primaryCooldownUntil = Date.now() + Math.min(err.retryAfterMs ?? OVERLOAD_COOLDOWN_MS, MAX_COOLDOWN_MS);
           }
           model = this.fallbackModel ?? primary;
           await new Promise((r) => setTimeout(r, TRANSIENT_BACKOFF_MS));

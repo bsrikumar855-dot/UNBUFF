@@ -1,0 +1,244 @@
+{
+  "id": "data_analyst",
+  "name": "Data Analyst",
+  "description": "Entry-level data analyst turning raw data into clear, correct answers with SQL, Python and charts.",
+  "skills": [
+    {
+      "id": "sql_analysis",
+      "name": "SQL for Analysis",
+      "weight": 0.2,
+      "description": "Querying relational data for answers: joins, aggregation, window functions and clean results.",
+      "keywords": [
+        "sql",
+        "join",
+        "group by",
+        "aggregate",
+        "window function",
+        "cte",
+        "subquery",
+        "postgres",
+        "mysql",
+        "query"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact tables, queries and schema used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains what an index speeds up and what it costs on writes",
+          "Explains the difference between INNER and LEFT JOIN with an example",
+          "Explains what a transaction guarantees (atomicity, isolation) and a bug it prevents"
+        ],
+        "L3": [
+          "Explains when they would denormalize or NOT add an index, and the trade-off",
+          "Defends SQL vs a document store for their data with a real cost of each",
+          "Explains how they found and fixed a slow query (EXPLAIN, index, rewrite)"
+        ]
+      },
+      "prerequisites": [
+        "Normalization (1NF to 3NF)",
+        "Joins",
+        "Indexes & B-trees",
+        "Transactions & ACID",
+        "Reading a query plan"
+      ]
+    },
+    {
+      "id": "python_data",
+      "name": "Python for Data",
+      "weight": 0.15,
+      "description": "Working with data in Python: pandas, cleaning, merging, and reproducible notebooks.",
+      "keywords": [
+        "python",
+        "pandas",
+        "numpy",
+        "jupyter",
+        "notebook",
+        "dataframe",
+        "merge",
+        "groupby",
+        "csv"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact libraries, datasets and steps used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains how a merge or join can silently duplicate rows and how to check",
+          "Explains the difference between a view and a copy in pandas or a similar gotcha",
+          "Explains how they made the notebook reproducible"
+        ],
+        "L3": [
+          "Explains when they would NOT use pandas (data too large, SQL is better) and what they use instead",
+          "Defends a cleaning decision against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "DataFrame basics",
+        "Merging & grouping",
+        "Missing values",
+        "Reproducible notebooks"
+      ]
+    },
+    {
+      "id": "data_cleaning",
+      "name": "Data Preparation",
+      "weight": 0.15,
+      "description": "Finding and fixing problems in data: missing values, duplicates, outliers, types and bias in collection.",
+      "keywords": [
+        "data cleaning",
+        "missing values",
+        "outlier",
+        "duplicate",
+        "imputation",
+        "normalization",
+        "data quality",
+        "etl",
+        "data types"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact data problems found and how each was handled used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains at least two ways to handle missing data and what each does to the result",
+          "Explains how an outlier changes the mean and the median",
+          "Explains how they checked the data was correct before analysing"
+        ],
+        "L3": [
+          "Explains when they would NOT drop or impute a value and the bias that could introduce",
+          "Defends a cleaning rule against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Missing data strategies",
+        "Outliers & distributions",
+        "Data types & parsing",
+        "Data quality checks"
+      ]
+    },
+    {
+      "id": "stats_prob",
+      "name": "Statistics & Probability",
+      "weight": 0.2,
+      "description": "Descriptive statistics, distributions, sampling, correlation and basic hypothesis testing.",
+      "keywords": [
+        "statistics",
+        "probability",
+        "mean",
+        "median",
+        "variance",
+        "standard deviation",
+        "distribution",
+        "p-value",
+        "hypothesis",
+        "correlation",
+        "sampling",
+        "confidence interval",
+        "a/b test"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact statistical measures or tests applied used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains what a p-value does and does not say",
+          "Explains why correlation is not causation with an example",
+          "Explains how sample size affects a confidence interval"
+        ],
+        "L3": [
+          "Explains when they would NOT trust a result (small sample, bias, multiple tests) and what they would do",
+          "Defends the test or measure chosen against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Mean, median, variance",
+        "Distributions",
+        "Sampling & bias",
+        "Hypothesis testing"
+      ]
+    },
+    {
+      "id": "data_viz",
+      "name": "Visualization & Storytelling",
+      "weight": 0.15,
+      "description": "Choosing the right chart, avoiding misleading visuals and communicating a finding to a decision maker.",
+      "keywords": [
+        "visualization",
+        "chart",
+        "tableau",
+        "power bi",
+        "matplotlib",
+        "seaborn",
+        "plotly",
+        "dashboard",
+        "storytelling",
+        "excel"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact charts and the question each answered used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains which chart fits a comparison, a trend, a distribution and a part-to-whole, and why",
+          "Explains one way a chart can mislead (truncated axis, dual axis)",
+          "Explains how they tailored the message for a non-technical reader"
+        ],
+        "L3": [
+          "Explains when they would NOT use a chart and show a table or a single number",
+          "Defends a chart choice against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Chart choice",
+        "Misleading visuals",
+        "Dashboards",
+        "Presenting findings"
+      ]
+    },
+    {
+      "id": "analytics_thinking",
+      "name": "Business Metrics & Analysis",
+      "weight": 0.15,
+      "description": "Turning a business question into a metric, a query and a recommendation.",
+      "keywords": [
+        "metric",
+        "kpi",
+        "funnel",
+        "retention",
+        "cohort",
+        "conversion",
+        "ab test",
+        "business",
+        "analysis",
+        "dashboard"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact question, metric and decision used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains how they defined the metric and its denominator",
+          "Explains the difference between a leading and a lagging indicator",
+          "Explains how they checked the result against the business context"
+        ],
+        "L3": [
+          "Explains when they would NOT act on the number and what they would check first",
+          "Defends a metric choice against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Defining a metric",
+        "Funnels & cohorts",
+        "A/B test basics",
+        "Recommendations"
+      ]
+    }
+  ]
+}

@@ -14,9 +14,9 @@ describe("full flow over HTTP (mock mode)", () => {
     expect(health.body).toEqual({ status: "ok", llm_mode: "mock", model: null });
 
     const roles = await request(app).get("/api/roles").expect(200);
-    expect(roles.body.roles).toEqual([
-      expect.objectContaining({ id: "frontend_developer", name: "Frontend Developer", skill_count: 7 }),
-    ]);
+    expect(roles.body.roles).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "frontend_developer", name: "Frontend Developer", skill_count: 7 })]),
+    );
     const role = await request(app).get("/api/roles/frontend_developer").expect(200);
     expect(role.body.skills).toHaveLength(7);
 
@@ -108,3 +108,17 @@ describe("full flow over HTTP (mock mode)", () => {
 function app() {
   return testApp();
 }
+
+describe("Teach me primer over HTTP (mock mode)", () => {
+  it("returns a short lesson for a claim's skill and refuses a claim with no skill", async () => {
+    const app = testApp();
+    const extract = await request(app).post("/api/claims/extract").send({ role_id: "frontend_developer", resume_text: sampleResume }).expect(200);
+    const sid = extract.body.session_id as string;
+    const claim = (extract.body as ClaimsResponse).claims.find((c) => c.skill_id)!;
+    const ok = await request(app).post("/api/primer").send({ session_id: sid, claim_id: claim.id }).expect(200);
+    expect(typeof ok.body.lesson).toBe("string");
+    expect(ok.body.lesson.length).toBeGreaterThan(40);
+    await request(app).post("/api/primer").send({ session_id: sid, claim_id: "CL-999" }).expect(404);
+    await request(app).post("/api/primer").send({ session_id: "s_nope", claim_id: claim.id }).expect(404);
+  });
+});

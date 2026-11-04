@@ -77,6 +77,10 @@ export class MockProvider implements LLMProvider {
     };
   }
 
+  async primer({ skill }: Parameters<LLMProvider["primer"]>[0]) {
+    return { lesson: `${skill.description} Start with: ${skill.prerequisites.join("; ")}. (Canned lesson from the built-in mock model.)` };
+  }
+
   async fixTask({ claim, missingConcepts, rootCause }: Parameters<LLMProvider["fixTask"]>[0]) {
     const concepts = missingConcepts.length > 0 ? missingConcepts : [claim.text];
     const root = rootCause ? `Start with the root cause, **${rootCause}**. ` : "";

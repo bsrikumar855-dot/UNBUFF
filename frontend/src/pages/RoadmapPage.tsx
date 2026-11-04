@@ -16,12 +16,27 @@ import { cn } from "@/lib/cn";
 const RoadmapPage: React.FC = () => {
   const [search] = useSearchParams();
   const { state } = useSessionState();
-  const sessionId = search.get("session") ?? state.sessionId;
+  const explicit = search.get("session") ?? state.sessionId;
+  // After a reload the in-memory session is gone: use the student's newest saved session before falling back to the demo.
+  const [latest, setLatest] = useState<string | null | undefined>(explicit ? null : undefined);
+  const sessionId = explicit ?? latest ?? null;
   const [report, setReport] = useState<Report | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
+    if (explicit) return;
+    let cancelled = false;
+    Promise.resolve()
+      .then(() => api.getSessions())
+      .then((r) => !cancelled && setLatest(r?.sessions?.[0]?.session_id ?? null), () => !cancelled && setLatest(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [explicit]);
+
+  useEffect(() => {
+    if (latest === undefined) return; // still looking for the newest session
     let cancelled = false;
     setError(null);
     (sessionId ? api.getReport(sessionId) : api.getDemoReport())
@@ -30,7 +45,7 @@ const RoadmapPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [sessionId, attempt]);
+  }, [sessionId, latest, attempt]);
 
   const weeks = useMemo(() => (report ? buildRoadmap(report) : []), [report]);
 
@@ -43,9 +58,9 @@ const RoadmapPage: React.FC = () => {
             4-week <em>roadmap</em>
           </>
         }
-        description={!sessionId ? "Showing the demo report (synthetic data)." : undefined}
+        description={!sessionId && latest !== undefined ? "Showing the demo report (synthetic data)." : undefined}
         actions={
-          !sessionId ? (
+          !sessionId && latest !== undefined ? (
             <span className="inline-flex items-center gap-2 rounded-full bg-redline-soft px-4 py-2 text-sm font-medium text-redline shadow-[inset_0_0_0_1px_rgba(179,41,26,0.18)]">
               <Info size={16} aria-hidden="true" />
               Demo data

@@ -34,6 +34,8 @@ export interface LLMProvider {
     missingConcepts: string[];
     rootCause: string | null;
   }): Promise<{ explanation: string; exercise: string }>;
+  /** Teach me mode: a short lesson on the claim's skill, shown before the first question. */
+  primer(input: { role: Role; skill: RoleSkill; claim: Claim }): Promise<{ lesson: string }>;
   rewrite(input: { claim: Claim; evidenceSummary: string }): Promise<string>;
   /**
    * AI mentor. `system` is trusted policy text written by this application; `prompt` carries the student's message and

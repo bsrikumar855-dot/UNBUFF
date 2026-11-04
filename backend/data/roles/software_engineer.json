@@ -1,0 +1,296 @@
+{
+  "id": "software_engineer",
+  "name": "Software Engineer (Generalist)",
+  "description": "Entry-level generalist software engineer for product-company interviews: core CS, data structures, design and clean code.",
+  "skills": [
+    {
+      "id": "data_structures",
+      "name": "Data Structures & Complexity",
+      "weight": 0.25,
+      "description": "Core structures and Big-O reasoning: arrays, hash maps, trees, graphs, heaps, sorting and searching.",
+      "keywords": [
+        "array",
+        "hash map",
+        "hashmap",
+        "tree",
+        "graph",
+        "heap",
+        "stack",
+        "queue",
+        "big o",
+        "complexity",
+        "sorting",
+        "binary search",
+        "recursion",
+        "dynamic programming"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact data structures and algorithms used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains why a hash map lookup is O(1) on average and when it degrades",
+          "Explains the time and space cost of a sort they used",
+          "Explains when a heap or balanced tree beats an array"
+        ],
+        "L3": [
+          "Explains when they would NOT use the structure they picked and what breaks",
+          "Defends a choice between two structures with concrete costs for their input size"
+        ]
+      },
+      "prerequisites": [
+        "Arrays & strings",
+        "Hash maps & sets",
+        "Trees & graphs",
+        "Big-O analysis"
+      ]
+    },
+    {
+      "id": "os_concurrency",
+      "name": "Operating Systems & Concurrency",
+      "weight": 0.15,
+      "description": "Processes, threads, scheduling, memory, locks and deadlocks.",
+      "keywords": [
+        "operating system",
+        "process",
+        "thread",
+        "scheduling",
+        "deadlock",
+        "mutex",
+        "semaphore",
+        "memory",
+        "virtual memory",
+        "paging",
+        "race condition",
+        "concurrency"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact concurrency primitives and where they were used used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains the difference between a process and a thread",
+          "Explains how a race condition arises and how a lock prevents it",
+          "Explains the four conditions for deadlock"
+        ],
+        "L3": [
+          "Explains when they would NOT use a lock or extra threads, and the cost",
+          "Defends a concurrency approach against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Processes & threads",
+        "Locks & race conditions",
+        "Deadlock",
+        "Virtual memory"
+      ]
+    },
+    {
+      "id": "dbms",
+      "name": "Databases",
+      "weight": 0.15,
+      "description": "Relational modelling, joins, indexes, transactions and query performance.",
+      "keywords": [
+        "sql",
+        "postgres",
+        "postgresql",
+        "mysql",
+        "join",
+        "index",
+        "transaction",
+        "normalization",
+        "acid",
+        "orm",
+        "query",
+        "schema",
+        "sqlite"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact tables, queries and schema used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains what an index speeds up and what it costs on writes",
+          "Explains the difference between INNER and LEFT JOIN with an example",
+          "Explains what a transaction guarantees (atomicity, isolation) and a bug it prevents"
+        ],
+        "L3": [
+          "Explains when they would denormalize or NOT add an index, and the trade-off",
+          "Defends SQL vs a document store for their data with a real cost of each",
+          "Explains how they found and fixed a slow query (EXPLAIN, index, rewrite)"
+        ]
+      },
+      "prerequisites": [
+        "Normalization (1NF to 3NF)",
+        "Joins",
+        "Indexes & B-trees",
+        "Transactions & ACID",
+        "Reading a query plan"
+      ]
+    },
+    {
+      "id": "networks_cs",
+      "name": "Computer Networks",
+      "weight": 0.1,
+      "description": "TCP vs UDP, HTTP, DNS, TLS and what happens when a page loads.",
+      "keywords": [
+        "network",
+        "tcp",
+        "udp",
+        "http",
+        "dns",
+        "tls",
+        "osi",
+        "socket",
+        "latency"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact protocols used in the project used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains TCP vs UDP and when each fits",
+          "Explains what happens from typing a URL to a page loading",
+          "Explains what TLS protects and what it does not"
+        ],
+        "L3": [
+          "Explains when they would NOT use TCP or HTTP for a feature",
+          "Defends a protocol choice against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "OSI layers",
+        "TCP handshake",
+        "DNS",
+        "HTTP and TLS"
+      ]
+    },
+    {
+      "id": "oop_design",
+      "name": "OOP & Clean Code",
+      "weight": 0.15,
+      "description": "Object-oriented design, SOLID, design patterns and readable, testable code.",
+      "keywords": [
+        "oop",
+        "object oriented",
+        "solid",
+        "design pattern",
+        "inheritance",
+        "polymorphism",
+        "encapsulation",
+        "interface",
+        "refactor",
+        "clean code",
+        "singleton",
+        "factory",
+        "observer"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact classes, patterns and responsibilities used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains composition vs inheritance with an example from their code",
+          "Explains one SOLID principle and a bug it prevents",
+          "Explains a design pattern they used and the problem it solved"
+        ],
+        "L3": [
+          "Explains when they would NOT apply a pattern and the over-engineering cost",
+          "Defends a design against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Encapsulation & polymorphism",
+        "SOLID principles",
+        "Common patterns",
+        "Refactoring"
+      ]
+    },
+    {
+      "id": "system_design",
+      "name": "System Design Basics",
+      "weight": 0.15,
+      "description": "Scaling a service: caching, queues, load balancing, replication, consistency and failure.",
+      "keywords": [
+        "system design",
+        "cache",
+        "redis",
+        "queue",
+        "kafka",
+        "rabbitmq",
+        "load balancer",
+        "scalab",
+        "replication",
+        "sharding",
+        "latency",
+        "throughput",
+        "microservice",
+        "cdn"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact components of the system (cache, queue, database) and what each did used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains what a cache invalidation problem looks like and one strategy to handle it",
+          "Explains why a queue decouples producers from consumers and what happens when it backs up",
+          "Explains the difference between vertical and horizontal scaling"
+        ],
+        "L3": [
+          "Explains when they would NOT add a cache, queue or microservice, and the cost they avoid",
+          "Defends a consistency vs availability choice for a concrete feature, naming what a user would see on failure"
+        ]
+      },
+      "prerequisites": [
+        "Load balancing",
+        "Caching strategies",
+        "Message queues",
+        "Replication & sharding",
+        "CAP and consistency"
+      ]
+    },
+    {
+      "id": "git",
+      "name": "Git & Collaboration",
+      "weight": 0.05,
+      "description": "Version control workflow: branching, merging, rebasing, pull requests, and recovering from mistakes.",
+      "keywords": [
+        "git",
+        "github",
+        "branch",
+        "merge",
+        "rebase",
+        "pull request",
+        "commit",
+        "gitlab"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact git commands and branching workflow used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains the difference between merge and rebase and what each does to history",
+          "Explains how to resolve a merge conflict step by step",
+          "Explains how revert differs from reset"
+        ],
+        "L3": [
+          "Explains when they would NOT rebase (shared branches) and the cost of rewriting history",
+          "Defends a branching strategy (trunk-based vs feature branches) against the alternative for a team of their size"
+        ]
+      },
+      "prerequisites": [
+        "Commits, branches & history",
+        "Merge vs rebase",
+        "Pull request review flow",
+        "Undoing changes: revert, reset, reflog"
+      ]
+    }
+  ]
+}

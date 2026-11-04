@@ -10,6 +10,12 @@ import type { CareerSignals } from "./match.js";
 /** Freehire category slugs that each UNBLUFF target role corresponds to. Roles not listed here map to nothing. */
 export const ROLE_CATEGORIES: Record<string, string[]> = {
   frontend_developer: ["frontend", "fullstack", "software_engineering"],
+  backend_developer: ["backend", "fullstack", "software_engineering"],
+  fullstack_developer: ["fullstack", "frontend", "backend", "software_engineering"],
+  data_analyst: ["data_analytics", "data_science"],
+  ml_engineer: ["ml_ai", "ai_engineering", "data_science"],
+  devops_engineer: ["devops", "sre"],
+  software_engineer: ["software_engineering", "backend", "fullstack"],
 };
 
 /** Categories that are close to one another, for partial credit. */
@@ -37,6 +43,18 @@ const INTERVIEW_SKILLS: Record<string, string[]> = {
   responsive_css: ["html", "css"],
   accessibility: ["accessibility"],
   git: ["git"],
+  sql_databases: ["sql"],
+  sql_analysis: ["sql"],
+  dbms: ["sql"],
+  data_structures: ["algorithms", "data_structures"],
+  testing: ["testing"],
+  python_data: ["python", "pandas"],
+  python_ml: ["python"],
+  deep_learning: ["deep_learning"],
+  containers: ["docker", "kubernetes"],
+  ci_cd: ["ci_cd"],
+  iac_cloud: ["terraform", "aws"],
+  linux_shell: ["linux"],
 };
 
 const LANGUAGE_SKILL: Record<CodeLanguageId, string> = { python: "python", javascript: "javascript", cpp: "cpp", java: "java" } as Record<CodeLanguageId, string>;
@@ -95,6 +113,7 @@ export function deriveSignals(input: SignalInputs): DerivedProfile {
   if (verified.size === 0 && self.size === 0 && resume.size === 0) notes.push("No skills to compare yet: upload your resume in Memory, add skills in your career preferences, or practise to build verified results.");
   if (skills === null) notes.push("Your practice results could not be read just now, so verified skills are not included.");
   if (!prefs) notes.push("You have not saved career preferences (location, work mode, employment type).");
+  if (!prefs?.countries.length && !prefs?.cities.length) notes.push("Showing jobs in India until you choose a country or city in your career preferences.");
 
   return {
     signals: {

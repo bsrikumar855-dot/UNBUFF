@@ -327,6 +327,10 @@ export const api = {
    * POST /api/fix-task
    * Generates a fix task for shaky, bluff, or honest_gap claims.
    */
+  async getPrimer(payload: FixTaskRequest): Promise<{ lesson: string }> {
+    return apiClient<{ lesson: string }>("/primer", { method: "POST", body: JSON.stringify(payload) });
+  },
+
   async getFixTask(payload: FixTaskRequest): Promise<FixTaskResponse> {
     return apiClient<FixTaskResponse>("/fix-task", {
       method: "POST",

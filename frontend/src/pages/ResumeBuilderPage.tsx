@@ -769,7 +769,15 @@ export const ResumeBuilderPage: React.FC = () => {
                   )}
                 </div>
                 <div className={cn(GLASS, "p-5")}>
-                  {ats ? (
+                  {fromTemplate ? (
+                    <div>
+                      <p className="eyebrow text-ink-muted">Your UNBLUFF ATS score</p>
+                      <p className="mt-1 text-sm text-ink-secondary">
+                        Your score appears once you replace the placeholder details or upload your own résumé. Scoring
+                        the starter text would only measure the template.
+                      </p>
+                    </div>
+                  ) : ats ? (
                     <div className="flex items-center gap-4" aria-busy={scoring}>
                       <ScoreRing score={ats.score} className="size-[4.5rem]" />
                       <div className="min-w-0">

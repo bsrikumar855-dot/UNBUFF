@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MATCH_WEIGHTS, compareMatches, evidenceCoverage, matchJob, rankValue, type CareerSignals } from "../../src/careers/match.js";
+import { MATCH_WEIGHTS, compareMatches, evidenceCoverage, matchJob, type CareerSignals } from "../../src/careers/match.js";
 import { normalizeJob } from "../../src/careers/normalize.js";
 import { deriveSignals, verifiedSkillSlugs } from "../../src/careers/signals.js";
 import type { CareerPreferences } from "../../src/types.js";
@@ -180,10 +180,9 @@ describe("ordering", () => {
     const rich = job({ public_slug: "rich", skills: ["react", "javascript", "typescript", "css"] });
     const ms = matchJob(sparse, s);
     const mr = matchJob(rich, s);
-    expect(ms.score!).toBeGreaterThanOrEqual(mr.score!); // the raw comparison of the few stated fields is perfect...
+    expect(ms.score).toBeNull(); // a posting with no skills cannot be compared on skills, so it gets no score at all...
     expect(evidenceCoverage(ms)).toBeLessThan(evidenceCoverage(mr));
-    expect([{ job: sparse, match: ms }, { job: rich, match: mr }].sort(compareMatches).map((x) => x.job.slug)).toEqual(["rich", "sparse"]); // ...but it is ranked below
-    expect(rankValue(ms)!).toBeLessThan(ms.score!); // only the order key is discounted: the displayed score is the raw one
+    expect([{ job: sparse, match: ms }, { job: rich, match: mr }].sort(compareMatches).map((x) => x.job.slug)).toEqual(["rich", "sparse"]); // ...and is ranked below
   });
 
   it("measures evidence coverage from the components the student gave something to compare", () => {
@@ -225,12 +224,28 @@ describe("building signals from the student's own record", () => {
 });
 
 describe("confidence reflects how much the posting states", () => {
-  it("is low when only a few of the compared fields are stated, even if they all match", () => {
+  it("is insufficient when the posting lists no skills, even if everything else matches", () => {
     const s = signals({ prefs: prefs({ countries: ["in"], work_modes: ["remote", "hybrid"], employment_types: ["internship"] }) });
     const sparse = matchJob(job({ skills: [], countries: [], cities: [], work_mode: null, enrichment: { employment_type: "internship", seniority: "intern", category: "frontend" } }), s);
-    expect(sparse.score).toBe(100);
-    expect(sparse.confidence).toBe("low");
+    expect(sparse.score).toBeNull(); // category, seniority and place alone never read as a match
+    expect(sparse.confidence).toBe("insufficient");
     const rich = matchJob(job(), s);
     expect(["high", "medium"]).toContain(rich.confidence);
+  });
+});
+
+describe("default place", () => {
+  it("starts from India until the student chooses a place, and says so", () => {
+    const india = matchJob(job({ countries: ["in"], cities: [] }), signals());
+    expect(comp(india, "location").state).toBe("match");
+    expect(comp(india, "location").note).toMatch(/default/i);
+    const abroad = matchJob(job({ countries: ["my"], cities: [] }), signals());
+    expect(comp(abroad, "location").state).toBe("mismatch");
+    expect(comp(abroad, "location").note).toMatch(/India/);
+  });
+
+  it("uses the student's own choice once they set one", () => {
+    const m = matchJob(job({ countries: ["my"], cities: [] }), signals({ prefs: prefs({ countries: ["my"] }) }));
+    expect(comp(m, "location").state).toBe("match");
   });
 });

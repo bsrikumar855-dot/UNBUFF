@@ -1,4 +1,5 @@
 import React from "react";
+import { Braces, Cloud, Layers, LineChart, Brain, Cpu, Server, type LucideIcon } from "lucide-react";
 import { useRoles } from "@/hooks/useRoles";
 import { CardRadioGroup } from "@/components/ui/CardRadioGroup";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -8,11 +9,21 @@ interface RoleSelectorProps {
   onChange: (roleId: string) => void;
 }
 
+const ROLE_ICONS: Record<string, LucideIcon> = {
+  frontend_developer: Braces,
+  backend_developer: Server,
+  fullstack_developer: Layers,
+  data_analyst: LineChart,
+  ml_engineer: Brain,
+  devops_engineer: Cloud,
+  software_engineer: Cpu,
+};
+
 function RoleSkeleton() {
   return (
     <div className="grid gap-3" aria-hidden="true">
       {[0, 1].map((i) => (
-        <div key={i} className="h-[72px] animate-pulse rounded-2xl bg-white/60" />
+        <div key={i} className="h-[72px] animate-pulse rounded-2xl bg-white/50" />
       ))}
     </div>
   );
@@ -36,7 +47,9 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({ value, onChange }) =
         value: role.id,
         title: role.name,
         description: role.description,
+        icon: ROLE_ICONS[role.id] ?? Braces,
       }))}
+      className="sm:grid-cols-2"
     />
   );
 };

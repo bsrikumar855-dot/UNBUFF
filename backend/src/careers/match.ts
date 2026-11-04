@@ -120,23 +120,28 @@ function seniorityPart(job: CareerJob, s: CareerSignals): Part {
 
 const set = (l: string[] | undefined) => new Set((l ?? []).map(norm));
 
+/** Where a student is assumed to be until they choose. */
+export const DEFAULT_COUNTRIES = ["in"];
+
 function locationPart(job: CareerJob, s: CareerSignals): Part {
   const p = s.prefs;
-  const countries = set(p?.countries);
+  const chose = (p?.countries?.length ?? 0) > 0 || (p?.cities?.length ?? 0) > 0;
+  // Until the student picks a place, UNBLUFF's students are in India, so India is the starting point (and is said so).
+  const countries = set(chose ? p?.countries : DEFAULT_COUNTRIES);
   const cities = set(p?.cities);
-  if (countries.size === 0 && cities.size === 0) return { applicable: false, value: null, note: "", notSetNote: "No preferred country or city set." };
+  const where = chose ? "a place you chose" : "India (the default until you choose a place)";
   const jobCountries = set(job.countries);
   const jobCities = set(job.cities);
   const wantsRemote = (p?.work_modes ?? []).includes("remote");
   const known = jobCountries.size > 0 || jobCities.size > 0 || job.work_mode === "remote";
   if (!known) return { applicable: true, value: null, note: "The posting does not state where the job is." };
   if ([...cities].some((c) => jobCities.has(c))) return { applicable: true, value: 1, note: "The listed city matches one you chose." };
-  if ([...countries].some((c) => jobCountries.has(c))) return { applicable: true, value: 1, note: "The listed country matches one you chose." };
+  if ([...countries].some((c) => jobCountries.has(c))) return { applicable: true, value: 1, note: chose ? "The listed country matches one you chose." : "Listed in India, the default until you choose a place." };
   if (job.work_mode === "remote" && wantsRemote) {
     if (jobCountries.size === 0) return { applicable: true, value: 1, note: "Remote, with no country restriction listed." };
     return { applicable: true, value: 0.5, note: `Remote, but listed for ${[...jobCountries].join(", ").toUpperCase()}: whether you are eligible is not confirmed.` };
   }
-  return { applicable: true, value: 0, note: `Listed for ${[...jobCountries, ...jobCities].join(", ") || "another place"}, not a place you chose.` };
+  return { applicable: true, value: 0, note: `Listed for ${[...jobCountries, ...jobCities].join(", ") || "another place"}, not ${where}.` };
 }
 
 function workModePart(job: CareerJob, s: CareerSignals): Part {
@@ -178,7 +183,8 @@ export function matchJob(job: CareerJob, signals: CareerSignals): CareerMatch {
   const known = applicable.filter((c) => c.value !== null);
   const knownWeight = known.reduce((a, c) => a + c.weight, 0);
   const applicableWeight = applicable.reduce((a, c) => a + c.weight, 0);
-  const enough = known.length >= 2 && knownWeight >= MIN_KNOWN_WEIGHT;
+  // Parts that need nothing from the student (category, seniority, the default place) must not read as a full match: a score needs a skills comparison too.
+  const enough = known.length >= 3 && known.some((c) => c.key === "skills") && knownWeight >= MIN_KNOWN_WEIGHT;
   const score = enough ? Math.round((100 * known.reduce((a, c) => a + c.weight * (c.value ?? 0), 0)) / knownWeight) : null;
   const coverage = applicableWeight > 0 ? knownWeight / applicableWeight : 0;
   const confidence: CareerMatch["confidence"] = !enough ? "insufficient" : coverage >= 0.8 && knownWeight >= 0.7 ? "high" : coverage >= 0.6 && knownWeight >= 0.5 ? "medium" : "low";

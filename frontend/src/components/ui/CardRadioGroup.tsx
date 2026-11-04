@@ -1,11 +1,12 @@
 import React, { useRef } from "react";
-import { Check } from "lucide-react";
+import { Check, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export interface CardRadioOption<T extends string> {
   value: T;
   title: string;
   description: string;
+  icon?: LucideIcon;
 }
 
 interface CardRadioGroupProps<T extends string> {
@@ -62,20 +63,33 @@ export function CardRadioGroup<T extends string>({
             onClick={() => onChange(option.value)}
             onKeyDown={(event) => handleKeyDown(event, index)}
             className={cn(
-              "min-h-14 rounded-2xl p-4 text-left transition-colors",
+              "group relative min-h-14 overflow-hidden rounded-2xl p-4 text-left backdrop-blur-sm transition-all duration-300 ease-out motion-safe:hover:-translate-y-0.5 motion-safe:active:scale-[0.99]",
               selected
-                ? "bg-redline-soft/60 shadow-[inset_0_0_0_1.5px_rgba(179,41,26,0.55)]"
-                : "bg-white/60 shadow-[inset_0_0_0_1px_rgba(24,24,27,0.1)] hover:bg-white"
+                ? "bg-[linear-gradient(135deg,rgba(244,168,156,0.55)_0%,rgba(255,255,255,0.7)_55%,rgba(240,96,78,0.28)_100%)] shadow-[inset_0_0_0_1.5px_rgba(201,54,42,0.6),inset_0_1px_0_rgba(255,255,255,0.95),0_16px_28px_-16px_rgba(201,54,42,0.6)]"
+                : "bg-white/55 shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08),inset_0_1px_0_rgba(255,255,255,0.95),0_10px_22px_-18px_rgba(24,24,27,0.4)] hover:bg-white/80 hover:shadow-[inset_0_0_0_1px_rgba(201,54,42,0.28),inset_0_1px_0_rgba(255,255,255,0.95),0_14px_26px_-18px_rgba(201,54,42,0.45)]"
             )}
           >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold text-ink-primary">
+            <div className="flex items-center gap-3">
+              {option.icon && (
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "grid size-10 shrink-0 place-items-center rounded-full transition-colors duration-300",
+                    selected
+                      ? "bg-[linear-gradient(135deg,#f0604e_0%,#c9362a_100%)] text-white shadow-[0_8px_16px_-8px_rgba(201,54,42,0.8),inset_0_1px_0_rgba(255,255,255,0.4)]"
+                      : "bg-white text-redline shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08)]"
+                  )}
+                >
+                  <option.icon size={18} strokeWidth={1.75} />
+                </span>
+              )}
+              <span className="min-w-0 flex-1 text-sm font-semibold text-ink-primary">
                 {option.title}
               </span>
               <span
                 aria-hidden="true"
                 className={cn(
-                  "grid size-5 shrink-0 place-items-center rounded-full",
+                  "grid size-5 shrink-0 place-items-center rounded-full transition-colors duration-300",
                   selected
                     ? "bg-redline text-surface-50"
                     : "bg-white shadow-[inset_0_0_0_1.5px_rgba(24,24,27,0.25)]"
@@ -84,7 +98,7 @@ export function CardRadioGroup<T extends string>({
                 {selected && <Check size={12} strokeWidth={3} />}
               </span>
             </div>
-            <p className="mt-1 text-sm leading-relaxed text-ink-secondary">
+            <p className={cn("mt-2 text-sm leading-relaxed text-ink-secondary", option.icon && "sm:pl-[3.25rem]")}>
               {option.description}
             </p>
           </button>

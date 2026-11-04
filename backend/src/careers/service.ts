@@ -39,7 +39,7 @@ import {
   type FreehireQuery,
   type FreehireSearchResult,
 } from "./freehire.js";
-import { compareMatches, matchJob, type CareerSignals } from "./match.js";
+import { compareMatches, DEFAULT_COUNTRIES, matchJob, type CareerSignals } from "./match.js";
 import { descriptionText, normalizeJob } from "./normalize.js";
 import { MAX_RESUME_CHARS, MAX_RESUME_SKILLS, SKILL_VOCABULARY, extractResumeSkills, isKnownSkill, skillLabel } from "./resumeSkills.js";
 import { deriveSignals, type DerivedProfile } from "./signals.js";
@@ -384,6 +384,7 @@ export class CareerService {
       if (prefs.countries.length) base.countries = prefs.countries;
       if (prefs.cities.length) base.cities = prefs.cities;
     }
+    if (!prefs?.countries.length && !prefs?.cities.length) base.countries = DEFAULT_COUNTRIES;
     if (prefs?.must_match_work_mode && prefs.work_modes.length) base.work_mode = prefs.work_modes;
 
     const groups: Partial<FreehireQuery>[] = [];

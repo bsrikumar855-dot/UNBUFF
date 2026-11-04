@@ -6,6 +6,17 @@ import { Button } from "@/components/ui/button";
 const WAKE_TIMEOUT_MS = 90_000;
 const SLOW_AFTER_MS = 3_000;
 
+const AWAKE_KEY = "unbluff.serverAwakeAt";
+const AWAKE_FOR_MS = 5 * 60_000;
+
+function recentlyAwake(): boolean {
+  try {
+    return Date.now() - Number(sessionStorage.getItem(AWAKE_KEY) ?? 0) < AWAKE_FOR_MS;
+  } catch {
+    return false;
+  }
+}
+
 type Phase = "checking" | "waking" | "ready" | "failed";
 
 /**
@@ -19,10 +30,21 @@ export const ServerWakeGate: React.FC = () => {
 
   useEffect(() => {
     let done = false;
+    if (attempt === 0 && recentlyAwake()) {
+      setPhase("ready"); // the server answered within the last few minutes: no need to ask again on every page load
+      return;
+    }
     setPhase("checking");
     const slow = setTimeout(() => !done && setPhase("waking"), SLOW_AFTER_MS);
     apiClient<HealthResponse>("/health", { method: "GET", timeoutMs: WAKE_TIMEOUT_MS })
-      .then(() => setPhase("ready"))
+      .then(() => {
+        try {
+          sessionStorage.setItem(AWAKE_KEY, String(Date.now()));
+        } catch {
+          /* storage can be unavailable; the check just runs again */
+        }
+        setPhase("ready");
+      })
       .catch(() => setPhase("failed"))
       .finally(() => {
         done = true;

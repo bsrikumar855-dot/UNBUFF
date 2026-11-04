@@ -1,0 +1,297 @@
+{
+  "id": "backend_developer",
+  "name": "Backend Developer",
+  "description": "Entry-level backend developer building tested, secure REST services on top of a relational database.",
+  "skills": [
+    {
+      "id": "server_runtime",
+      "name": "Server Language & Runtime",
+      "weight": 0.15,
+      "description": "A backend language and its runtime: concurrency model, error handling, modules and dependency management.",
+      "keywords": [
+        "node",
+        "nodejs",
+        "java",
+        "python",
+        "go",
+        "golang",
+        "spring",
+        "django",
+        "flask",
+        "express",
+        "async",
+        "thread",
+        "concurrency",
+        "typescript"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact language, framework and runtime used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains how their runtime handles concurrent requests (event loop, threads or goroutines)",
+          "Explains how errors propagate and how they handle a failing downstream call",
+          "Explains how they manage dependencies and configuration across environments"
+        ],
+        "L3": [
+          "Explains when they would NOT use their language or framework for a service and what they would pick",
+          "Defends sync vs async handling for a concrete endpoint with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Concurrency model of the runtime",
+        "Error handling & logging",
+        "Dependency management",
+        "Configuration & environment variables"
+      ]
+    },
+    {
+      "id": "rest_apis",
+      "name": "REST API Design",
+      "weight": 0.2,
+      "description": "Designing HTTP APIs: resources, methods, status codes, idempotency, pagination, versioning and authentication.",
+      "keywords": [
+        "rest",
+        "api",
+        "http",
+        "endpoint",
+        "json",
+        "status code",
+        "idempotent",
+        "pagination",
+        "jwt",
+        "oauth",
+        "express",
+        "fastapi",
+        "spring"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact endpoints, methods and payloads used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains which HTTP methods are safe and idempotent and why that matters for retries",
+          "Explains how 401 differs from 403 and 400 from 422",
+          "Explains how cursor pagination differs from offset pagination"
+        ],
+        "L3": [
+          "Explains when they would NOT use REST (for example streaming or very chatty clients) and what they would use instead",
+          "Defends an API versioning or authentication choice against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "HTTP methods & status codes",
+        "Idempotency & safe methods",
+        "Authentication: sessions vs tokens",
+        "Pagination & versioning"
+      ]
+    },
+    {
+      "id": "sql_databases",
+      "name": "SQL & Data Modelling",
+      "weight": 0.2,
+      "description": "Relational modelling, joins, indexes, transactions and query performance.",
+      "keywords": [
+        "sql",
+        "postgres",
+        "postgresql",
+        "mysql",
+        "join",
+        "index",
+        "transaction",
+        "normalization",
+        "acid",
+        "orm",
+        "query",
+        "schema",
+        "sqlite"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact tables, queries and schema used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains what an index speeds up and what it costs on writes",
+          "Explains the difference between INNER and LEFT JOIN with an example",
+          "Explains what a transaction guarantees (atomicity, isolation) and a bug it prevents"
+        ],
+        "L3": [
+          "Explains when they would denormalize or NOT add an index, and the trade-off",
+          "Defends SQL vs a document store for their data with a real cost of each",
+          "Explains how they found and fixed a slow query (EXPLAIN, index, rewrite)"
+        ]
+      },
+      "prerequisites": [
+        "Normalization (1NF to 3NF)",
+        "Joins",
+        "Indexes & B-trees",
+        "Transactions & ACID",
+        "Reading a query plan"
+      ]
+    },
+    {
+      "id": "auth_security",
+      "name": "Authentication & Security",
+      "weight": 0.15,
+      "description": "Securing a service: password storage, tokens, authorization, injection and common web vulnerabilities.",
+      "keywords": [
+        "auth",
+        "authentication",
+        "authorization",
+        "jwt",
+        "oauth",
+        "bcrypt",
+        "hash",
+        "cors",
+        "csrf",
+        "xss",
+        "sql injection",
+        "owasp",
+        "https",
+        "rate limit"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact security measures and where they were applied used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains why passwords are hashed with a slow salted hash rather than encrypted or hashed with SHA-256",
+          "Explains how SQL injection happens and how parameterized queries stop it",
+          "Explains the difference between authentication and authorization with an example from their project"
+        ],
+        "L3": [
+          "Explains when they would NOT store a JWT in local storage or keep sessions stateless, and the risk",
+          "Defends a token vs session choice against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Password hashing",
+        "Sessions vs tokens",
+        "OWASP top ten",
+        "CORS & CSRF"
+      ]
+    },
+    {
+      "id": "testing",
+      "name": "Testing",
+      "weight": 0.1,
+      "description": "Writing reliable automated tests: unit, integration, mocking and what to test.",
+      "keywords": [
+        "test",
+        "jest",
+        "vitest",
+        "pytest",
+        "junit",
+        "mock",
+        "unit test",
+        "integration test",
+        "coverage",
+        "tdd",
+        "ci"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact tests and the tool used to run them used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains the difference between a unit test and an integration test with an example from their project",
+          "Explains what a mock or stub replaces and the risk of over-mocking",
+          "Explains how they made a flaky test reliable"
+        ],
+        "L3": [
+          "Explains what they chose NOT to test and why",
+          "Defends their test mix (unit vs integration) against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Unit vs integration tests",
+        "Mocks, stubs, fakes",
+        "Test data & isolation",
+        "Running tests in CI"
+      ]
+    },
+    {
+      "id": "deploy_basics",
+      "name": "Deployment & Observability",
+      "weight": 0.1,
+      "description": "Shipping a service: containers, environments, logs, health checks and monitoring.",
+      "keywords": [
+        "docker",
+        "container",
+        "deploy",
+        "ci/cd",
+        "github actions",
+        "logging",
+        "monitoring",
+        "health check",
+        "aws",
+        "render",
+        "heroku",
+        "nginx"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact deployment target and pipeline used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains what a container image contains and why it runs the same everywhere",
+          "Explains what they log and how they would trace one failing request",
+          "Explains what a health check is for"
+        ],
+        "L3": [
+          "Explains what they would NOT put in an image or log (secrets, personal data) and why",
+          "Defends a deployment choice (platform vs own server) against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Docker basics",
+        "Environment config & secrets",
+        "Structured logging",
+        "Health checks"
+      ]
+    },
+    {
+      "id": "git",
+      "name": "Git & Collaboration",
+      "weight": 0.1,
+      "description": "Version control workflow: branching, merging, rebasing, pull requests, and recovering from mistakes.",
+      "keywords": [
+        "git",
+        "github",
+        "branch",
+        "merge",
+        "rebase",
+        "pull request",
+        "commit",
+        "gitlab"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact git commands and branching workflow used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains the difference between merge and rebase and what each does to history",
+          "Explains how to resolve a merge conflict step by step",
+          "Explains how revert differs from reset"
+        ],
+        "L3": [
+          "Explains when they would NOT rebase (shared branches) and the cost of rewriting history",
+          "Defends a branching strategy (trunk-based vs feature branches) against the alternative for a team of their size"
+        ]
+      },
+      "prerequisites": [
+        "Commits, branches & history",
+        "Merge vs rebase",
+        "Pull request review flow",
+        "Undoing changes: revert, reset, reflog"
+      ]
+    }
+  ]
+}
