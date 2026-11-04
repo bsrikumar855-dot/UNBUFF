@@ -40,7 +40,7 @@
     "firebase-admin": "^14.5.0",
     "helmet": "^8.3.0",
     "pino": "^10.4.0",
-    "typescript": "~5.9",
+    "typescript": "~7.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
