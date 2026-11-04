@@ -400,6 +400,18 @@ export class AssessmentService {
     return turn(session, claim, mode, "done", null, null, grade);
   }
 
+  // ---------- teach me primer ----------
+
+  /** A short lesson on the claim's skill, for Teach me mode. Not stored: it is cheap and always fresh. */
+  primer(uid: string, sessionId: string, id: string): Promise<{ lesson: string }> {
+    return this.withSession(uid, sessionId, async (session, role) => {
+      const claim = findClaim(session, id);
+      const skill = role.skills.find((s) => s.id === claim.skill_id);
+      if (!skill) throw new ApiError("BAD_REQUEST", `Claim ${claim.id} has no skill to teach`);
+      return this.callLlm(() => this.deps.llm.primer({ role, skill, claim }));
+    });
+  }
+
   // ---------- fix task + report ----------
 
   fixTask(uid: string, sessionId: string, id: string): Promise<FixTask> {

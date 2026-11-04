@@ -148,11 +148,13 @@ describe("the workspace survives a reload", () => {
     mocked.getSession.mockResolvedValue(detail({ stage: "interrogate", open_claim_id: "CL-001" }));
     mocked.interrogate.mockResolvedValue(makeTurn({ session_id: "s_saved", claim_id: "CL-001", claim: claims[0]!, question: "What did you build?" }));
     const first = openFresh("/workspace/s_saved");
+    fireEvent.click(await screen.findByRole("button", { name: /ready, ask me/ })); // Teach me shows its primer first
     fireEvent.change(await screen.findByLabelText("Your answer"), { target: { value: "A dashboard with hooks" } });
     expect(loadDraft("u1", "answer:s_saved:CL-001", "assess-L1-question")).toBe("A dashboard with hooks");
     first.unmount();
 
     openFresh("/workspace/s_saved");
+    fireEvent.click(await screen.findByRole("button", { name: /ready, ask me/ }));
     expect(await screen.findByDisplayValue("A dashboard with hooks")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Submit answer" }));
     await waitFor(() => expect(loadDraft("u1", "answer:s_saved:CL-001", "assess-L1-question")).toBeNull());

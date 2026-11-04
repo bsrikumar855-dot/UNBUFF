@@ -1,0 +1,288 @@
+{
+  "id": "devops_engineer",
+  "name": "DevOps Engineer",
+  "description": "Entry-level DevOps engineer automating builds, deployments and infrastructure with Linux, containers and CI/CD.",
+  "skills": [
+    {
+      "id": "linux_shell",
+      "name": "Linux & Shell",
+      "weight": 0.15,
+      "description": "Command line, processes, permissions, networking tools and shell scripting.",
+      "keywords": [
+        "linux",
+        "bash",
+        "shell",
+        "ubuntu",
+        "permissions",
+        "chmod",
+        "process",
+        "systemd",
+        "ssh",
+        "cron",
+        "grep",
+        "awk"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact commands and scripts used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains how file permissions (rwx, chmod) work and a mistake they cause",
+          "Explains how a process is started, signalled and stopped",
+          "Explains how they debugged a failing script or service"
+        ],
+        "L3": [
+          "Explains when they would NOT script it in bash and what they would use instead",
+          "Defends a scheduling or service-management choice (cron vs systemd timer) with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Filesystem & permissions",
+        "Processes & signals",
+        "Shell scripting",
+        "SSH & networking tools"
+      ]
+    },
+    {
+      "id": "networking",
+      "name": "Networking Basics",
+      "weight": 0.1,
+      "description": "TCP/IP, DNS, HTTP/TLS, ports and load balancing.",
+      "keywords": [
+        "network",
+        "tcp",
+        "ip",
+        "dns",
+        "http",
+        "https",
+        "tls",
+        "port",
+        "firewall",
+        "load balancer",
+        "nat",
+        "subnet",
+        "curl"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact network components in the setup used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains what happens from typing a URL to a page loading (DNS, TCP, TLS, HTTP)",
+          "Explains what a subnet and a security group or firewall rule do",
+          "Explains how a load balancer picks a backend"
+        ],
+        "L3": [
+          "Explains when they would NOT expose a port or service publicly and what they do instead",
+          "Defends a load balancing approach against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "DNS",
+        "TCP & TLS",
+        "Subnets & firewalls",
+        "Load balancing"
+      ]
+    },
+    {
+      "id": "containers",
+      "name": "Containers & Orchestration",
+      "weight": 0.2,
+      "description": "Docker images, networking, volumes, and Kubernetes concepts: pods, deployments, services.",
+      "keywords": [
+        "docker",
+        "dockerfile",
+        "container",
+        "kubernetes",
+        "k8s",
+        "pod",
+        "helm",
+        "docker compose",
+        "image",
+        "registry"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact images, containers and what ran in them used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains how image layers and caching work and how they made a build faster",
+          "Explains the difference between a container and a VM",
+          "Explains what a Kubernetes deployment, service and pod each do"
+        ],
+        "L3": [
+          "Explains when they would NOT use Kubernetes and what is enough instead",
+          "Defends a base image or orchestration choice against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Image layers & Dockerfile",
+        "Volumes & networking",
+        "Pods, deployments, services",
+        "Resource limits"
+      ]
+    },
+    {
+      "id": "ci_cd",
+      "name": "CI/CD Pipelines",
+      "weight": 0.2,
+      "description": "Automated build, test and deploy: pipelines, artifacts, environments and rollbacks.",
+      "keywords": [
+        "ci/cd",
+        "pipeline",
+        "github actions",
+        "jenkins",
+        "gitlab ci",
+        "build",
+        "deploy",
+        "rollback",
+        "artifact",
+        "blue green",
+        "canary"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact pipeline stages and triggers used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains the stages of their pipeline and what failing each one blocks",
+          "Explains how they roll back a bad release",
+          "Explains how secrets are handled in the pipeline"
+        ],
+        "L3": [
+          "Explains when they would NOT auto-deploy to production and what gate they add",
+          "Defends a deployment strategy (blue-green vs canary vs rolling) against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Pipeline stages",
+        "Artifacts & versioning",
+        "Deployment strategies",
+        "Secrets in CI"
+      ]
+    },
+    {
+      "id": "iac_cloud",
+      "name": "Infrastructure as Code & Cloud",
+      "weight": 0.15,
+      "description": "Provisioning with Terraform or similar, and core cloud services: compute, storage, IAM.",
+      "keywords": [
+        "terraform",
+        "ansible",
+        "infrastructure as code",
+        "cloud",
+        "aws",
+        "gcp",
+        "azure",
+        "iam",
+        "s3",
+        "ec2",
+        "cloudformation",
+        "state"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact resources defined and the cloud used used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains what Terraform state is and what goes wrong if it is lost or shared badly",
+          "Explains least privilege with an IAM example",
+          "Explains the difference between declarative and imperative provisioning"
+        ],
+        "L3": [
+          "Explains when they would NOT manage something as code and the cost",
+          "Defends a cloud service choice (managed vs self-run) against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Declarative IaC",
+        "State management",
+        "IAM & least privilege",
+        "Compute & storage services"
+      ]
+    },
+    {
+      "id": "monitoring",
+      "name": "Monitoring & Reliability",
+      "weight": 0.15,
+      "description": "Metrics, logs, alerts, SLOs and incident response.",
+      "keywords": [
+        "monitoring",
+        "prometheus",
+        "grafana",
+        "logging",
+        "alert",
+        "slo",
+        "sla",
+        "incident",
+        "observability",
+        "tracing",
+        "uptime",
+        "postmortem"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact signals collected and alerts set used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains the difference between metrics, logs and traces and when each helps",
+          "Explains what makes an alert actionable and how they reduced noise",
+          "Explains what an SLO is and how an error budget is used"
+        ],
+        "L3": [
+          "Explains when they would NOT page someone and what they do instead",
+          "Defends an alert threshold or SLO against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Metrics, logs, traces",
+        "Alerting",
+        "SLOs & error budgets",
+        "Incident response & postmortems"
+      ]
+    },
+    {
+      "id": "git",
+      "name": "Git & Collaboration",
+      "weight": 0.05,
+      "description": "Version control workflow: branching, merging, rebasing, pull requests, and recovering from mistakes.",
+      "keywords": [
+        "git",
+        "github",
+        "branch",
+        "merge",
+        "rebase",
+        "pull request",
+        "commit",
+        "gitlab"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact git commands and branching workflow used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains the difference between merge and rebase and what each does to history",
+          "Explains how to resolve a merge conflict step by step",
+          "Explains how revert differs from reset"
+        ],
+        "L3": [
+          "Explains when they would NOT rebase (shared branches) and the cost of rewriting history",
+          "Defends a branching strategy (trunk-based vs feature branches) against the alternative for a team of their size"
+        ]
+      },
+      "prerequisites": [
+        "Commits, branches & history",
+        "Merge vs rebase",
+        "Pull request review flow",
+        "Undoing changes: revert, reset, reflog"
+      ]
+    }
+  ]
+}

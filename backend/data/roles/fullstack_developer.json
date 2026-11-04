@@ -1,0 +1,289 @@
+{
+  "id": "fullstack_developer",
+  "name": "Full Stack Developer",
+  "description": "Entry-level full stack developer shipping a feature end to end: UI, API and database.",
+  "skills": [
+    {
+      "id": "web_frontend",
+      "name": "Frontend Fundamentals",
+      "weight": 0.2,
+      "description": "JavaScript, a UI library such as React, state, rendering and responsive CSS.",
+      "keywords": [
+        "javascript",
+        "typescript",
+        "react",
+        "next.js",
+        "hooks",
+        "state",
+        "css",
+        "responsive",
+        "flexbox",
+        "grid",
+        "dom",
+        "vite"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact components, hooks and styles used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains that a state update schedules a re-render and what triggers it",
+          "Explains how the event loop orders promises before timers",
+          "Explains how flexbox and grid differ and when each fits"
+        ],
+        "L3": [
+          "Explains when they would NOT lift state up or use a global store, and the cost",
+          "Defends a rendering approach (client vs server) against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Closures & event loop",
+        "Component state & re-render",
+        "Flexbox & grid",
+        "Fetching data in components"
+      ]
+    },
+    {
+      "id": "rest_apis",
+      "name": "REST API Design",
+      "weight": 0.2,
+      "description": "Designing HTTP APIs: resources, methods, status codes, idempotency, pagination, versioning and authentication.",
+      "keywords": [
+        "rest",
+        "api",
+        "http",
+        "endpoint",
+        "json",
+        "status code",
+        "idempotent",
+        "pagination",
+        "jwt",
+        "oauth",
+        "express",
+        "fastapi",
+        "spring"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact endpoints, methods and payloads used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains which HTTP methods are safe and idempotent and why that matters for retries",
+          "Explains how 401 differs from 403 and 400 from 422",
+          "Explains how cursor pagination differs from offset pagination"
+        ],
+        "L3": [
+          "Explains when they would NOT use REST (for example streaming or very chatty clients) and what they would use instead",
+          "Defends an API versioning or authentication choice against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "HTTP methods & status codes",
+        "Idempotency & safe methods",
+        "Authentication: sessions vs tokens",
+        "Pagination & versioning"
+      ]
+    },
+    {
+      "id": "sql_databases",
+      "name": "SQL & Data Modelling",
+      "weight": 0.2,
+      "description": "Relational modelling, joins, indexes, transactions and query performance.",
+      "keywords": [
+        "sql",
+        "postgres",
+        "postgresql",
+        "mysql",
+        "join",
+        "index",
+        "transaction",
+        "normalization",
+        "acid",
+        "orm",
+        "query",
+        "schema",
+        "sqlite"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact tables, queries and schema used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains what an index speeds up and what it costs on writes",
+          "Explains the difference between INNER and LEFT JOIN with an example",
+          "Explains what a transaction guarantees (atomicity, isolation) and a bug it prevents"
+        ],
+        "L3": [
+          "Explains when they would denormalize or NOT add an index, and the trade-off",
+          "Defends SQL vs a document store for their data with a real cost of each",
+          "Explains how they found and fixed a slow query (EXPLAIN, index, rewrite)"
+        ]
+      },
+      "prerequisites": [
+        "Normalization (1NF to 3NF)",
+        "Joins",
+        "Indexes & B-trees",
+        "Transactions & ACID",
+        "Reading a query plan"
+      ]
+    },
+    {
+      "id": "auth_sessions",
+      "name": "Auth Across the Stack",
+      "weight": 0.1,
+      "description": "Signing users in end to end: login UI, tokens or cookies, protected routes and server checks.",
+      "keywords": [
+        "auth",
+        "login",
+        "jwt",
+        "cookie",
+        "session",
+        "oauth",
+        "firebase",
+        "protected route",
+        "cors",
+        "csrf"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact login flow and where the user is checked used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains where the server must verify the user and why hiding a button in the UI is not security",
+          "Explains how cookies and tokens are sent and the risk of each",
+          "Explains what CORS blocks and what it does not"
+        ],
+        "L3": [
+          "Explains when they would NOT trust data sent by the client and what they re-check on the server",
+          "Defends cookie sessions vs bearer tokens for their app with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Cookies vs tokens",
+        "Server-side authorization",
+        "CORS",
+        "Protected routes"
+      ]
+    },
+    {
+      "id": "testing",
+      "name": "Testing",
+      "weight": 0.1,
+      "description": "Writing reliable automated tests: unit, integration, mocking and what to test.",
+      "keywords": [
+        "test",
+        "jest",
+        "vitest",
+        "pytest",
+        "junit",
+        "mock",
+        "unit test",
+        "integration test",
+        "coverage",
+        "tdd",
+        "ci"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact tests and the tool used to run them used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains the difference between a unit test and an integration test with an example from their project",
+          "Explains what a mock or stub replaces and the risk of over-mocking",
+          "Explains how they made a flaky test reliable"
+        ],
+        "L3": [
+          "Explains what they chose NOT to test and why",
+          "Defends their test mix (unit vs integration) against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Unit vs integration tests",
+        "Mocks, stubs, fakes",
+        "Test data & isolation",
+        "Running tests in CI"
+      ]
+    },
+    {
+      "id": "deploy_fullstack",
+      "name": "Deploying a Full Stack App",
+      "weight": 0.1,
+      "description": "Hosting the frontend and backend, environment config, and basic monitoring.",
+      "keywords": [
+        "deploy",
+        "docker",
+        "vercel",
+        "netlify",
+        "render",
+        "heroku",
+        "ci/cd",
+        "environment variables",
+        "logging",
+        "nginx"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact hosting and pipeline for each part used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains how the frontend finds the API in each environment",
+          "Explains what must never be shipped in the frontend bundle",
+          "Explains how they know when production is failing"
+        ],
+        "L3": [
+          "Explains when they would NOT split the frontend and backend hosting, and the cost",
+          "Defends their hosting choice against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Build vs runtime config",
+        "Secrets handling",
+        "Logs & error tracking",
+        "CI pipelines"
+      ]
+    },
+    {
+      "id": "git",
+      "name": "Git & Collaboration",
+      "weight": 0.1,
+      "description": "Version control workflow: branching, merging, rebasing, pull requests, and recovering from mistakes.",
+      "keywords": [
+        "git",
+        "github",
+        "branch",
+        "merge",
+        "rebase",
+        "pull request",
+        "commit",
+        "gitlab"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact git commands and branching workflow used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains the difference between merge and rebase and what each does to history",
+          "Explains how to resolve a merge conflict step by step",
+          "Explains how revert differs from reset"
+        ],
+        "L3": [
+          "Explains when they would NOT rebase (shared branches) and the cost of rewriting history",
+          "Defends a branching strategy (trunk-based vs feature branches) against the alternative for a team of their size"
+        ]
+      },
+      "prerequisites": [
+        "Commits, branches & history",
+        "Merge vs rebase",
+        "Pull request review flow",
+        "Undoing changes: revert, reset, reflog"
+      ]
+    }
+  ]
+}

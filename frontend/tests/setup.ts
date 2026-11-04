@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom";
 import { configure } from "@testing-library/react";
+import { beforeEach } from "vitest";
 
 // The first render of a lazily loaded page pays for importing the animation library under the full parallel suite; give
 // asynchronous queries room for that instead of failing on a cold start.
@@ -57,3 +58,12 @@ if (typeof Element !== "undefined" && typeof Element.prototype.animate !== "func
   };
   Element.prototype.getAnimations = () => [];
 }
+
+// The wake gate remembers a recent health check in sessionStorage; each test starts without it.
+beforeEach(() => {
+  try {
+    sessionStorage.clear();
+  } catch {
+    /* ignore */
+  }
+});

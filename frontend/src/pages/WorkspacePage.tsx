@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { RotateCcw } from "lucide-react";
-import type { FixTask, Mode, TurnResponse } from "@/types/contract";
+import type { FixTask, Mode, Role, TurnResponse } from "@/types/contract";
 import { api } from "@/api/endpoints";
 import { useSessionState } from "@/state/useSession";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { FixTaskCard } from "@/components/common/FixTaskCard";
 import { ClaimList } from "@/components/workspace/ClaimList";
 import { LevelTracker } from "@/components/workspace/LevelTracker";
 import { QuestionPanel } from "@/components/workspace/QuestionPanel";
+import { SkillPrimer } from "@/components/workspace/SkillPrimer";
 import { TurnResult } from "@/components/workspace/TurnResult";
 import { GLASS } from "@/components/ui/GlassCard";
 import { buttonClasses } from "@/lib/buttonClasses";
@@ -40,6 +41,15 @@ const WorkspacePage: React.FC = () => {
   const [error, setError] = useState<unknown>(null);
   const [fixTask, setFixTask] = useState<FixTask | null>(null);
   const started = useRef(false);
+  const [role, setRole] = useState<Role | null>(null);
+  const [primed, setPrimed] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (state.mode !== "prepare" || !state.roleId || role?.id === state.roleId) return;
+    Promise.resolve()
+      .then(() => api.getRole(state.roleId as string))
+      .then((r) => r && setRole(r), () => undefined);
+  }, [state.mode, state.roleId, role?.id]);
 
   /** Keep the session's claim list and progress in sync with each response (merged in the reducer, never from a stale copy). */
   const applyTurn = useCallback(
@@ -125,6 +135,11 @@ const WorkspacePage: React.FC = () => {
 
   const progress = turn?.progress ?? state.progress;
   const done = turn?.turn === "done";
+  // Teach me: show the skill primer once before the first (level 1, fresh) question of a claim.
+  const primerSkill =
+    state.mode === "prepare" && turn && !done && turn.mode === "assess" && turn.level === 1 && !primed.has(turn.claim_id)
+      ? (role?.skills.find((sk) => sk.id === turn.claim.skill_id) ?? null)
+      : null;
   const nextId = progress?.next_claim_id ?? null;
   const nextMode = progress?.next_mode ?? null;
 
@@ -154,7 +169,15 @@ const WorkspacePage: React.FC = () => {
             </p>
           )}
           <div aria-live="polite">
-            {turn && !done && turn.question && (
+            {turn && !done && turn.question && primerSkill && (
+              <SkillPrimer
+                skill={primerSkill}
+                sessionId={sessionId}
+                claimId={turn.claim_id}
+                onContinue={() => setPrimed((p) => new Set(p).add(turn.claim_id))}
+              />
+            )}
+            {turn && !done && turn.question && !primerSkill && (
               <QuestionPanel
                 turn={turn}
                 busy={busy !== null}

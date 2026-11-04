@@ -1,0 +1,326 @@
+{
+  "id": "ml_engineer",
+  "name": "Machine Learning Engineer",
+  "description": "Entry-level ML engineer who trains, evaluates and ships a model with sound data handling.",
+  "skills": [
+    {
+      "id": "python_ml",
+      "name": "Python & Numerical Computing",
+      "weight": 0.1,
+      "description": "Python for ML: numpy, pandas, vectorization and clean experiment code.",
+      "keywords": [
+        "python",
+        "numpy",
+        "pandas",
+        "vectorization",
+        "jupyter",
+        "scikit-learn",
+        "sklearn",
+        "notebook"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact libraries and data steps used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains why vectorized numpy beats a Python loop",
+          "Explains how they structured experiment code to be reproducible (seeds, versions)"
+        ],
+        "L3": [
+          "Explains when they would NOT use a notebook or pandas for the task",
+          "Defends a data-loading approach against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "numpy arrays & broadcasting",
+        "pandas basics",
+        "Reproducibility: seeds & environments",
+        "Notebook vs script"
+      ]
+    },
+    {
+      "id": "ml_foundations",
+      "name": "ML Foundations",
+      "weight": 0.2,
+      "description": "Regression, classification, clustering, bias-variance, regularization and choosing a model.",
+      "keywords": [
+        "machine learning",
+        "regression",
+        "classification",
+        "clustering",
+        "bias variance",
+        "overfitting",
+        "regularization",
+        "decision tree",
+        "svm",
+        "knn",
+        "random forest",
+        "gradient boosting",
+        "logistic regression"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact model, features and target used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains overfitting and two ways to reduce it",
+          "Explains the bias-variance trade-off with an example from their project",
+          "Explains how a linear model differs from a tree-based model and when each fits"
+        ],
+        "L3": [
+          "Explains when they would NOT use a complex model and what simple baseline they compared with",
+          "Defends the model choice against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Supervised vs unsupervised",
+        "Bias & variance",
+        "Regularization",
+        "Baselines"
+      ]
+    },
+    {
+      "id": "evaluation",
+      "name": "Evaluation & Validation",
+      "weight": 0.2,
+      "description": "Splitting data, cross-validation, metrics, leakage and error analysis.",
+      "keywords": [
+        "evaluation",
+        "cross validation",
+        "train test split",
+        "precision",
+        "recall",
+        "f1",
+        "roc",
+        "auc",
+        "rmse",
+        "confusion matrix",
+        "data leakage",
+        "metric"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact metric and validation setup used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains why accuracy misleads on imbalanced data and which metric they used instead",
+          "Explains what data leakage is and how it would show up",
+          "Explains how cross-validation differs from a single split"
+        ],
+        "L3": [
+          "Explains when they would NOT trust the score and what they did to check",
+          "Defends the metric choice against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Train/validation/test",
+        "Precision, recall, F1",
+        "Leakage",
+        "Cross-validation"
+      ]
+    },
+    {
+      "id": "data_features",
+      "name": "Data & Feature Engineering",
+      "weight": 0.15,
+      "description": "Preparing data for models: cleaning, encoding, scaling, imbalance and pipelines.",
+      "keywords": [
+        "feature engineering",
+        "preprocessing",
+        "encoding",
+        "one hot",
+        "scaling",
+        "normalization",
+        "imbalance",
+        "smote",
+        "pipeline",
+        "missing values"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact features created and transformations applied used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains why scaling matters for some models and not others",
+          "Explains how they avoided fitting a transformer on test data",
+          "Explains how they handled class imbalance"
+        ],
+        "L3": [
+          "Explains when they would NOT add a feature or resample and the risk",
+          "Defends a preprocessing choice against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Encoding categorical data",
+        "Scaling",
+        "Class imbalance",
+        "Pipelines"
+      ]
+    },
+    {
+      "id": "deep_learning",
+      "name": "Deep Learning & NLP Basics",
+      "weight": 0.15,
+      "description": "Neural networks, backpropagation, CNNs/transformers at a conceptual level, and using pretrained models.",
+      "keywords": [
+        "neural network",
+        "deep learning",
+        "pytorch",
+        "tensorflow",
+        "keras",
+        "cnn",
+        "transformer",
+        "nlp",
+        "embedding",
+        "fine-tuning",
+        "backpropagation",
+        "gradient descent",
+        "llm"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact architecture, framework and dataset used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains gradient descent and what the learning rate does",
+          "Explains why they used a pretrained model or trained from scratch",
+          "Explains what an embedding represents"
+        ],
+        "L3": [
+          "Explains when they would NOT use deep learning and what they would use instead",
+          "Defends fine-tuning vs a prompt or classic model against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Gradient descent",
+        "Neural network layers",
+        "Transfer learning",
+        "Embeddings"
+      ]
+    },
+    {
+      "id": "ml_deploy",
+      "name": "Deploying & Monitoring Models",
+      "weight": 0.1,
+      "description": "Serving a model, versioning, drift and responsible use.",
+      "keywords": [
+        "deployment",
+        "serving",
+        "api",
+        "docker",
+        "mlflow",
+        "monitoring",
+        "drift",
+        "fastapi",
+        "flask",
+        "inference",
+        "onnx",
+        "fairness",
+        "bias"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact how the model is served and used used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains how they wrapped the model in an API and handled latency",
+          "Explains what model drift is and how they would detect it",
+          "Explains one fairness risk in their data or model"
+        ],
+        "L3": [
+          "Explains when they would NOT ship the model and what evidence they would need",
+          "Defends a batch vs online serving choice against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Model serving",
+        "Versioning data & models",
+        "Drift monitoring",
+        "Fairness & ethics"
+      ]
+    },
+    {
+      "id": "git",
+      "name": "Git & Collaboration",
+      "weight": 0.05,
+      "description": "Version control workflow: branching, merging, rebasing, pull requests, and recovering from mistakes.",
+      "keywords": [
+        "git",
+        "github",
+        "branch",
+        "merge",
+        "rebase",
+        "pull request",
+        "commit",
+        "gitlab"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact git commands and branching workflow used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains the difference between merge and rebase and what each does to history",
+          "Explains how to resolve a merge conflict step by step",
+          "Explains how revert differs from reset"
+        ],
+        "L3": [
+          "Explains when they would NOT rebase (shared branches) and the cost of rewriting history",
+          "Defends a branching strategy (trunk-based vs feature branches) against the alternative for a team of their size"
+        ]
+      },
+      "prerequisites": [
+        "Commits, branches & history",
+        "Merge vs rebase",
+        "Pull request review flow",
+        "Undoing changes: revert, reset, reflog"
+      ]
+    },
+    {
+      "id": "testing",
+      "name": "Testing",
+      "weight": 0.05,
+      "description": "Writing reliable automated tests: unit, integration, mocking and what to test.",
+      "keywords": [
+        "test",
+        "jest",
+        "vitest",
+        "pytest",
+        "junit",
+        "mock",
+        "unit test",
+        "integration test",
+        "coverage",
+        "tdd",
+        "ci"
+      ],
+      "levels": {
+        "L1": [
+          "Names the exact tests and the tool used to run them used in the project",
+          "States which parts they personally built versus a teammate, a tutorial or a library"
+        ],
+        "L2": [
+          "Explains the difference between a unit test and an integration test with an example from their project",
+          "Explains what a mock or stub replaces and the risk of over-mocking",
+          "Explains how they made a flaky test reliable"
+        ],
+        "L3": [
+          "Explains what they chose NOT to test and why",
+          "Defends their test mix (unit vs integration) against a concrete alternative with a real cost of each"
+        ]
+      },
+      "prerequisites": [
+        "Unit vs integration tests",
+        "Mocks, stubs, fakes",
+        "Test data & isolation",
+        "Running tests in CI"
+      ]
+    }
+  ]
+}

@@ -34,7 +34,8 @@ export const TurnResult: React.FC<{ turn: TurnResponse }> = ({ turn }) => {
       {grade && (
         <ul className="grid gap-1.5 text-sm" aria-label="Evidence from your last answer">
           {grade.admits_gap && <li className="text-ink-secondary">You said you don&apos;t know. That&apos;s an honest gap.</li>}
-          {CRITERIA.map((c) => {
+          {/* "I don't know" asked nothing else, so a list of five missing criteria would only be noise. */}
+          {!grade.admits_gap && CRITERIA.map((c) => {
             const r = grade.criteria[c];
             if (!r.passed && !r.missing_concept) return null;
             return (

@@ -87,11 +87,21 @@ describe("Claim ledger", () => {
 });
 
 describe("Workspace", () => {
+  it("Teach me shows the skill primer before the first question", async () => {
+    vi.mocked(api.interrogate).mockResolvedValueOnce(makeTurn());
+    renderAt("/workspace/s_test");
+    expect(await screen.findByRole("region", { name: "Teach me primer" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Your answer")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /ready, ask me/ }));
+    expect(await screen.findByLabelText("Your answer")).toBeInTheDocument();
+  });
+
   it("3a. turn 'clarify' shows the follow-up tag", async () => {
     vi.mocked(api.interrogate)
       .mockResolvedValueOnce(makeTurn())
       .mockResolvedValueOnce(makeTurn({ turn: "clarify", question: "Which hook exactly?", grade: makeGrade(false, { needs_clarification: true }) }));
     renderAt("/workspace/s_test");
+    fireEvent.click(await screen.findByRole("button", { name: /ready, ask me/ }));
     fireEvent.change(await screen.findByLabelText("Your answer"), { target: { value: "I used hooks for it" } });
     fireEvent.click(screen.getByRole("button", { name: "Submit answer" }));
     expect(await screen.findByText("Follow-up — be more specific")).toBeInTheDocument();
@@ -106,6 +116,7 @@ describe("Workspace", () => {
       .mockResolvedValueOnce(makeTurn({ turn: "done", level: null, question: null, teach_now: true, claim: gap, grade: makeGrade(false, { admits_gap: true }), progress: makeProgress({ claims_done: 1, next_claim_id: "CL-002" }) }));
     vi.mocked(api.getFixTask).mockResolvedValue({ claim_id: "CL-001", skill_id: "react_state", root_cause: "JS closures & references", missing_concepts: ["x"], explanation: "Closures capture **references**.", exercise: "Write a counter." });
     renderAt("/workspace/s_test");
+    fireEvent.click(await screen.findByRole("button", { name: /ready, ask me/ }));
     fireEvent.click(await screen.findByRole("button", { name: "I don't know" }));
     expect(api.interrogate).toHaveBeenLastCalledWith({ session_id: "s_test", claim_id: "CL-001", answer: "I don't know" });
     const fix = await screen.findByRole("region", { name: "Fix task" });
@@ -123,6 +134,7 @@ describe("Workspace", () => {
       )
       .mockResolvedValueOnce(makeTurn({ mode: "retest", question: "Scenario: it breaks in production. Why?" }));
     renderAt("/workspace/s_test");
+    fireEvent.click(await screen.findByRole("button", { name: /ready, ask me/ }));
     fireEvent.change(await screen.findByLabelText("Your answer"), { target: { value: "A long and specific answer about the component." } });
     fireEvent.click(screen.getByRole("button", { name: "Submit answer" }));
     expect(await screen.findByText(RETEST_BANNER)).toBeInTheDocument();
@@ -137,6 +149,7 @@ describe("Workspace", () => {
       .mockResolvedValueOnce(makeTurn())
       .mockRejectedValueOnce(new ApiError("Retest unlocks after 2 more concepts", "BAD_REQUEST", 400));
     renderAt("/workspace/s_test");
+    fireEvent.click(await screen.findByRole("button", { name: /ready, ask me/ }));
     fireEvent.click(await screen.findByRole("button", { name: "I don't know" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Retest unlocks after 2 more concepts");
   });

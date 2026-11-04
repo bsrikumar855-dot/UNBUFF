@@ -35,8 +35,8 @@ export const ClaimRow: React.FC<ClaimRowProps> = ({
         className="w-full rounded-xl border border-line-strong bg-white/70 px-3.5 py-2 text-sm"
       />
       {claim.resume_line && (
-        <p className="text-xs italic text-ink-muted">
-          From your resume: {claim.resume_line}
+        <p className="text-xs italic text-ink-muted" title={claim.resume_line}>
+          From your resume: {claim.resume_line.length > 140 ? `${claim.resume_line.slice(0, 140).trimEnd()}…` : claim.resume_line}
         </p>
       )}
       <div className="flex flex-wrap items-end gap-3">
