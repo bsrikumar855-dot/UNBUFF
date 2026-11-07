@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_ANALYTICS_CONFIG } from "../../src/analytics/config.js";
-import { applyAction, byPriority, createSuggested, onSubmission, priorityOf, RevisionActionError, toItem, type RevisionRecord } from "../../src/analytics/revision.js";
+import { applyAction, byPriority, createSuggested, onSubmission, priorityOf, recallEstimate, RevisionActionError, toItem, type RevisionRecord } from "../../src/analytics/revision.js";
 import { applyEvent, type CountedVerdict, type StatsRecord } from "../../src/analytics/stats.js";
 import { detectWeaknesses } from "../../src/analytics/weakness.js";
 import type { DsaDifficulty } from "../../src/types.js";
@@ -170,6 +170,39 @@ describe("revision rules", () => {
     const mk = (id: string, reason: RevisionRecord["reason"], dueDays: number): RevisionRecord => ({ ...fail(null, stats(["wrong_answer"], id))!, reason, due_at: day(dueDays) });
     const items = [mk("e", "topic_weakness", -5), mk("d", "spaced_review", 3), mk("c", "spaced_review", -1), mk("b", "unsolved_attempted", -2), mk("a", "repeated_failure", 0), mk("a2", "repeated_failure", -3)];
     expect(items.sort(byPriority(NOW)).map((i) => [i.question_id, priorityOf(i, NOW)])).toEqual([["a2", 1], ["a", 1], ["b", 2], ["c", 3], ["d", 4], ["e", 5]]);
+  });
+});
+
+describe("recall estimate", () => {
+  const review = (id: string, reviewedDaysAgo: number, intervalDays: number): RevisionRecord => ({
+    ...fail(null, stats(["wrong_answer"], id))!,
+    reason: "spaced_review",
+    status: "scheduled",
+    last_reviewed_at: day(-reviewedDaysAgo),
+    due_at: day(-reviewedDaysAgo + intervalDays),
+  });
+
+  it("falls as time passes since the last review and is 1 at the moment of review", () => {
+    expect(recallEstimate(review("a", 0, 7), NOW)).toBe(1);
+    expect(recallEstimate(review("a", 7, 7), NOW)!).toBeLessThan(recallEstimate(review("a", 3, 7), NOW)!);
+  });
+
+  it("is null when nothing has been reviewed or the item is not a spaced review", () => {
+    expect(recallEstimate({ ...review("a", 2, 7), last_reviewed_at: null }, NOW)).toBeNull();
+    expect(recallEstimate({ ...review("a", 2, 7), reason: "unsolved_attempted" }, NOW)).toBeNull();
+  });
+
+  it("puts the item most likely forgotten first, not just the one due longest ago", () => {
+    const shortInterval = review("short", 4, 1); // 3 days overdue on a 1-day interval
+    const longInterval = review("long", 35, 30); // 5 days overdue on a 30-day interval
+    expect(Date.parse(longInterval.due_at)).toBeLessThan(Date.parse(shortInterval.due_at));
+    expect([longInterval, shortInterval].sort(byPriority(NOW)).map((i) => i.question_id)).toEqual(["short", "long"]);
+  });
+
+  it("falls back to due date and id when recall is equal or unknown", () => {
+    const a = { ...review("b", 2, 7), last_reviewed_at: null };
+    const b = { ...review("a", 2, 7), last_reviewed_at: null };
+    expect([a, b].sort(byPriority(NOW)).map((i) => i.question_id)).toEqual(["a", "b"]);
   });
 });
 

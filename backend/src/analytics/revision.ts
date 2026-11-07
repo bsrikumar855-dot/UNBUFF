@@ -229,6 +229,29 @@ export function toItem(r: RevisionRecord, title: string | null, now: Date): Revi
   };
 }
 
-/** Queue order: priority tier, then earlier due date, then question id (stable). */
-export const byPriority = (now: Date) => (a: RevisionRecord, b: RevisionRecord) =>
-  priorityOf(a, now) - priorityOf(b, now) || a.due_at.localeCompare(b.due_at) || a.question_id.localeCompare(b.question_id);
+/**
+ * Estimated chance the student still remembers a spaced-review item, from a forgetting curve:
+ * exp(-elapsed / (interval * 1.4)), where elapsed is the time since the last review and interval is the gap
+ * that review scheduled (due_at - last_reviewed_at, at least one day). It is an estimate for ordering the queue,
+ * never shown as a fact. Null when the item has never been reviewed, so there is nothing to measure from.
+ */
+export function recallEstimate(r: RevisionRecord, now: Date): number | null {
+  if (r.reason !== "spaced_review" || !r.last_reviewed_at) return null;
+  const last = Date.parse(r.last_reviewed_at);
+  const elapsedDays = Math.max(0, (now.getTime() - last) / DAY_MS);
+  const intervalDays = Math.max(1, (Date.parse(r.due_at) - last) / DAY_MS);
+  return Math.exp(-elapsedDays / (intervalDays * 1.4));
+}
+
+/**
+ * Queue order: priority tier, then (for spaced reviews) the item most likely to have been forgotten first,
+ * then earlier due date, then question id (stable). Recall is rounded so float noise cannot reorder ties.
+ */
+export const byPriority = (now: Date) => (a: RevisionRecord, b: RevisionRecord) => {
+  const tier = priorityOf(a, now) - priorityOf(b, now);
+  if (tier !== 0) return tier;
+  const ra = recallEstimate(a, now);
+  const rb = recallEstimate(b, now);
+  const recall = ra !== null && rb !== null ? Math.round(ra * 1000) - Math.round(rb * 1000) : 0;
+  return recall || a.due_at.localeCompare(b.due_at) || a.question_id.localeCompare(b.question_id);
+};
