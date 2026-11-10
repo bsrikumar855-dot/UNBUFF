@@ -55,10 +55,7 @@ const SettingsPage: React.FC = () => {
       />
 
       {returned?.kind === "connected" && (
-        <p
-          role="status"
-          className={cn(TILE, "mb-4 px-4 py-3 text-sm text-ink-primary")}
-        >
+        <p role="status" className={cn(TILE, "mb-4 px-4 py-3 text-sm text-ink-primary")}>
           GitHub is connected. Fetching your public activity now.
         </p>
       )}
@@ -82,15 +79,24 @@ const SettingsPage: React.FC = () => {
         <LeetCodeConnectionPanel showInsightsLink />
       </div>
       <p className="mt-5 flex flex-wrap items-center gap-2 text-sm">
-        <Link to={routes.github} className={buttonClasses("secondary", "sm", "rounded-full bg-white/70")}>
+        <Link
+          to={routes.github}
+          className={buttonClasses("secondary", "sm", "rounded-full bg-white/70")}
+        >
           <Github aria-hidden="true" />
           Open GitHub insights
         </Link>
-        <Link to={routes.leetcode} className={buttonClasses("secondary", "sm", "rounded-full bg-white/70")}>
+        <Link
+          to={routes.leetcode}
+          className={buttonClasses("secondary", "sm", "rounded-full bg-white/70")}
+        >
           <Trophy aria-hidden="true" />
           LeetCode insights
         </Link>
-        <Link to={routes.mentorMemory} className={buttonClasses("secondary", "sm", "rounded-full bg-white/70")}>
+        <Link
+          to={routes.mentorMemory}
+          className={buttonClasses("secondary", "sm", "rounded-full bg-white/70")}
+        >
           <Brain aria-hidden="true" />
           AI mentor memory
         </Link>
@@ -98,6 +104,17 @@ const SettingsPage: React.FC = () => {
 
       <h2 className="eyebrow mb-3 mt-8">Data and privacy</h2>
       <DataPanel />
+      <p className="mt-4 text-sm text-ink-secondary">
+        Read the{" "}
+        <Link to="/privacy" className="text-redline underline underline-offset-4">
+          Privacy
+        </Link>{" "}
+        page and the{" "}
+        <Link to="/terms" className="text-redline underline underline-offset-4">
+          Terms of use
+        </Link>
+        .
+      </p>
     </Page>
   );
 };

@@ -30,6 +30,7 @@ function routes(): Route[] {
 /** Public by design: no student data, or a browser redirect that carries no token (GitHub's callback). */
 const PUBLIC = new Set([
   "get /health",
+  "get /ready",
   "get /roles",
   "get /roles/:roleId",
   "get /demo/report",

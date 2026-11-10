@@ -4,6 +4,8 @@ This records what was checked before deploying UNBLUFF, what was found and fixed
 the operator can do. It complements `production-readiness.md` (earlier state) and `phase-10-release-readiness.md` §9
 (step-by-step deployment).
 
+> To go live, follow [go-live.md](go-live.md): it lists, in order, every step that needs your accounts or decisions.
+
 ## Verdict
 
 The application is **safe to deploy from a data-isolation and hardening point of view**, and a production-mode build

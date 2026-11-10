@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/context";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CommandPalette } from "./CommandPalette";
@@ -74,7 +74,21 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
           <footer className="border-t border-line px-6 py-5">
             <div className="mx-auto flex max-w-352 flex-wrap items-center justify-between gap-2 text-xs text-ink-muted">
               <span className="eyebrow">UNBLUFF · evidence, not claims</span>
-              <span>&copy; 2026</span>
+              <nav aria-label="Legal" className="flex items-center gap-4">
+                <Link
+                  to="/privacy"
+                  className="underline-offset-4 hover:text-redline hover:underline"
+                >
+                  Privacy
+                </Link>
+                <Link
+                  to="/terms"
+                  className="underline-offset-4 hover:text-redline hover:underline"
+                >
+                  Terms
+                </Link>
+                <span>&copy; 2026</span>
+              </nav>
             </div>
           </footer>
         </div>

@@ -1,4 +1,6 @@
+import express from "express";
 import request from "supertest";
+import { healthRouter } from "../../src/routes/health.js";
 import { describe, expect, it } from "vitest";
 import type { ClaimsResponse, Report, TurnResponse } from "../../src/types.js";
 import { ClaimsResponseSchema, ReportSchema, TurnResponseSchema } from "../fixtures/contractSchemas.js";
@@ -120,5 +122,21 @@ describe("Teach me primer over HTTP (mock mode)", () => {
     expect(ok.body.lesson.length).toBeGreaterThan(40);
     await request(app).post("/api/primer").send({ session_id: sid, claim_id: "CL-999" }).expect(404);
     await request(app).post("/api/primer").send({ session_id: "s_nope", claim_id: claim.id }).expect(404);
+  });
+});
+
+describe("readiness", () => {
+  it("/api/ready is public, uncached, and reports an unreachable database as 503", async () => {
+    const app = testApp();
+    const ok = await request(app).get("/api/ready").expect(200);
+    expect(ok.body.ready).toBe(true);
+    expect(ok.headers["cache-control"]).toMatch(/no-store/);
+  });
+
+  it("reports 503 when the database probe fails", async () => {
+    const llm = { mode: "mock", model: null } as never;
+    const down = express().use(healthRouter(llm, { probe: async () => Promise.reject(new Error("db down")) }));
+    const res = await request(down).get("/ready").expect(503);
+    expect(res.body).toEqual({ ready: false, checks: { database: "unreachable" } });
   });
 });

@@ -23,7 +23,8 @@
     "code:import-suite": "tsx scripts/code_import_suite.ts",
     "practice:build": "tsx scripts/build_practice_pack.ts",
     "smoke:judge0": "tsx scripts/judge0_smoke.ts",
-    "indexes:check": "tsx scripts/firestore_index_check.ts"
+    "indexes:check": "tsx scripts/firestore_index_check.ts",
+    "preflight": "tsx scripts/preflight.ts"
   },
   "dependencies": {
     "@google-cloud/firestore": "^9.3.1",
