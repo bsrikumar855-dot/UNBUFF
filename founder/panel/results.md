@@ -1,0 +1,65 @@
+# Buyer panel: UNBLUFF, a placement-preparation website for engineering students
+
+**0 buy · 20 pass** (0% buy) out of 20 simulated buyers. Seed 7, so the same cards can be dealt again.
+
+These are simulated buyers, not customers. Use this to find objections and weak spots, then confirm the big ones with real people before you spend.
+
+## By segment
+
+| group | buyers | buy rate |
+| --- | ---: | ---: |
+| Student at a lower-tier or regional college | 9 | 0% |
+| Student at a mid-tier college | 8 | 0% |
+| Student at a top-tier college (IIT, NIT or a leading private college) | 3 | 0%  (thin) |
+
+## By buying behaviour
+
+| group | buyers | buy rate |
+| --- | ---: | ---: |
+| Follows one YouTuber's roadmap | 4 | 0%  (thin) |
+| Relies on the college placement cell | 2 | 0%  (thin) |
+| Buys a course when friends do | 2 | 0%  (thin) |
+| Starts panicking two months before placements | 4 | 0%  (thin) |
+| Targets service-company tests only | 2 | 0%  (thin) |
+| Collects free resources and pays for nothing | 3 | 0%  (thin) |
+| Grinds LeetCode every day | 3 | 0%  (thin) |
+
+## By income
+
+| group | buyers | buy rate |
+| --- | ---: | ---: |
+| under INR 482,000 | 6 | 0%  (thin) |
+| INR 482,000 to 779,000 | 7 | 0%  (thin) |
+| INR 779,000 and up | 7 | 0%  (thin) |
+
+## Why they pass
+
+| reason | buyers | in their words |
+| --- | ---: | --- |
+| price | 7 | "I do not have money for a monthly subscription; my parents pay for everything. Even the 499 one-time pass is a big ask from my family's money when I am not sure the AI mentor is better than just asking seniors or using free stuff." (P003) · "I pay for nothing right now and my family's money for this kind of thing is tight. Everything the Pro part promises, like mentor hints and resume tools, I can get free on YouTube, GeeksforGeeks and my free chatbot." (P008) |
+| trust | 6 | "I do not know this website and I would have to hand it my resume and my data. Even if the free check is useful, I do not pay for things I have not seen work, and my family's money is not for trying out a new site." (P001) · "The college placement cell is free and it is already running the training and tests I am waiting for. The page never says this gets me a job, and the one thing that would prove progress, checking my code against hidden tests, is not out yet." (P002) |
+| habit | 5 | "I already ask a free AI chatbot when I'm stuck, and my placement cell already runs training, so I don't see what I'd be paying for yet. I'd use the free resume check and plan first and see if it helps." (P004) · "I already use LeetCode and the free playlists from my YouTuber, and I rarely pay for prep stuff. The free resume score sounds useful, but I don't see why I'd pay for something I can get from what I already use." (P005) |
+| need | 1 | "I can get the same kind of resume tips and placement practice free on YouTube and GeeksforGeeks, and I'm short on money and time. I would use the free resume check, but I would not pay for something I have not seen actually get me a job." (P006) |
+| quality | 1 | "I already get hints for free from my chatbot and I can get practice problems on YouTube and GeeksforGeeks. The thing I actually care about, a judge that checks my code against hidden tests, is listed as coming later, so I would be paying for the parts I can already get for nothing." (P017) |
+
+## Why they buy
+
+| reason | buyers | in their words |
+| --- | ---: | --- |
+
+## What would flip a no
+
+- A friend from my college who got a real placement using it, or a clear free result I can see before I give any card or pay anything.
+- Seeing that students like me got placed after using it, or the hidden-test checking going live before my placement season starts.
+- If my whole batch is paying for it and seniors say it got them interviews, I would ask my parents for the one-time pass.
+- If the free plan showed me a real gap in my resume that my placement cell missed, and the Pro resume tools clearly fixed it during the 7-day trial.
+- Proof that the paid features give me something my free resources don't, like hidden-test checks that prove my code works, which the site says is not available yet.
+- If the free resume check and first plan clearly showed me gaps that YouTube did not, and the 7-day trial showed real improvement in my applications before I had to pay.
+- If it gave me TCS/Infosys-style aptitude practice that I cannot get free elsewhere and it loaded fine on my bad Wi-Fi.
+- A checked result I could not get anywhere else, such as my code proven against hidden tests on a real placement-style problem.
+- A creator I already follow using it and telling me it worked for them, so I trust the people behind it before I give them my resume.
+- If the resume questioning showed me a real weak claim on my own resume that I could not have caught myself, I would pay for the 499 six-month pass.
+- If the hidden-test judge were live and I could see it grade my code against real problems, I would ask my parents for the INR 499 six-month pass.
+- If the free ATS score and resume check showed a specific gap I could fix this week, and the AI mentor's hints actually got me unstuck on a problem during the free trial.
+
+20 buyers gave all four price answers. Run founder-pricing's van_westendorp.py on the answers folder.

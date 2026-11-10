@@ -1,0 +1,13 @@
+{
+  "id": "P004",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I already ask a free AI chatbot when I'm stuck, and my placement cell already runs training, so I don't see what I'd be paying for yet. I'd use the free resume check and plan first and see if it helps.",
+  "objection": "The Pro mentor gives hints, not answers, and that sounds a lot like what the free chatbot already does for me. I'd want to know why it's better enough to pay for.",
+  "would_change_my_mind": "If the free plan showed me a real gap in my resume that my placement cell missed, and the Pro resume tools clearly fixed it during the 7-day trial.",
+  "price_too_cheap": 15,
+  "price_cheap": 49,
+  "price_expensive": 149,
+  "price_too_expensive": 249
+}

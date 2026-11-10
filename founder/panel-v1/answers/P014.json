@@ -1,0 +1,13 @@
+{
+  "id": "P014",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "I do not have money for a monthly subscription. My parents pay for everything, so INR 299 every month is not something I can decide on my own, and I would have to ask them for a recurring expense for a site I have not tried.",
+  "objection": "It is a monthly charge with no proof yet that it will get me placed, and the most useful part (hidden-test code running) is not even available yet.",
+  "would_change_my_mind": "A free plan that gives me a real, usable plan, or a one-time or short-term option my parents can approve without a monthly commitment.",
+  "price_too_cheap": 19,
+  "price_cheap": 49,
+  "price_expensive": 149,
+  "price_too_expensive": 199
+}

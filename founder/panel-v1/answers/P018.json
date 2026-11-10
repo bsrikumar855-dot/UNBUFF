@@ -1,0 +1,13 @@
+{
+  "id": "P018",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I pay for nothing right now. Everything I need for placement prep is on YouTube and GeeksforGeeks for free, and I already use a free AI chatbot for doubts, so I don't see why I'd start paying INR 299 a month.",
+  "objection": "The free resources cover the same DSA and DBMS topics, so the mentor and resume checks would have to prove they do something those don't.",
+  "would_change_my_mind": "Seeing the resume check catch a real problem in my own resume that I could not find myself, before I am asked to pay.",
+  "price_too_cheap": 29,
+  "price_cheap": 79,
+  "price_expensive": 149,
+  "price_too_expensive": 199
+}

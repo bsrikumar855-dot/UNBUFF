@@ -1,0 +1,13 @@
+{
+  "id": "P008",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "I pay for nothing right now and my family's money for this kind of thing is tight. Everything the Pro part promises, like mentor hints and resume tools, I can get free on YouTube, GeeksforGeeks and my free chatbot.",
+  "objection": "Nothing I have read says the paid part does something free tools cannot. An AI mentor that only gives hints sounds like extra work, not a better result.",
+  "would_change_my_mind": "A checked result I could not get anywhere else, such as my code proven against hidden tests on a real placement-style problem.",
+  "price_too_cheap": 9,
+  "price_cheap": 29,
+  "price_expensive": 59,
+  "price_too_expensive": 99
+}

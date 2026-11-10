@@ -1,0 +1,13 @@
+{
+  "id": "P020",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I do not know this site and I would have to hand it my resume and my data before I have seen anything useful. The free part is also missing the one thing I care about, a judge with hidden tests that I can trust, so I have no reason to pay INR 299 yet.",
+  "objection": "Why should I give a new website my resume and personal details when I cannot see who runs it or how it checks my claims?",
+  "would_change_my_mind": "The hidden-test judge going live and proving on hard problems that it is accurate and fair, with a clear privacy policy for my resume.",
+  "price_too_cheap": 49,
+  "price_cheap": 149,
+  "price_expensive": 299,
+  "price_too_expensive": 499
+}

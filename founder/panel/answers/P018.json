@@ -1,0 +1,13 @@
+{
+  "id": "P018",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I pay for nothing right now. I get placement prep free from YouTube and GeeksforGeeks and ask doubts to a free chatbot, and this asks me to start paying for the same kind of help. The free tier also gives me a resume score, which I can get elsewhere for nothing.",
+  "objection": "I can't see what this gives me that free YouTube, GeeksforGeeks and free ATS checkers don't, so I'd be paying for the same thing in a different wrapper.",
+  "would_change_my_mind": "If the hidden-test code checking, which the page says is coming later, were already live and clearly caught mistakes my free practice misses.",
+  "price_too_cheap": 15,
+  "price_cheap": 39,
+  "price_expensive": 99,
+  "price_too_expensive": 149
+}

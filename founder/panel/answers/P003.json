@@ -1,0 +1,13 @@
+{
+  "id": "P003",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "I do not have money for a monthly subscription; my parents pay for everything. Even the 499 one-time pass is a big ask from my family's money when I am not sure the AI mentor is better than just asking seniors or using free stuff.",
+  "objection": "I cannot tell if the hints and plan are better than free YouTube and my college placement cell, and the 7-day trial still needs me to remember to cancel.",
+  "would_change_my_mind": "If my whole batch is paying for it and seniors say it got them interviews, I would ask my parents for the one-time pass.",
+  "price_too_cheap": 19,
+  "price_cheap": 49,
+  "price_expensive": 149,
+  "price_too_expensive": 249
+}

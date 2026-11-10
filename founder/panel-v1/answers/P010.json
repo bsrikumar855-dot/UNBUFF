@@ -1,0 +1,13 @@
+{
+  "id": "P010",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I already get all of this free on YouTube and GeeksforGeeks, and I use a free AI chatbot for doubts, so I have never paid for a study resource and I don't see why I would start with this. The AI mentor and resume checks sound useful, but the free versions cover most of what I need.",
+  "objection": "If the free tools already cover DSA and DBMS, what does INR 299 a month give me that I can't get for nothing? The 'checked progress' idea sounds good but I can't tell yet if it actually helps me get placed.",
+  "would_change_my_mind": "A clear, free trial that shows the resume ATS scoring and the mentor are clearly better than what I already use for free, with real results from people in my college.",
+  "price_too_cheap": 9,
+  "price_cheap": 49,
+  "price_expensive": 129,
+  "price_too_expensive": 199
+}

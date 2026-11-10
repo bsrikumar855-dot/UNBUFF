@@ -1,0 +1,13 @@
+{
+  "id": "P015",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I already ask a free AI chatbot when I'm stuck, and nothing here shows that paying gets me a placement. I'd use the free resume check and the study plan first, and only pay if they clearly helped.",
+  "objection": "Will this actually help me get a job? Nobody in my batch can say it has got anyone placed yet.",
+  "would_change_my_mind": "Seeing friends or seniors who used it land interviews or offers, or my free ATS score and plan clearly improving my resume.",
+  "price_too_cheap": 19,
+  "price_cheap": 49,
+  "price_expensive": 149,
+  "price_too_expensive": 249
+}

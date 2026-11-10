@@ -1,0 +1,13 @@
+{
+  "id": "P020",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I don't know this site and I'm not handing it my resume and my data on a random Tuesday. The free check is fine to try, but I'd only pay once I've seen it work on something real.",
+  "objection": "I can't check the claims. It says nothing counts unless it was checked, but the hidden-test judging isn't out yet, so right now I'd be paying for AI hints and resume tools on trust.",
+  "would_change_my_mind": "Hidden-test judging for my own LeetCode solutions that actually runs and shows me pass or fail.",
+  "price_too_cheap": 29,
+  "price_cheap": 49,
+  "price_expensive": 149,
+  "price_too_expensive": 299
+}

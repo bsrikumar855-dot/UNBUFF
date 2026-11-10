@@ -1,0 +1,13 @@
+{
+  "id": "P012",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "Everything it says it does, I can get free from YouTube and GeeksforGeeks, and my family's money goes to my fees first. Paying 299 a month for an AI mentor and resume checks I have not tried yet is hard to justify when I have three months and no proof it works.",
+  "objection": "The free stuff already covers DSA and DBMS, and the paid part is an AI mentor and ATS scoring I have no way to judge before paying. Also the hidden-test feature is not out yet, so the thing I would want most is not there.",
+  "would_change_my_mind": "A free trial of the Pro features long enough to see my resume score and a real study plan built from my own progress, and that it saves me hours compared with YouTube.",
+  "price_too_cheap": 29,
+  "price_cheap": 99,
+  "price_expensive": 199,
+  "price_too_expensive": 249
+}

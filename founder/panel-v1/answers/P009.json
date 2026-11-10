@@ -1,0 +1,13 @@
+{
+  "id": "P009",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I do not know this website or the people behind it, and I would have to give it my resume and my data before I know if it helps. I already follow one YouTuber's free roadmap, so I see no reason to pay 299 a month for something I cannot yet see working.",
+  "objection": "I do not trust a new website with my resume and my data. Nothing here tells me how my data is stored or used, and the hidden-test feature that would make it worth paying for is not even available yet.",
+  "would_change_my_mind": "A free check that shows my real resume gaps and a plan built from what I have proven, with a clear note on what happens to my resume and data, before I pay anything.",
+  "price_too_cheap": 29,
+  "price_cheap": 99,
+  "price_expensive": 199,
+  "price_too_expensive": 249
+}

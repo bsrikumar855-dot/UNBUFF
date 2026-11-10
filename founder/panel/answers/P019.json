@@ -1,0 +1,13 @@
+{
+  "id": "P019",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "I don't have money for a monthly subscription, my parents pay for everything and I'd have to ask them for INR 99 every month. The free ATS score and plan cover what I need right now, and the AI mentor sounds like something I could get from free YouTube and aptitude PDFs.",
+  "objection": "Nothing here tests aptitude or basics, which is what TCS and Infosys actually check, and the hidden-test feature isn't available yet, so I'd be paying for hints I can't verify.",
+  "would_change_my_mind": "If the free 7-day trial showed the mentor actually raising my aptitude mock scores and my placement cell or parents agreed to pay for it.",
+  "price_too_cheap": 10,
+  "price_cheap": 29,
+  "price_expensive": 99,
+  "price_too_expensive": 299
+}

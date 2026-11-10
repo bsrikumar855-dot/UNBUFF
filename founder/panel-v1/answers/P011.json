@@ -1,0 +1,13 @@
+{
+  "id": "P011",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "I don't have money for a monthly subscription. My parents pay for everything, and asking them for INR 299 every month for a website I haven't proven is a hard conversation to start. The free tier is fine for now, and I'd rather spend my effort on LeetCode than on a paid mentor.",
+  "objection": "Nothing counts as progress unless it's checked, and hidden-test judging isn't out yet. I judge tools by the quality of the problems and the judge, and I can't tell yet whether this is better than the free stuff I already use.",
+  "would_change_my_mind": "A free trial of the AI mentor and resume scoring that clearly beats what I already get for free, or a Pro price I can justify to my parents without a fight.",
+  "price_too_cheap": 19,
+  "price_cheap": 49,
+  "price_expensive": 149,
+  "price_too_expensive": 199
+}

@@ -1,0 +1,13 @@
+{
+  "id": "P016",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I do not trust a new website with my resume and my data, and I rarely pay for anything when a free playlist from my creator already covers placement prep. Free upload sounds fine, but the paid part asks me to pay a stranger for the same kind of help.",
+  "objection": "Who runs this, and what happens to my resume after I upload it? A new site with no name I recognise and no track record is asking for my personal data.",
+  "would_change_my_mind": "Seeing people I know, or a creator I follow, say they got placed through it and that their resume data was actually handled and deleted as promised.",
+  "price_too_cheap": 19,
+  "price_cheap": 49,
+  "price_expensive": 199,
+  "price_too_expensive": 99
+}

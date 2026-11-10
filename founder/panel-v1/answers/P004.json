@@ -1,0 +1,13 @@
+{
+  "id": "P004",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "need",
+  "reason": "My placement cell already runs mock interviews and DSA sessions for free, and I can ask the free AI chatbot whenever I get stuck. Paying INR 299 a month on top of that feels like paying for something I can already get.",
+  "objection": "I can't tell yet whether the daily plan built from what I've proven will beat what my placement cell and the free chatbot already give me, and I don't want to pay before I've seen it work.",
+  "would_change_my_mind": "If I could use the daily study plan and a few mentor hints for free for a week and it clearly showed my weak topics and what to fix before placements.",
+  "price_too_cheap": 29,
+  "price_cheap": 99,
+  "price_expensive": 199,
+  "price_too_expensive": 249
+}

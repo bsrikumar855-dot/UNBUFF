@@ -1,0 +1,13 @@
+{
+  "id": "P007",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "need",
+  "reason": "I already use LeetCode and a couple of free sites for aptitude and DSA practice, and the TCS and Infosys tests mostly need basics I can get for free. Paying INR 299 a month for an AI mentor and resume tools feels like paying for something I don't need yet.",
+  "objection": "I can't tell if the daily plan is actually better than what I already do, since the hidden-test judging isn't even available yet and the thing I'd be paying for is the part that's coming later.",
+  "would_change_my_mind": "If it showed clearly that it covers aptitude and the service-company test pattern better than the free sites I use, with a trial I could try before paying.",
+  "price_too_cheap": 29,
+  "price_cheap": 60,
+  "price_expensive": 150,
+  "price_too_expensive": 200
+}

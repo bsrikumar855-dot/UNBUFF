@@ -1,0 +1,13 @@
+{
+  "id": "P012",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "I would take the free resume check and maybe try the 7-day trial, but I would not pay in the first month. YouTube and GeeksforGeeks cover the same placement prep for nothing, and money for things like this comes from my family's income.",
+  "objection": "Free YouTube and GeeksforGeeks already cover DSA and interview prep, and I cannot see yet what the paid mentor gives me that a free channel does not. The line 'nothing counts as progress unless it was checked' sounds good, but the real checking (hidden tests) is not available yet.",
+  "would_change_my_mind": "If the free ATS score and resume check showed a specific gap I could fix this week, and the AI mentor's hints actually got me unstuck on a problem during the free trial.",
+  "price_too_cheap": 19,
+  "price_cheap": 49,
+  "price_expensive": 149,
+  "price_too_expensive": 299
+}

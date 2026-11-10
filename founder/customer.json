@@ -1,0 +1,35 @@
+{
+  "business": "UNBLUFF, a placement-preparation website for engineering students",
+  "target": "Pre-final and final-year engineering students in India preparing for campus placements and off-campus job applications",
+  "where": "India, mostly outside the top-tier colleges",
+  "age": [20, 23],
+  "segments": [
+    {"name": "Student at a top-tier college (IIT, NIT or a leading private college)", "share": 0.15, "income": [1200000, 3500000]},
+    {"name": "Student at a mid-tier college", "share": 0.40, "income": [400000, 1200000]},
+    {"name": "Student at a lower-tier or regional college", "share": 0.45, "income": [150000, 600000]}
+  ],
+  "behaviours": [
+    {"name": "Grinds LeetCode every day", "share": 0.15, "how": "Solves problems daily and judges tools by how good the problems and the judge are."},
+    {"name": "Follows one YouTuber's roadmap", "share": 0.20, "how": "Trusts one creator's plan and free playlists, and rarely pays for anything."},
+    {"name": "Starts panicking two months before placements", "share": 0.18, "how": "Did little so far and now wants a fast, clear plan."},
+    {"name": "Collects free resources and pays for nothing", "share": 0.17, "how": "Bookmarks everything free, uses a free AI chatbot for doubts."},
+    {"name": "Buys a course when friends do", "share": 0.12, "how": "Follows what the batch is buying, often a one-time course."},
+    {"name": "Targets service-company tests only", "share": 0.10, "how": "Aims for TCS, Infosys and similar, so aptitude and basics matter most."},
+    {"name": "Relies on the college placement cell", "share": 0.08, "how": "Waits for the college to organise training and tests."}
+  ],
+  "objections": [
+    "I can get all of this free on YouTube and GeeksforGeeks",
+    "Will this actually help me get a job?",
+    "I do not have money for a monthly subscription; my parents pay for everything",
+    "I already use LeetCode or another platform",
+    "I do not trust a new website with my resume and my data",
+    "My college placement cell already trains us"
+  ],
+  "habits": [
+    "you use your phone more than a laptop",
+    "you share a hostel room and the Wi-Fi is unreliable",
+    "you watch placement-prep videos on YouTube",
+    "your campus placement season starts in about three months",
+    "you ask a free AI chatbot when you are stuck on a doubt"
+  ]
+}

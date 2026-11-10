@@ -1,0 +1,13 @@
+{
+  "id": "P001",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I do not know this website and I would have to hand it my resume and my data. Even if the free check is useful, I do not pay for things I have not seen work, and my family's money is not for trying out a new site.",
+  "objection": "Who is behind this site, and what happens to my resume after I upload it? Nothing I read says who runs it.",
+  "would_change_my_mind": "A friend from my college who got a real placement using it, or a clear free result I can see before I give any card or pay anything.",
+  "price_too_cheap": 29,
+  "price_cheap": 49,
+  "price_expensive": 149,
+  "price_too_expensive": 249
+}
