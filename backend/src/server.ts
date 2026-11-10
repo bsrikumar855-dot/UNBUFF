@@ -281,6 +281,7 @@ function main(): void {
     requireEmailVerification: config.REQUIRE_EMAIL_VERIFICATION,
     appCheck: { mode: config.APP_CHECK, verifier: verifier.appCheck() },
     exposeModel: config.NODE_ENV !== "production",
+    readyProbe: async () => void (await stores.sessions.get("readiness-probe")),
     llm, logger, demoReportJson, corsOrigin: config.CORS_ORIGIN, trustProxy: config.TRUST_PROXY });
   // Revocation needs Admin access. In production a configuration that cannot provide it is refused at startup, rather
   // than running with revoked sessions silently accepted; a transient failure to reach Firebase is only logged.

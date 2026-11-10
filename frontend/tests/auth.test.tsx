@@ -10,7 +10,10 @@ import { App } from "@/App";
 import { LoginPage } from "@/pages/LoginPage";
 
 /** In-memory identity provider: no network, no Firebase. */
-function fakeClient(initial: AuthUser | null = null, overrides: Partial<AuthClient> = {}) {
+function fakeClient(
+  initial: AuthUser | null = null,
+  overrides: Partial<AuthClient> = {}
+) {
   let user = initial;
   const listeners = new Set<(u: AuthUser | null) => void>();
   const emit = () => listeners.forEach((l) => l(user));
@@ -52,20 +55,27 @@ function renderRoutes(client: AuthClient, path: string) {
           </Route>
         </Routes>
       </MemoryRouter>
-    </AuthProvider>,
+    </AuthProvider>
   );
 }
 
-const fill = (label: RegExp, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
+const fill = (label: RegExp, value: string) =>
+  fireEvent.change(screen.getByLabelText(label), { target: { value } });
 
 describe("validateAuthForm", () => {
   it("checks email, password presence, length and confirmation", () => {
     expect(validateAuthForm("signin", "nope", "x", "")).toMatch(/valid email/);
     expect(validateAuthForm("signin", "a@b.co", "", "")).toMatch(/Enter your password/);
     expect(validateAuthForm("signin", "a@b.co", "x", "")).toBeNull();
-    expect(validateAuthForm("register", "a@b.co", "short", "short")).toMatch(/at least 8/);
-    expect(validateAuthForm("register", "a@b.co", "longenough1", "different1")).toMatch(/don't match/);
-    expect(validateAuthForm("register", "a@b.co", "longenough1", "longenough1")).toBeNull();
+    expect(validateAuthForm("register", "a@b.co", "short", "short")).toMatch(
+      /at least 8/
+    );
+    expect(validateAuthForm("register", "a@b.co", "longenough1", "different1")).toMatch(
+      /don't match/
+    );
+    expect(
+      validateAuthForm("register", "a@b.co", "longenough1", "longenough1")
+    ).toBeNull();
     expect(validateAuthForm("reset", "a@b.co", "", "")).toBeNull();
   });
 });
@@ -116,7 +126,9 @@ describe("LoginPage", () => {
     fill(/^Email/, "me@example.com");
     fill(/^Password/, "wrong-password");
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Incorrect email or password.");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Incorrect email or password."
+    );
   });
 
   it("registers a new student after confirming the password", async () => {
@@ -132,7 +144,14 @@ describe("LoginPage", () => {
 
     fill(/^Confirm password/, "longenough1");
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
-    await waitFor(() => expect(client.signUp).toHaveBeenCalledWith("new@example.com", "longenough1", true));
+    expect(screen.getByRole("alert")).toHaveTextContent(/agree to the Terms/);
+    expect(client.signUp).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByLabelText(/I am 18 or older/));
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+    await waitFor(() =>
+      expect(client.signUp).toHaveBeenCalledWith("new@example.com", "longenough1", true)
+    );
   });
 
   it("sends a password reset and answers the same way for every address", async () => {
@@ -155,7 +174,9 @@ describe("LoginPage", () => {
 describe("App navigation", () => {
   it("offers Sign in when signed out and Sign out + My sessions when signed in", async () => {
     const { unmount } = render(<App authClient={fakeClient(null)} />);
-    expect((await screen.findAllByRole("link", { name: "Sign in" })).length).toBeGreaterThan(0);
+    expect(
+      (await screen.findAllByRole("link", { name: "Sign in" })).length
+    ).toBeGreaterThan(0);
     unmount();
 
     const client = fakeClient({ uid: "u1", email: "a@b.co" });
@@ -167,7 +188,9 @@ describe("App navigation", () => {
     expect(screen.getByRole("link", { name: "My sessions" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
     await waitFor(() => expect(client.signOut).toHaveBeenCalled());
-    expect((await screen.findAllByRole("link", { name: "Sign in" })).length).toBeGreaterThan(0);
+    expect(
+      (await screen.findAllByRole("link", { name: "Sign in" })).length
+    ).toBeGreaterThan(0);
   });
 });
 
@@ -195,7 +218,9 @@ describe("API client authentication", () => {
     setAuthHooks({ getToken: async () => "token-123", onUnauthorized: vi.fn() });
     await apiClient("/sessions");
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer token-123");
+    expect((init.headers as Record<string, string>).Authorization).toBe(
+      "Bearer token-123"
+    );
     expect(url).not.toContain("token-123");
   });
 
@@ -210,15 +235,30 @@ describe("API client authentication", () => {
 
   it("reports an expired session when the server answers 401 to a signed request", async () => {
     const onUnauthorized = vi.fn();
-    global.fetch = vi.fn().mockResolvedValue(jsonResponse(401, { error: { code: "UNAUTHENTICATED", message: "Sign in to continue." } }));
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        jsonResponse(401, {
+          error: { code: "UNAUTHENTICATED", message: "Sign in to continue." },
+        })
+      );
     setAuthHooks({ getToken: async () => "token-123", onUnauthorized });
-    await expect(apiClient("/sessions")).rejects.toMatchObject({ code: "UNAUTHENTICATED", status: 401 });
+    await expect(apiClient("/sessions")).rejects.toMatchObject({
+      code: "UNAUTHENTICATED",
+      status: 401,
+    });
     expect(onUnauthorized).toHaveBeenCalledTimes(1);
   });
 
   it("signs the student out and explains why when the provider reports an expired token", async () => {
     const client = fakeClient({ uid: "u1", email: "a@b.co" });
-    global.fetch = vi.fn().mockResolvedValue(jsonResponse(401, { error: { code: "UNAUTHENTICATED", message: "Sign in to continue." } }));
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        jsonResponse(401, {
+          error: { code: "UNAUTHENTICATED", message: "Sign in to continue." },
+        })
+      );
     renderRoutes(client, "/login");
     await screen.findByText("HOME").catch(() => undefined); // signed-in users are bounced off /login
     await act(async () => {
@@ -230,9 +270,15 @@ describe("API client authentication", () => {
 
   it("does not treat a 401 without a token as an expiry", async () => {
     const onUnauthorized = vi.fn();
-    global.fetch = vi.fn().mockResolvedValue(jsonResponse(401, { error: { code: "UNAUTHENTICATED", message: "x" } }));
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        jsonResponse(401, { error: { code: "UNAUTHENTICATED", message: "x" } })
+      );
     setAuthHooks({ getToken: async () => null, onUnauthorized });
-    await expect(apiClient("/sessions")).rejects.toMatchObject({ code: "UNAUTHENTICATED" });
+    await expect(apiClient("/sessions")).rejects.toMatchObject({
+      code: "UNAUTHENTICATED",
+    });
     expect(onUnauthorized).not.toHaveBeenCalled();
   });
 });

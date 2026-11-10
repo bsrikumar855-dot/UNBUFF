@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/context";
 import { validateAuthForm, type AuthMode as Mode } from "@/auth/validate";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ export const LoginPage: React.FC = () => {
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [remember, setRemember] = useState(rememberThisDevice);
+  const [agreed, setAgreed] = useState(false);
 
   useEffect(() => {
     if (auth.sessionExpired) setNotice("Your session expired. Please sign in again.");
@@ -48,6 +49,7 @@ export const LoginPage: React.FC = () => {
     setNotice(null);
     setPassword("");
     setConfirm("");
+    setAgreed(false);
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -55,6 +57,12 @@ export const LoginPage: React.FC = () => {
     const problem = validateAuthForm(mode, email, password, confirm);
     if (problem) {
       setError(problem);
+      return;
+    }
+    if (mode === "register" && !agreed) {
+      setError(
+        "Please agree to the Terms of use and the Privacy page to create an account."
+      );
       return;
     }
     setBusy(true);
@@ -156,6 +164,28 @@ export const LoginPage: React.FC = () => {
             </label>
           )}
 
+          {mode === "register" && (
+            <label className="flex items-start gap-2.5 text-sm text-ink-secondary">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="mt-0.5 size-4 accent-redline"
+              />
+              <span>
+                I am 18 or older and agree to the{" "}
+                <Link to="/terms" className="text-redline underline underline-offset-4">
+                  Terms of use
+                </Link>{" "}
+                and the{" "}
+                <Link to="/privacy" className="text-redline underline underline-offset-4">
+                  Privacy
+                </Link>{" "}
+                page, including that my résumé and answers are processed by an AI service.
+              </span>
+            </label>
+          )}
+
           {mode !== "reset" && (
             <label className="flex items-start gap-2.5 text-sm text-ink-secondary">
               <input
@@ -167,7 +197,8 @@ export const LoginPage: React.FC = () => {
               <span>
                 Keep me signed in on this device
                 <span className="block text-xs text-ink-muted">
-                  Turn this off on a shared or lab computer: closing the browser signs you out and clears your drafts.
+                  Turn this off on a shared or lab computer: closing the browser signs you
+                  out and clears your drafts.
                 </span>
               </span>
             </label>

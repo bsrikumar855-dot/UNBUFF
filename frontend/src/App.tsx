@@ -41,6 +41,8 @@ const LearnPatternPage = lazy(() => import("@/pages/LearnPatternPage"));
 const LearnDbmsPage = lazy(() => import("@/pages/LearnDbmsPage"));
 const LearnDbmsTopicPage = lazy(() => import("@/pages/LearnDbmsTopicPage"));
 const MentorPage = lazy(() => import("@/pages/MentorPage"));
+const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"));
+const TermsPage = lazy(() => import("@/pages/TermsPage"));
 const MentorMemoryPage = lazy(() => import("@/pages/MentorMemoryPage"));
 
 export const AppRoutes: React.FC = () => (
@@ -52,6 +54,8 @@ export const AppRoutes: React.FC = () => (
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
       {/* Public: synthetic demo data only. Must be declared before the protected /report/:sessionId. */}
       <Route path="/report/demo" element={<ReportPage demo />} />
       <Route path="/roadmap" element={<RoadmapPage />} />

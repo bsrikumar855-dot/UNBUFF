@@ -82,6 +82,8 @@ export interface AppDeps {
   appCheck?: { mode: AppCheckMode; verifier: AppCheckVerifier | null };
   /** Report the model name on /api/health (default false; production keeps it private). */
   exposeModel?: boolean;
+  /** Cheap database read used by GET /api/ready; absent means the check is skipped. */
+  readyProbe?: () => Promise<void>;
   llm: LLMProvider;
   logger: Logger;
   demoReportJson: string;
@@ -119,7 +121,7 @@ export function createApp(deps: AppDeps): Express {
   api.use(limiters.global);
   // Before every router: only the real web app may call the API once App Check is enforced (health and GitHub's redirect exempt).
   api.use(appCheckGuard(deps.appCheck?.mode ?? "off", deps.appCheck?.verifier ?? null, deps.logger));
-  api.use(healthRouter(deps.llm, { exposeModel: deps.exposeModel ?? false }));
+  api.use(healthRouter(deps.llm, { exposeModel: deps.exposeModel ?? false, probe: deps.readyProbe }));
   api.use(rolesRouter(deps.roles));
   api.use(demoRouter(deps.demoReportJson)); // synthetic data only; public by design
   api.use(dsaCatalogueRouter(() => deps.catalogue)); // public, read-only catalogue

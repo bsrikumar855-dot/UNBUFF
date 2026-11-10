@@ -58,11 +58,10 @@ jobs:
         continue-on-error: true
         run: npm audit --omit=dev --audit-level=high
 
-  # The Firestore store classes (every per-student query) are exercised against the emulators. Informational for now:
-  # a failure here is reported but does not block a merge until the job has proven stable.
+  # The Firestore store classes (every per-student query) are exercised against the emulators. This job has been green on every
+  # run since it was added, so it now blocks a merge like the others: a broken per-student query is a data-leak risk.
   emulator:
     runs-on: ubuntu-latest
-    continue-on-error: true
     defaults:
       run:
         working-directory: backend
