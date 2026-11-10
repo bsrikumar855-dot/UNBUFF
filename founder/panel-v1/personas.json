@@ -1,0 +1,222 @@
+[
+ {
+  "id": "P001",
+  "name": "Omar",
+  "age": 20,
+  "segment": "Student at a lower-tier or regional college",
+  "income": 368000,
+  "behaviour": "Follows one YouTuber's roadmap",
+  "behaviour_how": "Trusts one creator's plan and free playlists, and rarely pays for anything.",
+  "objection": "I do not trust a new website with my resume and my data",
+  "habit": "you share a hostel room and the Wi-Fi is unreliable"
+ },
+ {
+  "id": "P002",
+  "name": "Raj",
+  "age": 22,
+  "segment": "Student at a lower-tier or regional college",
+  "income": 277000,
+  "behaviour": "Relies on the college placement cell",
+  "behaviour_how": "Waits for the college to organise training and tests.",
+  "objection": "Will this actually help me get a job?",
+  "habit": "your campus placement season starts in about three months"
+ },
+ {
+  "id": "P003",
+  "name": "Emil",
+  "age": 22,
+  "segment": "Student at a lower-tier or regional college",
+  "income": 424000,
+  "behaviour": "Buys a course when friends do",
+  "behaviour_how": "Follows what the batch is buying, often a one-time course.",
+  "objection": "I do not have money for a monthly subscription; my parents pay for everything",
+  "habit": "you share a hostel room and the Wi-Fi is unreliable"
+ },
+ {
+  "id": "P004",
+  "name": "Owen",
+  "age": 20,
+  "segment": "Student at a lower-tier or regional college",
+  "income": 355000,
+  "behaviour": "Starts panicking two months before placements",
+  "behaviour_how": "Did little so far and now wants a fast, clear plan.",
+  "objection": "My college placement cell already trains us",
+  "habit": "you ask a free AI chatbot when you are stuck on a doubt"
+ },
+ {
+  "id": "P005",
+  "name": "Sana",
+  "age": 23,
+  "segment": "Student at a mid-tier college",
+  "income": 718000,
+  "behaviour": "Follows one YouTuber's roadmap",
+  "behaviour_how": "Trusts one creator's plan and free playlists, and rarely pays for anything.",
+  "objection": "I already use LeetCode or another platform",
+  "habit": "you use your phone more than a laptop"
+ },
+ {
+  "id": "P006",
+  "name": "Maya",
+  "age": 23,
+  "segment": "Student at a mid-tier college",
+  "income": 907000,
+  "behaviour": "Starts panicking two months before placements",
+  "behaviour_how": "Did little so far and now wants a fast, clear plan.",
+  "objection": "I can get all of this free on YouTube and GeeksforGeeks",
+  "habit": "you share a hostel room and the Wi-Fi is unreliable"
+ },
+ {
+  "id": "P007",
+  "name": "Selin",
+  "age": 20,
+  "segment": "Student at a lower-tier or regional college",
+  "income": 593000,
+  "behaviour": "Targets service-company tests only",
+  "behaviour_how": "Aims for TCS, Infosys and similar, so aptitude and basics matter most.",
+  "objection": "I already use LeetCode or another platform",
+  "habit": "you share a hostel room and the Wi-Fi is unreliable"
+ },
+ {
+  "id": "P008",
+  "name": "Ruby",
+  "age": 20,
+  "segment": "Student at a mid-tier college",
+  "income": 672000,
+  "behaviour": "Collects free resources and pays for nothing",
+  "behaviour_how": "Bookmarks everything free, uses a free AI chatbot for doubts.",
+  "objection": "I can get all of this free on YouTube and GeeksforGeeks",
+  "habit": "you use your phone more than a laptop"
+ },
+ {
+  "id": "P009",
+  "name": "Nora",
+  "age": 20,
+  "segment": "Student at a lower-tier or regional college",
+  "income": 405000,
+  "behaviour": "Follows one YouTuber's roadmap",
+  "behaviour_how": "Trusts one creator's plan and free playlists, and rarely pays for anything.",
+  "objection": "I do not trust a new website with my resume and my data",
+  "habit": "you use your phone more than a laptop"
+ },
+ {
+  "id": "P010",
+  "name": "Fatima",
+  "age": 22,
+  "segment": "Student at a top-tier college (IIT, NIT or a leading private college)",
+  "income": 2612000,
+  "behaviour": "Collects free resources and pays for nothing",
+  "behaviour_how": "Bookmarks everything free, uses a free AI chatbot for doubts.",
+  "objection": "I can get all of this free on YouTube and GeeksforGeeks",
+  "habit": "you share a hostel room and the Wi-Fi is unreliable"
+ },
+ {
+  "id": "P011",
+  "name": "Tariq",
+  "age": 23,
+  "segment": "Student at a mid-tier college",
+  "income": 519000,
+  "behaviour": "Grinds LeetCode every day",
+  "behaviour_how": "Solves problems daily and judges tools by how good the problems and the judge are.",
+  "objection": "I do not have money for a monthly subscription; my parents pay for everything",
+  "habit": "you watch placement-prep videos on YouTube"
+ },
+ {
+  "id": "P012",
+  "name": "Felix",
+  "age": 22,
+  "segment": "Student at a mid-tier college",
+  "income": 779000,
+  "behaviour": "Starts panicking two months before placements",
+  "behaviour_how": "Did little so far and now wants a fast, clear plan.",
+  "objection": "I can get all of this free on YouTube and GeeksforGeeks",
+  "habit": "your campus placement season starts in about three months"
+ },
+ {
+  "id": "P013",
+  "name": "Zoe",
+  "age": 23,
+  "segment": "Student at a lower-tier or regional college",
+  "income": 366000,
+  "behaviour": "Relies on the college placement cell",
+  "behaviour_how": "Waits for the college to organise training and tests.",
+  "objection": "I do not have money for a monthly subscription; my parents pay for everything",
+  "habit": "you use your phone more than a laptop"
+ },
+ {
+  "id": "P014",
+  "name": "Dev",
+  "age": 21,
+  "segment": "Student at a mid-tier college",
+  "income": 482000,
+  "behaviour": "Starts panicking two months before placements",
+  "behaviour_how": "Did little so far and now wants a fast, clear plan.",
+  "objection": "I do not have money for a monthly subscription; my parents pay for everything",
+  "habit": "you watch placement-prep videos on YouTube"
+ },
+ {
+  "id": "P015",
+  "name": "Yusuf",
+  "age": 23,
+  "segment": "Student at a lower-tier or regional college",
+  "income": 523000,
+  "behaviour": "Buys a course when friends do",
+  "behaviour_how": "Follows what the batch is buying, often a one-time course.",
+  "objection": "Will this actually help me get a job?",
+  "habit": "you ask a free AI chatbot when you are stuck on a doubt"
+ },
+ {
+  "id": "P016",
+  "name": "Theo",
+  "age": 20,
+  "segment": "Student at a top-tier college (IIT, NIT or a leading private college)",
+  "income": 1672000,
+  "behaviour": "Follows one YouTuber's roadmap",
+  "behaviour_how": "Trusts one creator's plan and free playlists, and rarely pays for anything.",
+  "objection": "I do not trust a new website with my resume and my data",
+  "habit": "you watch placement-prep videos on YouTube"
+ },
+ {
+  "id": "P017",
+  "name": "Alma",
+  "age": 21,
+  "segment": "Student at a top-tier college (IIT, NIT or a leading private college)",
+  "income": 2787000,
+  "behaviour": "Grinds LeetCode every day",
+  "behaviour_how": "Solves problems daily and judges tools by how good the problems and the judge are.",
+  "objection": "I can get all of this free on YouTube and GeeksforGeeks",
+  "habit": "you ask a free AI chatbot when you are stuck on a doubt"
+ },
+ {
+  "id": "P018",
+  "name": "Freya",
+  "age": 22,
+  "segment": "Student at a lower-tier or regional college",
+  "income": 590000,
+  "behaviour": "Collects free resources and pays for nothing",
+  "behaviour_how": "Bookmarks everything free, uses a free AI chatbot for doubts.",
+  "objection": "I can get all of this free on YouTube and GeeksforGeeks",
+  "habit": "you watch placement-prep videos on YouTube"
+ },
+ {
+  "id": "P019",
+  "name": "Harper",
+  "age": 22,
+  "segment": "Student at a mid-tier college",
+  "income": 1127000,
+  "behaviour": "Targets service-company tests only",
+  "behaviour_how": "Aims for TCS, Infosys and similar, so aptitude and basics matter most.",
+  "objection": "I do not have money for a monthly subscription; my parents pay for everything",
+  "habit": "you share a hostel room and the Wi-Fi is unreliable"
+ },
+ {
+  "id": "P020",
+  "name": "Emma",
+  "age": 22,
+  "segment": "Student at a mid-tier college",
+  "income": 909000,
+  "behaviour": "Grinds LeetCode every day",
+  "behaviour_how": "Solves problems daily and judges tools by how good the problems and the judge are.",
+  "objection": "I do not trust a new website with my resume and my data",
+  "habit": "you share a hostel room and the Wi-Fi is unreliable"
+ }
+]

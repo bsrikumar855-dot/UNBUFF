@@ -1,0 +1,13 @@
+{
+  "id": "P010",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I don't pay for study stuff. YouTube, GeeksforGeeks and the free chatbot already cover my doubts, and I'd have to spend money on something that only gives me hints when the free stuff gives full answers.",
+  "objection": "Why would I pay 99 a month when the free resources cover the same ground, and does the resume check actually tell me anything I can't get from a free ATS checker?",
+  "would_change_my_mind": "If the resume questioning showed me a real weak claim on my own resume that I could not have caught myself, I would pay for the 499 six-month pass.",
+  "price_too_cheap": 9,
+  "price_cheap": 29,
+  "price_expensive": 199,
+  "price_too_expensive": 399
+}

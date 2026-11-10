@@ -1,0 +1,13 @@
+{
+  "id": "P002",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "The college placement cell is free and it is already running the training and tests I am waiting for. The page never says this gets me a job, and the one thing that would prove progress, checking my code against hidden tests, is not out yet.",
+  "objection": "Does a resume score and a study plan actually get me shortlisted, or is it just a nicer-looking checklist for something I could do with the placement cell's material?",
+  "would_change_my_mind": "Seeing that students like me got placed after using it, or the hidden-test checking going live before my placement season starts.",
+  "price_too_cheap": 19,
+  "price_cheap": 49,
+  "price_expensive": 150,
+  "price_too_expensive": 300
+}

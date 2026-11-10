@@ -1,0 +1,13 @@
+{
+  "id": "P008",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "need",
+  "reason": "I can already get DSA patterns and DBMS free on YouTube and GeeksforGeeks, and I use a free AI chatbot for doubts. I don't see what the paid AI mentor or resume tools give me that those don't, and I don't pay for anything when a free option exists.",
+  "objection": "Why would I pay INR 299 a month for something I can piece together for free, especially when the hidden-test feature that might make it different isn't even available yet?",
+  "would_change_my_mind": "Seeing a clear, checkable result that the resume ATS score or the graded quizzes got me shortlisted or caught mistakes that the free stuff missed, and being able to try Pro for free first.",
+  "price_too_cheap": 19,
+  "price_cheap": 79,
+  "price_expensive": 149,
+  "price_too_expensive": 199
+}

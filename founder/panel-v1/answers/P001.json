@@ -1,0 +1,13 @@
+{
+  "id": "P001",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I do not know this website or the people behind it, and I would have to give them my resume and my data. Even the free part asks me to trust a new site, and I already follow one YouTuber's free playlists, so I see no reason to pay a stranger 299 rupees a month.",
+  "objection": "I don't know who runs UNBLUFF or what they do with my resume and my personal details once I upload them.",
+  "would_change_my_mind": "A clear, readable privacy promise plus a free version that shows me real results on my own resume and plan before I ever have to pay.",
+  "price_too_cheap": 29,
+  "price_cheap": 99,
+  "price_expensive": 199,
+  "price_too_expensive": 249
+}

@@ -1,0 +1,13 @@
+{
+  "id": "P014",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "I can't pay a monthly subscription myself, my parents cover everything, so anything paid means asking them first. Even the INR 499 pass would need a proper conversation at home, and I'd only ask after I've seen the free result actually help.",
+  "objection": "I already watch placement-prep videos for free on YouTube, and I can't tell if the AI mentor and plan will be any better than that.",
+  "would_change_my_mind": "If the free ATS and resume check gave me a clear, specific list of what to fix and the 7-day Pro trial showed a concrete study plan I could follow before placement season, I'd ask my parents for the one-time 499 pass.",
+  "price_too_cheap": 29,
+  "price_cheap": 99,
+  "price_expensive": 249,
+  "price_too_expensive": 399
+}

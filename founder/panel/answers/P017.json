@@ -1,0 +1,13 @@
+{
+  "id": "P017",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "quality",
+  "reason": "I already get hints for free from my chatbot and I can get practice problems on YouTube and GeeksforGeeks. The thing I actually care about, a judge that checks my code against hidden tests, is listed as coming later, so I would be paying for the parts I can already get for nothing.",
+  "objection": "The AI mentor gives hints, but my free chatbot already does that when I am stuck, so I cannot see what Pro adds for the Rs 99 a month.",
+  "would_change_my_mind": "Hidden-test checking that is live and shows me my code failing real edge cases, not just a resume score.",
+  "price_too_cheap": 9,
+  "price_cheap": 39,
+  "price_expensive": 99,
+  "price_too_expensive": 199
+}

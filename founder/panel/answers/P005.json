@@ -1,0 +1,13 @@
+{
+  "id": "P005",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I already use LeetCode and the free playlists from my YouTuber, and I rarely pay for prep stuff. The free resume score sounds useful, but I don't see why I'd pay for something I can get from what I already use.",
+  "objection": "If it's a placement tool, I don't see what it does that LeetCode and my roadmap don't already do, and I'd be paying for the AI mentor's hints when I can ask a friend or search for the answer.",
+  "would_change_my_mind": "Proof that the paid features give me something my free resources don't, like hidden-test checks that prove my code works, which the site says is not available yet.",
+  "price_too_cheap": 19,
+  "price_cheap": 49,
+  "price_expensive": 149,
+  "price_too_expensive": 299
+}

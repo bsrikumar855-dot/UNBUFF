@@ -1,0 +1,13 @@
+{
+  "id": "P016",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I don't know this website and it wants my resume and my data before I know what I'm getting. I already get placement prep free from one creator's playlists, and I rarely pay for anything, so 299 a month for an AI mentor I haven't tried is not something I'd spend on.",
+  "objection": "Why would a new site I've never heard of be trusted with my resume and my personal data, when I can't see how it's used or who runs it?",
+  "would_change_my_mind": "A free trial of the Pro features with no card needed, and a clear note on what happens to my resume and data, would make me willing to try it.",
+  "price_too_cheap": 29,
+  "price_cheap": 79,
+  "price_expensive": 199,
+  "price_too_expensive": 249
+}

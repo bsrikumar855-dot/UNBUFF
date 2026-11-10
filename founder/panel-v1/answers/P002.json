@@ -1,0 +1,13 @@
+{
+  "id": "P002",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "Free to start is fine, but I'm not paying INR 299 a month out of family money for something that can't yet run my code against hidden tests. The placement cell already gives us free training and tests, so I'd rather use that and maybe try the free plan.",
+  "objection": "I can't tell whether any of this will actually get me a placement. A resume score and a daily plan sound useful, but the real interview tests aren't in it yet.",
+  "would_change_my_mind": "Proof that the resume tools and the coding tests get students shortlisted by companies that visit our campus, or a free trial of the Pro features.",
+  "price_too_cheap": 29,
+  "price_cheap": 79,
+  "price_expensive": 149,
+  "price_too_expensive": 249
+}

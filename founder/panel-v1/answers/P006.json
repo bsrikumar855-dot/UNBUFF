@@ -1,0 +1,13 @@
+{
+  "id": "P006",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I already get DSA and DBMS free on YouTube and GeeksforGeeks, and I have been doing that for two years. The plan that only counts checked progress sounds useful, but I can try the free part first and see if it actually helps before paying anything.",
+  "objection": "Whether the daily plan will actually be better than the free roadmaps I already follow, or just a neater version of the same thing with a paywall around the AI mentor.",
+  "would_change_my_mind": "If the free tier gave me a real plan and a resume ATS score that showed clear improvement after a week of use, and the mentor hints were clearly better than what I get from searching.",
+  "price_too_cheap": 29,
+  "price_cheap": 99,
+  "price_expensive": 199,
+  "price_too_expensive": 249
+}

@@ -1,0 +1,13 @@
+{
+  "id": "P005",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "I already use LeetCode and my YouTuber's free playlists, so this feels like one more platform I would sign up for and forget. I rarely pay for study stuff, and INR 299 a month is a lot from my family's money.",
+  "objection": "It is not clear it does anything LeetCode or the free playlists don't, and I have no proof the 'only what you have proven' plan will get me a job.",
+  "would_change_my_mind": "A free trial that shows real DBMS and DSA quizzes plus a resume check that clearly finds problems in my own resume, so I can see it is better than what I already use.",
+  "price_too_cheap": 29,
+  "price_cheap": 79,
+  "price_expensive": 149,
+  "price_too_expensive": 199
+}

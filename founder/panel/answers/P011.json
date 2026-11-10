@@ -1,0 +1,13 @@
+{
+  "id": "P011",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "I do not have money for a monthly subscription, and my parents pay for everything, so even INR 99 a month means asking at home for something I cannot justify to them. The free ATS score and plan are useful, but I do not see what the Pro features do that my daily LeetCode and YouTube prep does not already cover.",
+  "objection": "The Pro mentor gives hints, not answers, and I cannot tell if it is better than just reading editorials. The check that matters, running my code against hidden tests, is not available yet, so nothing here proves I am getting better.",
+  "would_change_my_mind": "If the hidden-test judge were live and I could see it grade my code against real problems, I would ask my parents for the INR 499 six-month pass.",
+  "price_too_cheap": 15,
+  "price_cheap": 49,
+  "price_expensive": 199,
+  "price_too_expensive": 300
+}

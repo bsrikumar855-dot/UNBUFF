@@ -1,0 +1,13 @@
+{
+  "id": "P013",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "I don't have money for a monthly subscription. My parents pay for everything I spend on, and INR 299 a month is a lot of their money for something I'd only use when I feel like studying. The free start is fine, but I wouldn't ask them for this.",
+  "objection": "Why would I pay every month when the college placement cell already runs training and tests for free? I'd rather wait for what the college gives us.",
+  "would_change_my_mind": "If the placement cell or college paid for it, or if my parents agreed to cover it as a one-time thing before placements, I'd try it.",
+  "price_too_cheap": 19,
+  "price_cheap": 49,
+  "price_expensive": 99,
+  "price_too_expensive": 149
+}

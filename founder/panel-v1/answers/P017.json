@@ -1,0 +1,13 @@
+{
+  "id": "P017",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "I can get DSA patterns and quizzes free on YouTube and GeeksforGeeks, and I already do my daily problems on LeetCode. Nothing I have read here shows me problems or a judge better than what I already use, so INR 299 a month for a mentor and resume tools feels like paying for things I can get elsewhere.",
+  "objection": "The hidden-test judge is not available yet, so I cannot see how good the problems or the judge are, and those are the only things I actually care about.",
+  "would_change_my_mind": "A working hidden-test judge with problems that are clearly harder or better curated than LeetCode, shown to me before I pay.",
+  "price_too_cheap": 29,
+  "price_cheap": 79,
+  "price_expensive": 199,
+  "price_too_expensive": 249
+}
