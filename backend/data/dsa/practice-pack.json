@@ -304,6 +304,206 @@
         "Arrays",
         "Two Pointers"
       ]
+    },
+    {
+      "id": "fp_031_warmer_days",
+      "title": "Warmer Days",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Arrays",
+        "Stack"
+      ]
+    },
+    {
+      "id": "fp_032_balance_point",
+      "title": "Balance Point",
+      "url": null,
+      "difficulty": "easy",
+      "topics": [
+        "Arrays",
+        "Prefix Sums"
+      ]
+    },
+    {
+      "id": "fp_033_lone_number",
+      "title": "Lone Number",
+      "url": null,
+      "difficulty": "easy",
+      "topics": [
+        "Bit Manipulation",
+        "Hash Table"
+      ]
+    },
+    {
+      "id": "fp_034_bit_total",
+      "title": "Bit Total",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Bit Manipulation",
+        "Math"
+      ]
+    },
+    {
+      "id": "fp_035_fewest_coins",
+      "title": "Fewest Coins",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Dynamic Programming"
+      ]
+    },
+    {
+      "id": "fp_036_equal_halves",
+      "title": "Equal Halves",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Arrays",
+        "Dynamic Programming"
+      ]
+    },
+    {
+      "id": "fp_037_ship_capacity",
+      "title": "Ship Capacity",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Arrays",
+        "Binary Search"
+      ]
+    },
+    {
+      "id": "fp_038_most_frequent",
+      "title": "Most Frequent",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Hash Table",
+        "Sorting"
+      ]
+    },
+    {
+      "id": "fp_039_busiest_moment",
+      "title": "Busiest Moment",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Intervals",
+        "Sorting"
+      ]
+    },
+    {
+      "id": "fp_040_friend_groups",
+      "title": "Friend Groups",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Graphs",
+        "Union Find"
+      ]
+    },
+    {
+      "id": "fp_041_longest_mirror",
+      "title": "Longest Mirror",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Strings",
+        "Two Pointers"
+      ]
+    },
+    {
+      "id": "fp_042_decode_count",
+      "title": "Decode Count",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Dynamic Programming",
+        "Strings"
+      ]
+    },
+    {
+      "id": "fp_043_fewest_jumps",
+      "title": "Fewest Jumps",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Dynamic Programming",
+        "Greedy"
+      ]
+    },
+    {
+      "id": "fp_044_target_subsets",
+      "title": "Target Subsets",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Backtracking",
+        "Bit Manipulation"
+      ]
+    },
+    {
+      "id": "fp_045_next_arrangement",
+      "title": "Next Arrangement",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Arrays",
+        "Two Pointers"
+      ]
+    },
+    {
+      "id": "fp_046_spreading_spoilage",
+      "title": "Spreading Spoilage",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Breadth-First Search",
+        "Matrix"
+      ]
+    },
+    {
+      "id": "fp_047_cheapest_network",
+      "title": "Cheapest Network",
+      "url": null,
+      "difficulty": "hard",
+      "topics": [
+        "Graphs",
+        "Greedy",
+        "Union Find"
+      ]
+    },
+    {
+      "id": "fp_048_widest_skyline",
+      "title": "Widest Skyline",
+      "url": null,
+      "difficulty": "hard",
+      "topics": [
+        "Arrays",
+        "Stack"
+      ]
+    },
+    {
+      "id": "fp_049_shared_subsequence",
+      "title": "Shared Subsequence",
+      "url": null,
+      "difficulty": "medium",
+      "topics": [
+        "Dynamic Programming",
+        "Strings"
+      ]
+    },
+    {
+      "id": "fp_050_running_median",
+      "title": "Running Median",
+      "url": null,
+      "difficulty": "hard",
+      "topics": [
+        "Heap",
+        "Sorting"
+      ]
     }
   ],
   "associations": []

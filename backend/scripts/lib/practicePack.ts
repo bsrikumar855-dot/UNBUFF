@@ -10,6 +10,7 @@
 
 import { arr, ints, line, limitsNote, lines, rng, str, type Exercise } from "./practiceHelpers.js";
 import { moreExercises } from "./practicePackMore.js";
+import { threeExercises } from "./practicePackThree.js";
 
 export type { Exercise };
 
@@ -412,9 +413,9 @@ function coreExercises(): Exercise[] {
   ];
 }
 
-/** All exercises: the original ten, then the extended set (see practicePackMore.ts). */
+/** All exercises: the original ten, then the extended sets (see practicePackMore.ts and practicePackThree.ts). */
 export function exercises(): Exercise[] {
-  return [...coreExercises(), ...moreExercises()];
+  return [...coreExercises(), ...moreExercises(), ...threeExercises()];
 }
 
 // ---------- file builders ----------
