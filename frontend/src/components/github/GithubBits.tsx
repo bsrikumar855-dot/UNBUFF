@@ -47,6 +47,9 @@ export const Heatmap: React.FC<{
   const ref = useRef<HTMLDivElement>(null);
   const armed = canObserve();
   const seen = useSeen(ref as React.RefObject<Element>, "0px 0px -8% 0px");
+  const cols = {
+    gridTemplateColumns: `repeat(${Math.max(1, weeks.length)}, minmax(0, 1fr))`,
+  };
   return (
     <div
       ref={ref}
@@ -54,33 +57,66 @@ export const Heatmap: React.FC<{
       data-armed={armed ? "true" : "false"}
       data-seen={seen ? "true" : "false"}
     >
-      {/* The grid shares the available width instead of scrolling sideways: every cell is a square that shrinks with the screen. */}
-      <div
-        role="img"
-        aria-label={`Contribution heatmap from ${from ?? "?"} to ${to ?? "?"}: ${total ?? 0} contributions in total. Monthly totals are listed below.`}
-        className="grid w-full max-w-4xl gap-[2px]"
-        style={{
-          gridTemplateColumns: `repeat(${Math.max(1, weeks.length)}, minmax(0, 1fr))`,
-        }}
-      >
-        {weeks.map((w, wi) => (
-          <div
-            key={w.starts_on}
-            className="heat-col grid gap-[2px]"
-            style={{ "--i": wi } as React.CSSProperties}
-          >
-            {w.days.map((d) => (
-              <div
-                key={d.date}
-                title={`${d.date}: ${d.count} contribution${d.count === 1 ? "" : "s"}`}
-                className={cn(
-                  "aspect-square w-full rounded-[3px]",
-                  LEVEL[heatLevel(d.count, max)]
-                )}
-              />
+      <div className="flex max-w-4xl gap-2">
+        <div aria-hidden="true" className="flex w-6 shrink-0 flex-col">
+          <div className="mb-1 h-[14px]" />
+          <div className="grid flex-1 grid-rows-7 gap-[2px] text-[10px] leading-none text-ink-muted">
+            {["", "Mon", "", "Wed", "", "Fri", ""].map((d, i) => (
+              <span key={i} className="flex items-center">
+                {d}
+              </span>
             ))}
           </div>
-        ))}
+        </div>
+        <div className="min-w-0 flex-1">
+          {/* Month names above the first week of each month, so a year of squares can be read at a glance. */}
+          <div
+            aria-hidden="true"
+            className="mb-1 grid h-[14px] w-full gap-[2px] text-[11px] leading-none text-ink-muted"
+            style={cols}
+          >
+            {weeks.map((w, wi) => {
+              const month = w.starts_on.slice(0, 7);
+              const first = wi === 0 || weeks[wi - 1]!.starts_on.slice(0, 7) !== month;
+              return (
+                <span key={w.starts_on} className="overflow-visible whitespace-nowrap">
+                  {first && wi < weeks.length - 2
+                    ? new Date(`${month}-01T00:00:00Z`).toLocaleDateString(undefined, {
+                        month: "short",
+                        timeZone: "UTC",
+                      })
+                    : ""}
+                </span>
+              );
+            })}
+          </div>
+          {/* The grid shares the available width instead of scrolling sideways: every cell is a square that shrinks with the screen. */}
+          <div
+            role="img"
+            aria-label={`Contribution heatmap from ${from ?? "?"} to ${to ?? "?"}: ${total ?? 0} contributions in total. Monthly totals are listed below.`}
+            className="grid w-full gap-[2px]"
+            style={cols}
+          >
+            {weeks.map((w, wi) => (
+              <div
+                key={w.starts_on}
+                className="heat-col grid gap-[2px]"
+                style={{ "--i": wi } as React.CSSProperties}
+              >
+                {w.days.map((d) => (
+                  <div
+                    key={d.date}
+                    title={`${d.date}: ${d.count} contribution${d.count === 1 ? "" : "s"}`}
+                    className={cn(
+                      "aspect-square w-full rounded-[3px]",
+                      LEVEL[heatLevel(d.count, max)]
+                    )}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
       <p className="mt-3 text-xs text-ink-muted">
         Darker squares mean more contributions that day, relative to your busiest day.
@@ -102,7 +138,10 @@ export const PeriodBars: React.FC<{
           <span className="w-24 shrink-0 text-ink-secondary">
             {month ? monthLabel(r.period) : r.period.slice(5)}
           </span>
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-200" aria-hidden="true">
+          <div
+            className="h-2 flex-1 overflow-hidden rounded-full bg-surface-200"
+            aria-hidden="true"
+          >
             <div
               className="h-full rounded-full bg-ink-primary"
               style={{ width: `${(r.total / max) * 100}%` }}

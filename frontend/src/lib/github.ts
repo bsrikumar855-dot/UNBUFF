@@ -1,4 +1,5 @@
 import type {
+  GithubChecklistItem,
   GithubCallbackReason,
   GithubCheckStatus,
   GithubFreshness,
@@ -86,3 +87,14 @@ export function monthLabel(period: string): string {
 
 export const formatWhen = (iso: string | null): string =>
   iso ? new Date(iso).toLocaleString() : "never";
+
+/** The overall share of checks that pass (unknown checks are left out of the denominator). */
+export function checklistScore(items: GithubChecklistItem[]): {
+  pass: number;
+  checked: number;
+  unknown: number;
+} {
+  const pass = items.filter((i) => i.status === "pass").length;
+  const unknown = items.filter((i) => i.status === "unknown").length;
+  return { pass, checked: items.length - unknown, unknown };
+}

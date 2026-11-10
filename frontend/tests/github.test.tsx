@@ -211,7 +211,15 @@ const realLocation = window.location;
 let assign: ReturnType<typeof vi.fn>;
 beforeEach(() => {
   vi.resetAllMocks();
-  mocked.getAccountProfile.mockResolvedValue({ profile: { display_name: null, college: null, graduation_year: null, target_role_id: null, updated_at: null } });
+  mocked.getAccountProfile.mockResolvedValue({
+    profile: {
+      display_name: null,
+      college: null,
+      graduation_year: null,
+      target_role_id: null,
+      updated_at: null,
+    },
+  });
   mocked.getRoles.mockResolvedValue({ roles: [] });
   mocked.getLeetCodeConnection.mockReturnValue(new Promise(() => undefined)); // stays loading: GitHub is what is under test here
   assign = vi.fn();
@@ -471,8 +479,10 @@ describe("GitHub insights page", () => {
     expect(screen.getByText("No description.")).toBeInTheDocument();
     expect(screen.getByText(/TypeScript 80%/)).toBeInTheDocument();
     expect(
-      screen.getByText(/your commits in the last 90 days: unknown/)
-    ).toBeInTheDocument();
+      screen
+        .getAllByText("Your commits, 90 days")
+        .some((el) => el.nextElementSibling?.textContent === "unknown")
+    ).toBe(true);
     expect(await screen.findByRole("link", { name: "Add search" })).toBeInTheDocument();
     expect(
       screen.getByText(/12 pull requests and 4 issues opened in total/)
@@ -596,8 +606,15 @@ describe("a sync that is already running when the page opens", () => {
   it("keeps checking, then reloads the sections when it finishes", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
-      const running = conn({ sync_in_progress: true, last_synced_at: null, freshness: "never_synced" });
-      mocked.getGithubConnection.mockResolvedValueOnce(running).mockResolvedValueOnce(running).mockResolvedValue(conn());
+      const running = conn({
+        sync_in_progress: true,
+        last_synced_at: null,
+        freshness: "never_synced",
+      });
+      mocked.getGithubConnection
+        .mockResolvedValueOnce(running)
+        .mockResolvedValueOnce(running)
+        .mockResolvedValue(conn());
       mocked.getGithubContributions.mockResolvedValue({ available: false } as never);
       mocked.getGithubRepositories.mockResolvedValue({ available: false } as never);
       mocked.getGithubActivity.mockResolvedValue({ available: false } as never);
@@ -605,8 +622,12 @@ describe("a sync that is already running when the page opens", () => {
       expect(await screen.findByText(/synchronisation running/)).toBeInTheDocument();
       const before = mocked.getGithubContributions.mock.calls.length;
       await vi.advanceTimersByTimeAsync(3500);
-      await waitFor(() => expect(screen.queryByText(/synchronisation running/)).not.toBeInTheDocument());
-      await waitFor(() => expect(mocked.getGithubContributions.mock.calls.length).toBeGreaterThan(before));
+      await waitFor(() =>
+        expect(screen.queryByText(/synchronisation running/)).not.toBeInTheDocument()
+      );
+      await waitFor(() =>
+        expect(mocked.getGithubContributions.mock.calls.length).toBeGreaterThan(before)
+      );
     } finally {
       vi.useRealTimers();
     }

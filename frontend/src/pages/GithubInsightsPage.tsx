@@ -15,12 +15,14 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { api } from "@/api/endpoints";
+import { Heatmap, PeriodBars, SourceNote } from "@/components/github/GithubBits";
 import {
-  Checklist,
-  Heatmap,
-  PeriodBars,
-  SourceNote,
-} from "@/components/github/GithubBits";
+  ActivityTimeline,
+  ChecklistCards,
+  RepoList,
+  SectionNav,
+} from "@/components/github/GithubSections";
+import { checklistScore } from "@/lib/github";
 import { GithubConnectionPanel } from "@/components/github/GithubConnectionPanel";
 import { StatTile } from "@/components/dsa/AnalyticsBits";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -35,12 +37,6 @@ import type {
   GithubContributionsResponse,
   GithubRepositoriesResponse,
 } from "@/types/contract";
-
-const KIND_LABEL = {
-  pull_request: "Pull request",
-  issue: "Issue",
-  review: "Review",
-} as const;
 
 const AFTER_CONNECT = [
   {
@@ -163,7 +159,10 @@ const GithubInsightsPage: React.FC = () => {
 
       {locked && (
         <section aria-labelledby="after-connect" className="mt-8">
-          <h2 id="after-connect" className="serif text-heading font-medium text-ink-primary">
+          <h2
+            id="after-connect"
+            className="serif text-heading font-medium text-ink-primary"
+          >
             What you&apos;ll get after connecting
           </h2>
           <p className="mt-1 text-sm text-ink-secondary">
@@ -181,7 +180,9 @@ const GithubInsightsPage: React.FC = () => {
                   </span>
                   <div>
                     <h3 className="font-semibold text-ink-primary">{f.title}</h3>
-                    <p className="mt-1 text-sm leading-snug text-ink-secondary">{f.text}</p>
+                    <p className="mt-1 text-sm leading-snug text-ink-secondary">
+                      {f.text}
+                    </p>
                   </div>
                 </div>
                 <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white/70 px-3.5 py-1.5 text-xs text-ink-secondary shadow-[inset_0_0_0_1px_rgba(24,24,27,0.08)]">
@@ -212,8 +213,51 @@ const GithubInsightsPage: React.FC = () => {
       )}
 
       {readable && (
-        <div className="mt-6 flex flex-col gap-5">
-          <GlassCard id="contrib" icon={CalendarDays} title="Contribution calendar" sub="Your public contributions from the last synchronisation.">
+        <SectionNav
+          items={[
+            { id: "contrib", label: "Calendar" },
+            { id: "repos", label: "Repositories" },
+            { id: "activity", label: "Collaboration" },
+            { id: "checklist", label: "Checklist" },
+          ]}
+        />
+      )}
+
+      {readable && (
+        <div className="mt-2 flex flex-col gap-5">
+          {repositories.data?.available && activity.data?.available && (
+            <div
+              aria-label="Overview"
+              className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 lg:grid-cols-4"
+            >
+              <StatTile icon={FolderGit2} label="Public repositories">
+                {repositories.data.total_public_repositories}
+              </StatTile>
+              <StatTile icon={GitPullRequest} label="Pull requests opened">
+                {activity.data.pull_requests_total}
+              </StatTile>
+              <StatTile icon={Folder} label="Issues opened">
+                {activity.data.issues_total}
+              </StatTile>
+              <StatTile
+                icon={ClipboardCheck}
+                label="Portfolio checks done"
+                hint="of those GitHub let us check"
+              >
+                <span className="text-2xl">
+                  {checklistScore(repositories.data.checklist).pass} /{" "}
+                  {checklistScore(repositories.data.checklist).checked}
+                </span>
+              </StatTile>
+            </div>
+          )}
+          <GlassCard
+            id="contrib"
+            className="scroll-mt-28"
+            icon={CalendarDays}
+            title="Contribution calendar"
+            sub="Your public contributions from the last synchronisation."
+          >
             {contributions.error !== null && (
               <ErrorState error={contributions.error} onRetry={contributions.retry} />
             )}
@@ -229,10 +273,16 @@ const GithubInsightsPage: React.FC = () => {
               <>
                 <SourceNote source={c.source} />
                 <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  <StatTile icon={Activity} label="Contributions" hint="GitHub's own total for this period">
+                  <StatTile
+                    icon={Activity}
+                    label="Contributions"
+                    hint="GitHub's own total for this period"
+                  >
                     {c.total}
                   </StatTile>
-                  <StatTile icon={CalendarDays} label="Active days">{c.active_days ?? "–"}</StatTile>
+                  <StatTile icon={CalendarDays} label="Active days">
+                    {c.active_days ?? "–"}
+                  </StatTile>
                   <StatTile icon={Flame} label="Longest streak" hint="consecutive days">
                     {c.longest_streak_days ?? "–"}
                   </StatTile>
@@ -274,7 +324,13 @@ const GithubInsightsPage: React.FC = () => {
             )}
           </GlassCard>
 
-          <GlassCard id="repos" icon={FolderGit2} title="Public repositories" sub="Your own public repositories, most recently updated first.">
+          <GlassCard
+            id="repos"
+            className="scroll-mt-28"
+            icon={FolderGit2}
+            title="Public repositories"
+            sub="Your own public repositories, most recently updated first."
+          >
             {repositories.error !== null && (
               <ErrorState error={repositories.error} onRetry={repositories.retry} />
             )}
@@ -297,49 +353,20 @@ const GithubInsightsPage: React.FC = () => {
                 {repositories.data.repositories.length === 0 && (
                   <Empty>No public repositories found.</Empty>
                 )}
-                <ul className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-2">
-                  {repositories.data.repositories.map((r) => (
-                    <li key={r.name_with_owner} className={cn(TILE, "p-4")}>
-                      <a
-                        href={r.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-semibold text-ink-primary underline underline-offset-4 hover:text-redline"
-                      >
-                        {r.name_with_owner}
-                      </a>
-                      {(r.is_fork || r.is_archived) && (
-                        <span className="ml-2 text-xs text-ink-muted">
-                          {[r.is_fork && "fork", r.is_archived && "archived"]
-                            .filter(Boolean)
-                            .join(", ")}
-                        </span>
-                      )}
-                      <p className="mt-1 text-sm text-ink-secondary">
-                        {r.description ?? "No description."}
-                      </p>
-                      <p className="mt-2 text-xs text-ink-muted">
-                        {r.languages.length > 0
-                          ? r.languages.map((l) => `${l.name} ${l.percent}%`).join(", ")
-                          : (r.primary_language ?? "Language unknown")}
-                      </p>
-                      <p className="mt-1 text-xs text-ink-muted">
-                        Last push{" "}
-                        {r.pushed_at
-                          ? new Date(r.pushed_at).toLocaleDateString()
-                          : "unknown"}{" "}
-                        · your commits in the last 90 days:{" "}
-                        {r.your_commits_90d ?? "unknown"} · {r.open_pull_requests} open
-                        PRs · {r.open_issues} open issues
-                      </p>
-                    </li>
-                  ))}
-                </ul>
+                {repositories.data.repositories.length > 0 && (
+                  <RepoList repos={repositories.data.repositories} />
+                )}
               </>
             )}
           </GlassCard>
 
-          <GlassCard id="activity" icon={GitPullRequest} title="Recent collaboration" sub="Pull requests, issues and reviews from your public activity.">
+          <GlassCard
+            id="activity"
+            className="scroll-mt-28"
+            icon={GitPullRequest}
+            title="Recent collaboration"
+            sub="Pull requests, issues and reviews from your public activity."
+          >
             {activity.error !== null && (
               <ErrorState error={activity.error} onRetry={activity.retry} />
             )}
@@ -359,25 +386,7 @@ const GithubInsightsPage: React.FC = () => {
                 {activity.data.items.length === 0 ? (
                   <Empty>No recent public activity.</Empty>
                 ) : (
-                  <ul className="mt-3 flex flex-col gap-2 text-sm">
-                    {activity.data.items.map((i) => (
-                      <li key={`${i.kind}-${i.url}-${i.occurred_at}`} className={cn(TILE, "px-4 py-2.5")}>
-                        <span className="text-ink-muted">
-                          {KIND_LABEL[i.kind]} · {i.state} ·{" "}
-                          {new Date(i.occurred_at).toLocaleDateString()} ·{" "}
-                        </span>
-                        <a
-                          href={i.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="underline underline-offset-4 hover:text-redline"
-                        >
-                          {i.title}
-                        </a>
-                        <span className="text-ink-muted"> ({i.repository})</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <ActivityTimeline items={activity.data.items} />
                 )}
               </>
             )}
@@ -385,12 +394,13 @@ const GithubInsightsPage: React.FC = () => {
 
           <GlassCard
             id="checklist"
+            className="scroll-mt-28"
             icon={ClipboardCheck}
             title="Portfolio checklist"
             sub="Facts GitHub returned about your own, public, non-fork repositories. “Couldn't check” means GitHub did not return enough to decide; it is not a finding. This does not judge your code."
           >
             {repositories.data?.available && repositories.data.checklist.length > 0 && (
-              <Checklist items={repositories.data.checklist} />
+              <ChecklistCards items={repositories.data.checklist} />
             )}
             {repositories.data?.available && repositories.data.checklist.length === 0 && (
               <Empty>No repositories to check.</Empty>
