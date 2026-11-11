@@ -4,9 +4,8 @@ UNBLUFF runs and judges student code only inside **Judge0**, a separate sandboxe
 smoke test, production reports code Run/Submit as "unavailable" and no DSA result counts. This guide takes you from a blank server to
 `EXECUTION_PROVIDER_VERIFIED=true`.
 
-> **Status:** written from Judge0's own published instructions (v1.13.1, the current CE release) and from how this repository's adapter
-> talks to it. It has **not** been run end to end on a real server by the author, so treat the first run as a test and expect to adjust.
-> Judge0 facts below come from its changelog, API docs and `judge0.conf`; where something may differ on your server it says so.
+> **Status:** checked against the Judge0 source at tag `v1.13.1` (its `docker-compose.yml` and `judge0.conf`, read line by line) and against how
+> this repository's adapter talks to it. It has **not** been run end to end on a real server, so treat the first run as a test and expect to adjust.
 
 ## What you are building
 
@@ -38,7 +37,8 @@ asks Judge0 to enable network access. It discovers languages from `GET /language
 1. Create an **Ubuntu 22.04** VM (Judge0 recommends it). Add your SSH key; disable password login.
 2. Point a DNS **A record** for `judge.<your-domain>` at the VM's public IP.
 3. Firewall (cloud firewall and/or `ufw`): allow **22** (SSH, ideally only from your IP), **80** and **443** (Caddy). Do **not** expose Judge0's own port
-   **2358** publicly; Caddy reaches it on localhost.
+   **2358** publicly; Caddy reaches it on localhost. **Docker publishes ports around `ufw`**, so `ufw` alone will not protect 2358: also use your cloud
+   provider's firewall and bind the port to localhost in step 4.
 
 ```bash
 sudo ufw default deny incoming && sudo ufw default allow outgoing
@@ -85,15 +85,22 @@ In `judge0.conf` set at least:
 | `POSTGRES_PASSWORD` | the second random value | database password |
 | `AUTHN_TOKEN` | the third random value | **Without it, anyone who reaches the server can run code.** The header is `X-Auth-Token` unless you also set `AUTHN_HEADER`. |
 | `JUDGE0_TELEMETRY_ENABLE` | `false` | optional; telemetry is on by default |
+| `ALLOW_ENABLE_NETWORK` | `false` | the default is `true`, which lets a submission ask for network access. UNBLUFF never asks for it; switching it off means student code can never reach the network. |
 
 Keep the three values in your password manager; the token goes into Render later (a secret: never commit it).
 
-Limits: UNBLUFF sends its own per-run limits (2 s CPU, 128 MB by default for the practice problems), which must not exceed Judge0's
-maximums. Judge0's defaults (2 s CPU, 128 MB memory) match. After the first start, `GET /config_info` (needs the token header) shows the
-effective limits.
+Limits: UNBLUFF sends its own per-run limits (2 s CPU and 128 MB for the practice problems), which must stay within Judge0's maximums. Judge0's
+defaults are a 5 s CPU limit (maximum 15 s) and about 128 MB of memory (maximum about 512 MB), so UNBLUFF's limits fit and nothing needs changing.
+After the first start, `GET /config_info` (needs the token header) shows the effective limits.
 
 Optionally restrict who may call the API: Judge0 supports `ALLOW_IP` in `judge0.conf` (added in v1.6.0). Use it only if your backend host has fixed outbound IPs (Render
 shows them for paid plans); otherwise rely on the token.
+
+Two edits to `docker-compose.yml` in that folder (the file is in the release you just unzipped):
+
+1. **Pin the image.** At `v1.13.1` the file says `image: judge0/judge0:latest` for both `server` and `workers`. Change both to `judge0/judge0:1.13.1` so a restart
+   can never pull a different version. (If your downloaded file already pins a version, leave it.)
+2. **Bind the API to localhost.** Change `"2358:2358"` under `server` to `"127.0.0.1:2358:2358"`, so only Caddy on the same machine can reach it.
 
 ## 5. Start it
 
@@ -149,8 +156,9 @@ Confirm with `npm run preflight -- <your production env>`: the "judging off" war
 ## 9. Keeping it healthy
 
 - **Monitoring:** an uptime check on `https://judge.<your-domain>/languages` with the token header (or any monitor that can send a header), plus your normal VM disk/CPU alerts.
-- **Capacity:** the backend queues and polls with a deadline (`CODE_JUDGE_DEADLINE_MS`, default 60 s). If students wait too long at peak times, give the VM more CPU and
-  run more workers (see Judge0's documentation for scaling workers).
+- **Capacity:** the backend queues and polls with a deadline (`CODE_JUDGE_DEADLINE_MS`, default 60 s). Judge0 runs `COUNT` parallel workers (default twice the
+  CPU count) and rejects new submissions when `MAX_QUEUE_SIZE` (default 100) are already waiting. If students wait too long at peak times, give the VM more CPU;
+  if you see queue-full rejections, raise `MAX_QUEUE_SIZE` or add CPU.
 - **Disk:** Judge0 keeps submissions in its database; clear old ones now and then (or resize the disk).
 - **Updates:** follow Judge0 releases; read the changelog before upgrading (the cgroup requirement changed between major versions).
 - **Security:** keep the OS patched; keep SSH key-only; never reuse the token elsewhere; rotate it by editing `AUTHN_TOKEN`, restarting Judge0, and updating Render.
@@ -163,5 +171,5 @@ Confirm with `npm run preflight -- <your production env>`: the "judging off" war
 | `box.c ... cannot be created`, null results | The worker is not privileged. Make sure `privileged: true` is set for the server and worker services in `docker-compose.yml` (the release file has it). |
 | Every request returns 401/403 | Token mismatch. The header name is `X-Auth-Token` unless you set `AUTHN_HEADER`; if you renamed it, also set `JUDGE0_AUTH_HEADER` in the backend. |
 | `JUDGE0_URL must use https in production` | The backend refuses plain http. Finish step 6. |
-| Smoke test can list languages but runs time out | The worker is not running or is starved; `docker compose ps`, `docker compose logs worker`, and check CPU/RAM. |
+| Smoke test can list languages but runs time out | The worker is not running or is starved; `docker compose ps`, `docker compose logs workers`, and check CPU/RAM. |
 | Run works but Submit says unavailable | `EXECUTION_PROVIDER_VERIFIED` is not `true`, or the question has no hidden suite (company catalogue questions never have one). |
